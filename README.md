@@ -1,7 +1,13 @@
 
 # PE File Parser
 
+
 PE File Parser is a cross-platform C++ tool for analyzing Portable Executable (PE) files. It supports both 32-bit and 64-bit executables, DLLs, and drivers. The project is modular, maintainable, and suitable for reverse engineering, malware analysis, and research.
+
+---
+
+**Attribution:**
+This project is a remake and modular refactor of the original [PE-Explorer](https://github.com/adamhlt/PE-Explorer) repository by adamhlt.
 
 ## Features
 
