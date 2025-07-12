@@ -3,6 +3,30 @@
 #include "include/peParser.h"
 #include "include/PEResourceParser.h"
 #include <iostream>
+#include <fstream>
+#include <ctime>
+#include <cstdio>
+#include <cstring>
+#include <cstdarg>
+
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#define dup_fd _dup
+#define dup2_fd _dup2
+#define close_fd _close
+#define fileno_fd _fileno
+#else
+#include <unistd.h>
+#define dup_fd dup
+#define dup2_fd dup2
+#define close_fd close
+#define fileno_fd fileno
+#endif
+
+// Global variables for output redirection
+int g_original_stdout = -1;
+FILE* g_output_file = nullptr;
 
 // Globals for import/export parsing
 int g_NumberOfSections = 0;
@@ -11,11 +35,26 @@ PIMAGE_SECTION_HEADER g_SectionHeader = nullptr;
 int main(int argc, char* argv[])
 {
     // Initialize logging
-    Logger::init("Logs.txt");
+    Logger::init("Logs.txt", "ParseOutput.txt");
+    
+    // Open output file for complete results
+    g_output_file = fopen("ParseResults.txt", "w");
+    if (g_output_file) {
+        auto now = std::time(nullptr);
+        auto localTime = std::localtime(&now);
+        fprintf(g_output_file, "=== PE Parser Results - %s===\n\n", std::asctime(localTime));
+        fflush(g_output_file);
+    }
     
     if (argc != 2)
     {
         LOGF("[HELP] Usage: %s <PE_file_path>\n", argv[0]);
+        
+        // Close output file
+        if (g_output_file) {
+            fclose(g_output_file);
+            g_output_file = nullptr;
+        }
         Logger::close();
         return PE_ERROR_INVALID_PE;
     }
@@ -77,6 +116,14 @@ int main(int argc, char* argv[])
     // Cleanup
     CleanupPEFile(&fileInfo);
     LOG("[+] PE file analysis completed successfully!\n");
+    
+    // Close output file
+    if (g_output_file) {
+        fprintf(g_output_file, "\n=== Analysis Complete ===\n");
+        fclose(g_output_file);
+        g_output_file = nullptr;
+    }
+    
     Logger::close();
     return PE_SUCCESS;
 }

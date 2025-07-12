@@ -1,6 +1,7 @@
 #pragma once
 
 #include "peCommon.h"
+#include "outputCapture.h"
 
 /**
  * Main PE parsing function for 32-bit PE files.

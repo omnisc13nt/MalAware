@@ -3,6 +3,10 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <cstdarg>
+
+// Include output capture for global printf override
+#include "outputCapture.h"
 
 // Cross-platform PE parsing definitions
 // These definitions are based on Windows PE format but made cross-platform
@@ -283,21 +287,33 @@ inline bool isValidString(const char* str, size_t maxLen) {
 class Logger {
 private:
     static std::ofstream logFile;
+    static std::ofstream outputFile;
     static bool isInitialized;
     
 public:
-    static void init(const char* filename = "Logs.txt") {
+    static void init(const char* logFilename = "Logs.txt", const char* outputFilename = "ParseOutput.txt") {
         if (!isInitialized) {
-            logFile.open(filename, std::ios::app);
+            // Initialize log file
+            logFile.open(logFilename, std::ios::app);
             if (logFile.is_open()) {
-                // Write session header
                 auto now = std::time(nullptr);
                 auto localTime = std::localtime(&now);
                 logFile << "\n=== PE Parser Session Started at " 
                        << std::asctime(localTime) << "===\n";
                 logFile.flush();
-                isInitialized = true;
             }
+            
+            // Initialize output file
+            outputFile.open(outputFilename, std::ios::trunc); // Overwrite for each session
+            if (outputFile.is_open()) {
+                auto now = std::time(nullptr);
+                auto localTime = std::localtime(&now);
+                outputFile << "=== PE Parser Results - " 
+                          << std::asctime(localTime) << "===\n\n";
+                outputFile.flush();
+            }
+            
+            isInitialized = true;
         }
     }
     
@@ -312,10 +328,40 @@ public:
         }
     }
     
+    static void output(const char* message) {
+        if (isInitialized && outputFile.is_open()) {
+            outputFile << message;
+            outputFile.flush();
+        }
+    }
+    
+    static void printf_and_output(const char* format, ...) {
+        char buffer[1024];
+        va_list args;
+        va_start(args, format);
+        vsnprintf(buffer, sizeof(buffer), format, args);
+        va_end(args);
+        
+        // Print to console
+        printf("%s", buffer);
+        
+        // Write to output file
+        if (isInitialized && outputFile.is_open()) {
+            outputFile << buffer;
+            outputFile.flush();
+        }
+    }
+    
     static void close() {
-        if (isInitialized && logFile.is_open()) {
-            logFile << "=== PE Parser Session Ended ===\n\n";
-            logFile.close();
+        if (isInitialized) {
+            if (logFile.is_open()) {
+                logFile << "=== PE Parser Session Ended ===\n\n";
+                logFile.close();
+            }
+            if (outputFile.is_open()) {
+                outputFile << "\n=== Analysis Complete ===\n";
+                outputFile.close();
+            }
             isInitialized = false;
         }
     }
@@ -325,6 +371,7 @@ public:
 #define LOG(msg) do { \
     printf("%s", msg); \
     Logger::log(msg); \
+    Logger::output(msg); \
 } while(0)
 
 #define LOGF(fmt, ...) do { \
@@ -332,4 +379,32 @@ public:
     snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
     printf("%s", buffer); \
     Logger::log(buffer); \
+    Logger::output(buffer); \
 } while(0)
+
+// Debug logging macros (only write to log file, not console or output)
+#define LOG_DEBUG(msg) do { \
+    Logger::log(msg); \
+} while(0)
+
+#define LOGF_DEBUG(fmt, ...) do { \
+    char buffer[1024]; \
+    snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
+    Logger::log(buffer); \
+} while(0)
+
+// Output-only macros (write to console and output file, but not debug logs)
+#define LOG_OUTPUT(msg) do { \
+    printf("%s", msg); \
+    Logger::output(msg); \
+} while(0)
+
+#define LOGF_OUTPUT(fmt, ...) do { \
+    char buffer[1024]; \
+    snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
+    printf("%s", buffer); \
+    Logger::output(buffer); \
+} while(0)
+
+// Macro to replace printf with output logging
+#define PRINTF_OUTPUT(...) Logger::printf_and_output(__VA_ARGS__)

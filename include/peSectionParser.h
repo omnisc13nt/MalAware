@@ -2,6 +2,7 @@
 #pragma once
 
 #include "peCommon.h"
+#include "outputCapture.h"
 #include <string>
 
 /**

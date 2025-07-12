@@ -1,6 +1,7 @@
 #pragma once
 
 #include "peCommon.h"
+#include "outputCapture.h"
 
 /**
  * Retrieve and display dll and functions imported (for x86 PE file).

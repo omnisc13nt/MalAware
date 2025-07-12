@@ -14,7 +14,9 @@ int ParsePE32(PPE_FILE_INFO pFileInfo)
         return PE_ERROR_PARSING;
 
     printf("[+] PE IMAGE INFORMATION\n");
+    Logger::output("[+] PE IMAGE INFORMATION");
     printf("\n[+] Architecture x86\n");
+    Logger::output("\n[+] Architecture x86");
 
     // Display headers
     DisplayDosHeader(pFileInfo->pDosHeader);
@@ -50,7 +52,9 @@ int ParsePE64(PPE_FILE_INFO pFileInfo)
         return PE_ERROR_PARSING;
 
     printf("[+] PE IMAGE INFORMATION\n");
+    Logger::output("[+] PE IMAGE INFORMATION");
     printf("\n[+] Architecture x64\n");
+    Logger::output("\n[+] Architecture x64");
 
     // Display headers
     DisplayDosHeader(pFileInfo->pDosHeader);

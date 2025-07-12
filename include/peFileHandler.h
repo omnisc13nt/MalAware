@@ -1,6 +1,7 @@
 #pragma once
 
 #include "peCommon.h"
+#include "outputCapture.h"
 
 /**
  * Function to retrieve the PE file content.
