@@ -3,6 +3,9 @@
 #include "include/peParser.h"
 #include "include/PEResourceParser.h"
 #include "include/PESecurityAnalyzer.h"
+#include "include/PEDigitalSignatureAnalyzer.h"
+#include "include/PEDebugInfoAnalyzer.h"
+#include "include/PEHashCalculator.h"
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -130,6 +133,58 @@ int main(int argc, char* argv[])
         LOGF("[-] ERROR: Security analysis failed: %s\n", e.what());
     } catch (...) {
         LOG("[-] ERROR: Unknown error during security analysis\n");
+    }
+
+    // Digital signature analysis
+    try {
+        PEDigitalSignatureAnalyzer signatureAnalyzer(&fileInfo);
+        
+        // Perform digital signature analysis
+        signatureAnalyzer.analyzeSignature();
+        signatureAnalyzer.printSignatureInfo();
+        signatureAnalyzer.printCertificateChain();
+        signatureAnalyzer.printSecurityCatalog();
+        
+        LOG("[+] Digital signature analysis completed successfully!\n");
+    } catch (const std::exception& e) {
+        LOGF("[-] ERROR: Digital signature analysis failed: %s\n", e.what());
+    } catch (...) {
+        LOG("[-] ERROR: Unknown error during digital signature analysis\n");
+    }
+
+    // Debug information analysis
+    try {
+        PEDebugInfoAnalyzer debugAnalyzer(&fileInfo);
+        
+        // Perform debug information analysis
+        debugAnalyzer.analyzeDebugInfo();
+        debugAnalyzer.printDebugInfo();
+        debugAnalyzer.printDebugDirectories();
+        debugAnalyzer.printCodeViewInfo();
+        debugAnalyzer.printRichHeaderInfo();
+        
+        LOG("[+] Debug information analysis completed successfully!\n");
+    } catch (const std::exception& e) {
+        LOGF("[-] ERROR: Debug information analysis failed: %s\n", e.what());
+    } catch (...) {
+        LOG("[-] ERROR: Unknown error during debug information analysis\n");
+    }
+
+    // Hash calculation and comprehensive file analysis
+    try {
+        PEHashCalculator hashCalculator(&fileInfo);
+        
+        // Perform comprehensive hash analysis
+        hashCalculator.printFileHashes();
+        hashCalculator.printFileInfo();
+        hashCalculator.printSectionHashes();
+        hashCalculator.printOverlayInfo();
+        
+        LOG("[+] Hash calculation and file analysis completed successfully!\n");
+    } catch (const std::exception& e) {
+        LOGF("[-] ERROR: Hash calculation failed: %s\n", e.what());
+    } catch (...) {
+        LOG("[-] ERROR: Unknown error during hash calculation\n");
     }
 
     // Cleanup

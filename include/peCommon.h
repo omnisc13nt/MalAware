@@ -33,6 +33,23 @@ typedef void* HANDLE;
 #define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
 #define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
 
+// Directory entry indices
+#define IMAGE_DIRECTORY_ENTRY_EXPORT         0
+#define IMAGE_DIRECTORY_ENTRY_IMPORT         1
+#define IMAGE_DIRECTORY_ENTRY_RESOURCE       2
+#define IMAGE_DIRECTORY_ENTRY_EXCEPTION      3
+#define IMAGE_DIRECTORY_ENTRY_SECURITY       4
+#define IMAGE_DIRECTORY_ENTRY_BASERELOC      5
+#define IMAGE_DIRECTORY_ENTRY_DEBUG          6
+#define IMAGE_DIRECTORY_ENTRY_ARCHITECTURE   7
+#define IMAGE_DIRECTORY_ENTRY_GLOBALPTR      8
+#define IMAGE_DIRECTORY_ENTRY_TLS            9
+#define IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG    10
+#define IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT   11
+#define IMAGE_DIRECTORY_ENTRY_IAT            12
+#define IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT   13
+#define IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR 14
+
 // File characteristics
 #define IMAGE_FILE_EXECUTABLE_IMAGE 0x0002
 #define IMAGE_FILE_DLL 0x2000
@@ -246,6 +263,54 @@ typedef struct _IMAGE_EXPORT_DIRECTORY {
     DWORD AddressOfNameOrdinals;
 } IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
 
+// Debug Directory
+typedef struct _IMAGE_DEBUG_DIRECTORY {
+    DWORD Characteristics;
+    DWORD TimeDateStamp;
+    WORD MajorVersion;
+    WORD MinorVersion;
+    DWORD Type;
+    DWORD SizeOfData;
+    DWORD AddressOfRawData;
+    DWORD PointerToRawData;
+} IMAGE_DEBUG_DIRECTORY, *PIMAGE_DEBUG_DIRECTORY;
+
+// Debug Types
+#define IMAGE_DEBUG_TYPE_UNKNOWN         0
+#define IMAGE_DEBUG_TYPE_COFF            1
+#define IMAGE_DEBUG_TYPE_CODEVIEW        2
+#define IMAGE_DEBUG_TYPE_FPO             3
+#define IMAGE_DEBUG_TYPE_MISC            4
+#define IMAGE_DEBUG_TYPE_EXCEPTION       5
+#define IMAGE_DEBUG_TYPE_FIXUP           6
+#define IMAGE_DEBUG_TYPE_OMAP_TO_SRC     7
+#define IMAGE_DEBUG_TYPE_OMAP_FROM_SRC   8
+#define IMAGE_DEBUG_TYPE_BORLAND         9
+#define IMAGE_DEBUG_TYPE_RESERVED10      10
+#define IMAGE_DEBUG_TYPE_CLSID           11
+#define IMAGE_DEBUG_TYPE_VC_FEATURE      12
+#define IMAGE_DEBUG_TYPE_POGO            13
+#define IMAGE_DEBUG_TYPE_ILTCG           14
+#define IMAGE_DEBUG_TYPE_MPX             15
+#define IMAGE_DEBUG_TYPE_REPRO           16
+
+// Symbol Table Entry
+typedef struct _IMAGE_SYMBOL {
+    union {
+        BYTE ShortName[8];
+        struct {
+            DWORD Short;
+            DWORD Long;
+        } Name;
+        DWORD LongName[2];
+    } N;
+    DWORD Value;
+    WORD SectionNumber;
+    WORD Type;
+    BYTE StorageClass;
+    BYTE NumberOfAuxSymbols;
+} IMAGE_SYMBOL, *PIMAGE_SYMBOL;
+
 // Common types and constants used across the PE parser
 typedef struct _PE_FILE_INFO {
     HANDLE hFileContent;
@@ -261,6 +326,42 @@ typedef struct _PE_FILE_INFO {
 #define PE_ERROR_INVALID_PE -2
 #define PE_ERROR_MEMORY_ALLOCATION -3
 #define PE_ERROR_PARSING -4
+#define PE_ERROR_INVALID_SIGNATURE -5
+#define PE_ERROR_UNSUPPORTED_ARCHITECTURE -6
+#define PE_ERROR_CORRUPTED_STRUCTURE -7
+#define PE_ERROR_SECURITY_ANALYSIS_FAILED -8
+#define PE_ERROR_HASH_CALCULATION_FAILED -9
+#define PE_ERROR_DEBUG_INFO_FAILED -10
+#define PE_ERROR_RESOURCE_PARSING_FAILED -11
+#define PE_ERROR_IMPORT_PARSING_FAILED -12
+#define PE_ERROR_EXPORT_PARSING_FAILED -13
+
+// Error handling structure
+typedef struct _PE_ERROR_INFO {
+    int errorCode;
+    const char* errorMessage;
+    const char* detailedMessage;
+    const char* filename;
+    int lineNumber;
+} PE_ERROR_INFO, *PPE_ERROR_INFO;
+
+// Error handling macros
+#define PE_SET_ERROR(info, code, msg, detail) \
+    do { \
+        (info)->errorCode = (code); \
+        (info)->errorMessage = (msg); \
+        (info)->detailedMessage = (detail); \
+        (info)->filename = __FILE__; \
+        (info)->lineNumber = __LINE__; \
+    } while(0)
+
+#define PE_CHECK_ERROR(result, info, code, msg, detail) \
+    do { \
+        if ((result) != PE_SUCCESS) { \
+            PE_SET_ERROR(info, code, msg, detail); \
+            return (result); \
+        } \
+    } while(0)
 
 // WIN_CERTIFICATE structure for digital signature parsing
 typedef struct _WIN_CERTIFICATE {
@@ -376,10 +477,17 @@ public:
 
 #define LOGF(fmt, ...) do { \
     char buffer[1024]; \
-    snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
-    printf("%s", buffer); \
-    Logger::log(buffer); \
-    Logger::output(buffer); \
+    int result = snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
+    if (result > 0 && result < (int)sizeof(buffer)) { \
+        printf("%s", buffer); \
+        Logger::log(buffer); \
+        Logger::output(buffer); \
+    } else { \
+        const char* truncated_msg = "[ERROR: Message too long for buffer]\n"; \
+        printf("%s", truncated_msg); \
+        Logger::log(truncated_msg); \
+        Logger::output(truncated_msg); \
+    } \
 } while(0)
 
 // Debug logging macros (only write to log file, not console or output)
