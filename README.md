@@ -197,6 +197,7 @@ The parser generates comprehensive output in multiple formats:
     Valid To: 2025-01-15 23:59:59
     Signature Algorithm: SHA256RSA
 ```
+```
 
 [+] NT HEADER
         Signature : 0x4550
@@ -241,6 +242,8 @@ The parser generates comprehensive output in multiple formats:
         LoaderFlags : 0x0
         NumberOfRvaAndSizes : 0x10
 
+
+```
 [+] DATA DIRECTORIES
         DataDirectory (Import Table) VirtualAddress : 0x20FD4
         DataDirectory (Import Table) Size : 0x104
@@ -666,32 +669,7 @@ The parser generates comprehensive output in multiple formats:
 | -3   | PE_ERROR_MEMORY_ALLOCATION | Memory allocation failed |
 | -4   | PE_ERROR_PARSING | Parsing error occurred |
 
-## 🚀 Development Roadmap
-
-### Phase 1: Core Features ✅ COMPLETED
-- Complete PE structure parsing
-- Advanced security analysis
-- Digital signature verification
-- Entropy and packer detection
-
-### Phase 2: Advanced Analysis 🔄 IN PROGRESS
-- TLS callback analysis
-- Exception handling chains
-- Enhanced resource parsing
-- JSON output format
-
-### Phase 3: External Integration 📋 PLANNED
-- YARA rule integration
-- Disassembly capabilities
-- Threat intelligence APIs
-- Binary modification tools
-
-See [`PROJECT_SUMMARY.md`](PROJECT_SUMMARY.md) for detailed roadmap and implementation details.
-
-## 🤝 Contributing
-
-We welcome contributions to improve the PE File Parser! Here's how you can help:
-
+  
 ### Ways to Contribute
 - **Bug Reports**: Submit detailed bug reports with sample files
 - **Feature Requests**: Suggest new analysis capabilities
@@ -721,13 +699,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Original Project**: Based on [PE-Explorer](https://github.com/adamhlt/PE-Explorer) by adamhlt
 - **PE Format Specification**: Microsoft Portable Executable format documentation
-- **Community**: Thanks to all contributors and users providing feedback
-
-## 📞 Support
-
-- **Issues**: Report bugs and request features via GitHub Issues
-- **Documentation**: Comprehensive documentation in [`PROJECT_SUMMARY.md`](PROJECT_SUMMARY.md)
-- **Examples**: Sample analysis outputs and use cases included
 
 ---
 
