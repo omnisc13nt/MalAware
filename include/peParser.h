@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pe_common.h"
+#include "peCommon.h"
 
 /**
  * Main PE parsing function for 32-bit PE files.

@@ -1,4 +1,4 @@
-#include "../include/pe_header_parser.h"
+#include "../include/peHeaderParser.h"
 
 const char* GetImageCharacteristics(DWORD_PTR dCharacteristics)
 {

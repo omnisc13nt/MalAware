@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pe_common.h"
+#include "peCommon.h"
 
 /**
  * Function to identify the PE file characteristics.

@@ -1,41 +1,29 @@
-#include "../include/pe_section_parser.h"
+#include "../include/peSectionParser.h"
 #include <cstring>
 
-#include "../include/pe_section_parser.h"
+#include "../include/peSectionParser.h"
 #include <cstring>
 
-const char* GetSectionProtection(DWORD_PTR dCharacteristics)
+std::string GetSectionProtection(DWORD_PTR dCharacteristics)
 {
-    // Note: This function returns a static buffer that gets overwritten on each call
-    // In a real application, you might want to use a different approach
-    static char lpSectionProtection[1024];
-    
-    strcpy(lpSectionProtection, "(");
+    std::string protection = "(";
     bool bExecute = false, bRead = false;
 
-    if (dCharacteristics & IMAGE_SCN_MEM_EXECUTE)
-    {
+    if (dCharacteristics & IMAGE_SCN_MEM_EXECUTE) {
         bExecute = true;
-        strcat(lpSectionProtection, "EXECUTE");
+        protection += "EXECUTE";
     }
-
-    if (dCharacteristics & IMAGE_SCN_MEM_READ)
-    {
+    if (dCharacteristics & IMAGE_SCN_MEM_READ) {
         bRead = true;
-        if (bExecute)
-            strcat(lpSectionProtection, " | ");
-        strcat(lpSectionProtection, "READ");
+        if (bExecute) protection += " | ";
+        protection += "READ";
     }
-
-    if (dCharacteristics & IMAGE_SCN_MEM_WRITE)
-    {
-        if (bExecute || bRead)
-            strcat(lpSectionProtection, " | ");
-        strcat(lpSectionProtection, "WRITE");
+    if (dCharacteristics & IMAGE_SCN_MEM_WRITE) {
+        if (bExecute || bRead) protection += " | ";
+        protection += "WRITE";
     }
-
-    strcat(lpSectionProtection, ")");
-    return lpSectionProtection;
+    protection += ")";
+    return protection;
 }
 
 PIMAGE_SECTION_HEADER GetSections(PIMAGE_SECTION_HEADER pImageSectionHeader, 
@@ -96,6 +84,6 @@ void DisplaySections(PIMAGE_SECTION_HEADER pImageSectionHeader, int nNumberOfSec
         printf("\t\tPointerToLinenumbers : 0x%X\n", (unsigned int)pCurrentSectionHeader->PointerToLinenumbers);
         printf("\t\tNumberOfRelocations : 0x%X\n", (unsigned int)pCurrentSectionHeader->NumberOfRelocations);
         printf("\t\tNumberOfLinenumbers : 0x%X\n", (unsigned int)pCurrentSectionHeader->NumberOfLinenumbers);
-        printf("\t\tCharacteristics : 0x%X %s\n", (unsigned int)pCurrentSectionHeader->Characteristics, GetSectionProtection(pCurrentSectionHeader->Characteristics));
+        printf("\t\tCharacteristics : 0x%X %s\n", (unsigned int)pCurrentSectionHeader->Characteristics, GetSectionProtection(pCurrentSectionHeader->Characteristics).c_str());
     }
 }

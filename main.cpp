@@ -1,5 +1,5 @@
-#include "include/pe_file_handler.h"
-#include "include/pe_parser.h"
+#include "include/peFileHandler.h"
+#include "include/peParser.h"
 #include <iostream>
 
 int main(int argc, char* argv[])

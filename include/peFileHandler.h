@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pe_common.h"
+#include "peCommon.h"
 
 /**
  * Function to retrieve the PE file content.

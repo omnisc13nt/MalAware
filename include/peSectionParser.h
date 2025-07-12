@@ -1,13 +1,15 @@
+
 #pragma once
 
-#include "pe_common.h"
+#include "peCommon.h"
+#include <string>
 
 /**
  * Retrieve and display the protection of the section.
  * @param dCharacteristics : characteristics of the section.
  * @return : the description of the protection.
  */
-const char* GetSectionProtection(DWORD_PTR dCharacteristics);
+std::string GetSectionProtection(DWORD_PTR dCharacteristics);
 
 /**
  * Function to retrieve sections from the PE file and get the section which contains imports.

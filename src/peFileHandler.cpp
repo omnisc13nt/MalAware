@@ -1,6 +1,15 @@
-#include "../include/pe_file_handler.h"
+
+#include "../include/peFileHandler.h"
 #include <fstream>
 #include <iostream>
+#include <memory>
+
+// Use a unique_ptr for file content to ensure automatic cleanup
+struct FileContentDeleter {
+    void operator()(void* ptr) const {
+        free(ptr);
+    }
+};
 
 int LoadPEFile(const char* lpFilePath, PPE_FILE_INFO pFileInfo)
 {
@@ -8,46 +17,37 @@ int LoadPEFile(const char* lpFilePath, PPE_FILE_INFO pFileInfo)
         return PE_ERROR_INVALID_PE;
     }
 
-    // Initialize the structure
     memset(pFileInfo, 0, sizeof(PE_FILE_INFO));
 
-    // Open file using standard C++ streams
     std::ifstream file(lpFilePath, std::ios::binary | std::ios::ate);
-    if (!file.is_open())
-    {
-        printf("[-] An error occurred when trying to open the PE file!\n");
+    if (!file.is_open()) {
+        fprintf(stderr, "[-] Error: Unable to open PE file: %s\n", lpFilePath);
         return PE_ERROR_FILE_OPEN;
     }
 
-    // Get file size
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
-
-    if (size <= 0)
-    {
-        printf("[-] An error occurred when trying to get the PE file size!\n");
+    if (size <= 0) {
+        fprintf(stderr, "[-] Error: Invalid PE file size for: %s\n", lpFilePath);
         file.close();
         return PE_ERROR_FILE_OPEN;
     }
 
-    // Allocate memory for file content
-    pFileInfo->hFileContent = malloc(static_cast<size_t>(size));
-    if (pFileInfo->hFileContent == nullptr)
-    {
-        printf("[-] An error occurred when trying to allocate memory for the PE file content!\n");
+    // Use unique_ptr for automatic cleanup
+    std::unique_ptr<void, FileContentDeleter> fileContent(malloc(static_cast<size_t>(size)));
+    if (!fileContent) {
+        fprintf(stderr, "[-] Error: Memory allocation failed for PE file: %s\n", lpFilePath);
         file.close();
         return PE_ERROR_MEMORY_ALLOCATION;
     }
 
-    // Read file content
-    if (!file.read(static_cast<char*>(pFileInfo->hFileContent), size))
-    {
-        printf("[-] An error occurred when trying to read the PE file content!\n");
+    if (!file.read(static_cast<char*>(fileContent.get()), size)) {
+        fprintf(stderr, "[-] Error: Failed to read PE file content: %s\n", lpFilePath);
         file.close();
-        CleanupPEFile(pFileInfo);
         return PE_ERROR_FILE_OPEN;
     }
 
+    pFileInfo->hFileContent = fileContent.release();
     pFileInfo->dwFileSize = static_cast<DWORD>(size);
     file.close();
 
@@ -56,8 +56,7 @@ int LoadPEFile(const char* lpFilePath, PPE_FILE_INFO pFileInfo)
 
 void CleanupPEFile(PPE_FILE_INFO pFileInfo)
 {
-    if (pFileInfo && pFileInfo->hFileContent != nullptr)
-    {
+    if (pFileInfo && pFileInfo->hFileContent != nullptr) {
         free(pFileInfo->hFileContent);
         pFileInfo->hFileContent = nullptr;
     }

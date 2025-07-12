@@ -1,3 +1,17 @@
+## Recent Foundational Improvements
+
+### Memory Management
+- File content is now managed using RAII (`std::unique_ptr`) for automatic cleanup and leak prevention.
+
+### Error Handling
+- Error messages are printed to `stderr` for better visibility.
+- Error codes are returned for all failure cases.
+
+### Buffer Overflow Fix
+- The section protection string logic now uses `std::string` instead of a static buffer, eliminating undefined behavior and buffer overflow risk.
+
+---
+
 
 # PE File Parser
 

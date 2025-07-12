@@ -1,7 +1,7 @@
-#include "../include/pe_parser.h"
-#include "../include/pe_header_parser.h"
-#include "../include/pe_section_parser.h"
-#include "../include/pe_import_export.h"
+#include "../include/peParser.h"
+#include "../include/peHeaderParser.h"
+#include "../include/peSectionParser.h"
+#include "../include/peImportExport.h"
 
 int ParsePE32(PPE_FILE_INFO pFileInfo)
 {

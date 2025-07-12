@@ -1,5 +1,5 @@
-#include "../include/pe_import_export.h"
-#include "../include/pe_section_parser.h"
+#include "../include/peImportExport.h"
+#include "../include/peSectionParser.h"
 
 void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor, 
                   DWORD_PTR dRawOffset, 

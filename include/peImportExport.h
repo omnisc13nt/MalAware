@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pe_common.h"
+#include "peCommon.h"
 
 /**
  * Retrieve and display dll and functions imported (for x86 PE file).
