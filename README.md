@@ -347,4 +347,3 @@ MIT License. See [LICENSE](LICENSE) for details.
 ## References
 
 - [Microsoft PE Format Specification](https://docs.microsoft.com/en-us/windows/win32/debug/pe-format)
-- [MODULARIZATION_IMPROVEMENTS.md](MODULARIZATION_IMPROVEMENTS.md)
