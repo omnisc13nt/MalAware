@@ -1,0 +1,47 @@
+# Ignore build artifacts
+obj/
+build/
+*.o
+*.obj
+*.exe
+*.out
+*.bin
+*.log
+
+# Ignore CMake files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore editor files
+*.swp
+*.swo
+*.bak
+*.tmp
+*.DS_Store
+.vscode/
+.idea/
+
+# Ignore all markdown except README.md
+*.md
+!README.md
+
+# Ignore test files
+*.test
+*.spec
+
+# Ignore other system files
+Thumbs.db
+
+# Ignore sample PE files
+*.dll
+*.sys
+*.exe
+*.msi
+*.zip
+*.tar.gz
+
+# Ignore Python/Node artifacts (if any)
+__pycache__/
+node_modules/
