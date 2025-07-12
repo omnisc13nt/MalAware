@@ -34,6 +34,16 @@ int main(int argc, char* argv[])
 
     printf("\n[+] PE file parsing completed successfully!\n");
 
+    // Resource parsing and display
+    extern "C" {
+        #include "include/PEResourceParser.h"
+    }
+    {
+        PEResourceParser resourceParser(fileInfo.hFileContent, fileInfo.pNtHeader);
+        resourceParser.parseResources();
+        resourceParser.printResources();
+    }
+
     // Cleanup
     CleanupPEFile(&fileInfo);
     return PE_SUCCESS;

@@ -1,3 +1,5 @@
+# Ignore testFolder and all its contents
+testFolder/
 # Ignore build artifacts
 obj/
 build/

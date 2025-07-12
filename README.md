@@ -1,18 +1,3 @@
-## Recent Foundational Improvements
-
-### Memory Management
-- File content is now managed using RAII (`std::unique_ptr`) for automatic cleanup and leak prevention.
-
-### Error Handling
-- Error messages are printed to `stderr` for better visibility.
-- Error codes are returned for all failure cases.
-
-### Buffer Overflow Fix
-- The section protection string logic now uses `std::string` instead of a static buffer, eliminating undefined behavior and buffer overflow risk.
-
----
-
-
 # PE File Parser
 
 
@@ -57,7 +42,38 @@ peFileParser/
 └── README.md
 ```
 
+
 ## Build Instructions
+
+### Prerequisites
+You need a C++17-compatible compiler and build tools. See below for your platform:
+
+#### Ubuntu/Debian
+```bash
+sudo apt update
+sudo apt install build-essential g++ cmake
+```
+
+#### Fedora/RHEL/CentOS
+```bash
+sudo dnf install gcc-c++ make cmake
+```
+
+#### Arch Linux/Manjaro
+```bash
+sudo pacman -S base-devel gcc cmake
+```
+
+#### macOS (Homebrew)
+```bash
+brew install gcc cmake
+```
+
+#### Windows (MinGW)
+Install [MSYS2](https://www.msys2.org/) and run:
+```bash
+pacman -S mingw-w64-x86_64-gcc make cmake
+```
 
 ### Using Make
 ```bash
@@ -77,7 +93,7 @@ make
 
 ### Manual Compilation
 ```bash
-g++ -std=c++17 -O2 -Iinclude main_new.cpp src/*.cpp -o peFileParser_modular
+g++ -std=c++17 -O2 -Iinclude main.cpp src/*.cpp -o peFileParserModular
 ```
 
 ## Usage

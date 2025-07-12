@@ -257,3 +257,11 @@ typedef struct _PE_FILE_INFO {
 #define PE_ERROR_INVALID_PE -2
 #define PE_ERROR_MEMORY_ALLOCATION -3
 #define PE_ERROR_PARSING -4
+
+// WIN_CERTIFICATE structure for digital signature parsing
+typedef struct _WIN_CERTIFICATE {
+    DWORD dwLength;
+    WORD wRevision;
+    WORD wCertificateType;
+    BYTE bCertificate[1]; // Variable length
+} WIN_CERTIFICATE, *PWIN_CERTIFICATE;
