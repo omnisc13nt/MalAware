@@ -1,137 +1,6 @@
-# PE File Parser
+=== PE Parser Results - Sat Jul 12 19:35:37 2025
+===
 
-PE File Parser is a cross-platform C++ tool for analyzing Portable Executable (PE) files. It supports both 32-bit and 64-bit executables, DLLs, and drivers with comprehensive logging capabilities.
-
----
-
-**Attribution:**
-This project is a remake and modular refactor of the original [PE-Explorer](https://github.com/adamhlt/PE-Explorer) repository by adamhlt.
-
-## Features
-
-- **Complete PE Analysis**: Parse DOS, NT, File, and Optional headers
-- **Section Analysis**: List all PE sections with detailed characteristics
-- **Import/Export Tables**: Analyze import and export tables with function listings
-- **Data Directories**: Show all Data Directory entries with RVA and size
-- **Architecture Detection**: Automatically detect x86/x64 architecture
-- **Resource Parsing**: Extract and display resource information
-- **Advanced Security Analysis**: 
-  - **Entropy Analysis**: Section-by-section entropy calculation with packer detection
-  - **Security Features**: ASLR, DEP, SEH, CFG detection and analysis
-  - **Packer Detection**: Automated detection of packed/compressed executables
-  - **Overlay Analysis**: Detection and analysis of data beyond PE structure
-  - **Anomaly Detection**: Identify suspicious characteristics and potential threats
-- **Dual Logging System**: 
-  - Clean console output for users
-  - Comprehensive debug logs in `Logs.txt` with timestamps
-  - Session-based logging with start/end markers
-- **Error Handling**: Robust error handling with clear error codes
-- **Cross-Platform**: Windows, Linux, macOS support
-- **No Dependencies**: Pure C++ implementation, no external libraries
-
-## Project Structure
-
-```
-peFileParser/
-├── include/                 # Header files
-│   ├── peCommon.h          # Common definitions and Logger system
-│   ├── peFileHandler.h     # File I/O operations
-│   ├── peHeaderParser.h    # Header parsing functions
-│   ├── peSectionParser.h   # Section parsing functions
-│   ├── peImportExport.h    # Import/Export table parsing
-│   ├── peParser.h          # Main parser orchestration
-│   ├── PEParser.h          # PE parsing class
-│   ├── PERelocationParser.h # Relocation table parsing
-│   └── PEResourceParser.h  # Resource parsing
-├── src/                    # Source files
-│   ├── peFileHandler.cpp
-│   ├── peHeaderParser.cpp
-│   ├── peSectionParser.cpp
-│   ├── peImportExport.cpp
-│   ├── peParser.cpp
-│   ├── PEParser.cpp
-│   ├── PERelocationParser.cpp
-│   ├── PEResourceParser.cpp
-│   └── Logger.cpp          # Logging system implementation
-├── main.cpp                # Main application entry point
-├── Makefile                # Build system (Linux & Windows)
-├── testFolder/             # Test PE files
-│   └── LosslessScaling.exe # Sample 64-bit executable
-├── Logs.txt                # Debug logs (auto-generated)
-├── ParseResults.txt        # Complete parsing output (auto-generated)
-└── README.md
-```
-
-## Build Instructions
-
-### Prerequisites
-You need a C++17-compatible compiler and build tools:
-
-#### Linux/WSL
-```bash
-sudo apt-get update
-sudo apt-get install build-essential g++ mingw-w64
-```
-
-#### Windows
-Install [MSYS2](https://www.msys2.org/) and run:
-```bash
-pacman -S mingw-w64-x86_64-gcc make
-```
-
-### Building
-
-#### Using Makefile (Recommended)
-```bash
-make              # Build Linux version
-make windows      # Build Windows version
-make cross        # Build both versions
-make clean        # Clean build artifacts
-```
-
-#### Manual Build
-```bash
-# Linux
-g++ -std=c++17 -O2 -Iinclude main.cpp src/*.cpp -o peFileParserLinux
-
-# Windows cross-compilation (from Linux)
-x86_64-w64-mingw32-g++ -std=c++17 -O2 -Iinclude main.cpp src/*.cpp -o peFileParserWindows.exe -static-libgcc -static-libstdc++
-```
-
-## Usage
-
-```bash
-# Analyze a PE file (Linux)
-./peFileParserLinux <path_to_pe_file>
-
-# Analyze a PE file (Windows)
-./peFileParserWindows.exe <path_to_pe_file>
-
-# Example
-./peFileParserLinux testFolder/LosslessScaling.exe
-
-# Get help
-./peFileParserLinux
-```
-
-### Output Files
-The parser automatically generates separate output files for different purposes:
-
-1. **Console Output**: Clean, user-friendly analysis results displayed in terminal
-2. **Logs.txt**: Comprehensive debug logs with timestamps
-   - Session markers for multiple runs
-   - Detailed parsing steps and memory addresses
-   - Error diagnostics and troubleshooting information
-3. **ParseResults.txt**: Complete parsing output for reference (auto-generated)
-   - Contains the same information as console output but saved to file
-   - Useful for documentation, further analysis, and sharing results
-   - Generated automatically with each analysis
-4. **ParseOutput.txt**: Structured output from Logger system (internal use)
-
-## Example Output
-
-### LosslessScaling.exe Analysis Example
-```
 [INFO] Starting PE file analysis for: testFolder/LosslessScaling.exe
 [+] Successfully loaded PE file: testFolder/LosslessScaling.exe
 [+] Architecture: x64
@@ -225,6 +94,7 @@ The parser automatically generates separate output files for different purposes:
 
 	DataDirectory (IAT) VirtualAddress : 0x18000
 	DataDirectory (IAT) Size : 0x448
+
 
 [+] PE IMAGE SECTIONS
 
@@ -564,38 +434,37 @@ The parser automatically generates separate output files for different purposes:
 [-] No export table found!
 
 [+] PE file parsing completed successfully!
-No resources found.
 [+] Resource parsing completed successfully!
+
+[+] ENTROPY ANALYSIS
+	Section: .text    | Entropy: 6.35 | Size: 0x00017000 | NORMAL
+	Section: .rdata   | Entropy: 4.49 | Size: 0x0000A000 | NORMAL
+	Section: .data    | Entropy: 2.23 | Size: 0x00000C00 | NORMAL
+	Section: .pdata   | Entropy: 4.81 | Size: 0x00001600 | NORMAL
+	Section: .reloc   | Entropy: 4.72 | Size: 0x00000400 | NORMAL
+	Section: .rsrc    | Entropy: 6.77 | Size: 0x00002E00 | NORMAL
+
+[+] SECURITY FEATURES
+	ASLR (Address Space Layout Randomization): ENABLED
+	DEP (Data Execution Prevention): ENABLED
+	SEH (Structured Exception Handling): ENABLED
+	CFG (Control Flow Guard): ENABLED
+	Isolation Aware: ENABLED
+	Terminal Server Aware: ENABLED
+	Large Address Aware: ENABLED
+
+[+] PACKER DETECTION
+	Packer Detected: NO
+	Packer Name: None
+	Confidence: 0.0%
+	Indicators: No packing detected
+
+[+] OVERLAY ANALYSIS
+	Overlay Detected: NO
+
+[+] ANOMALY DETECTION
+	No anomalies detected.
+[+] Security analysis completed successfully!
 [+] PE file analysis completed successfully!
-```
 
-## Error Codes
-
-| Code | Constant | Description |
-|------|----------|-------------|
-| 0    | PE_SUCCESS | Operation completed successfully |
-| -1   | PE_ERROR_FILE_OPEN | File access error |
-| -2   | PE_ERROR_INVALID_PE | Invalid PE format |
-| -3   | PE_ERROR_MEMORY_ALLOCATION | Memory allocation failed |
-| -4   | PE_ERROR_PARSING | Parsing error occurred |
-
-## Technical Notes
-
-- **Cross-Platform Compatibility**: The parser uses custom PE structure definitions for cross-platform compatibility
-- **Memory-Based Parsing**: All parsing is done in-memory with no dependencies on Windows API
-- **Built-in Output Capture**: 
-  - Console output provides clean, user-friendly results
-  - `Logs.txt` contains comprehensive debug information with timestamps
-  - `ParseResults.txt` automatically captures complete analysis output for reference
-  - Debug information includes memory addresses, parsing steps, and error diagnostics
-- **Architecture Support**: Handles both 32-bit and 64-bit PE files with correct address calculations
-- **Import Table Parsing**: Fixed critical memory address calculations for reliable import function enumeration
-- **Cross-Platform Output**: Works identically on Windows and Linux with automatic file generation
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
-
-## References
-
-- [Microsoft PE Format Specification](https://docs.microsoft.com/en-us/windows/win32/debug/pe-format)
+=== Analysis Complete ===

@@ -1,0 +1,16 @@
+=== PE Parser Results - Sat Jul 12 19:35:37 2025
+===
+
+[INFO] Starting PE file analysis for: testFolder/LosslessScaling.exe
+[+] Successfully loaded PE file: testFolder/LosslessScaling.exe
+[+] Architecture: x64
+[+] PE IMAGE INFORMATION
+[+] Architecture x64
+[+] IMPORTED DLL
+
+[+] PE file parsing completed successfully!
+[+] Resource parsing completed successfully!
+[+] Security analysis completed successfully!
+[+] PE file analysis completed successfully!
+
+=== Analysis Complete ===
