@@ -2,6 +2,7 @@
 #include "include/peFileHandler.h"
 #include "include/peParser.h"
 #include "include/PEResourceParser.h"
+#include "include/PESecurityAnalyzer.h"
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -111,6 +112,24 @@ int main(int argc, char* argv[])
         LOGF("[-] ERROR: Resource parsing failed: %s\n", e.what());
     } catch (...) {
         LOG("[-] ERROR: Unknown error during resource parsing\n");
+    }
+
+    // Advanced security analysis
+    try {
+        PESecurityAnalyzer securityAnalyzer(&fileInfo);
+        
+        // Perform comprehensive security analysis
+        securityAnalyzer.printEntropyAnalysis();
+        securityAnalyzer.printSecurityFeatures();
+        securityAnalyzer.printPackerInfo();
+        securityAnalyzer.printOverlayInfo();
+        securityAnalyzer.printAnomalies();
+        
+        LOG("[+] Security analysis completed successfully!\n");
+    } catch (const std::exception& e) {
+        LOGF("[-] ERROR: Security analysis failed: %s\n", e.what());
+    } catch (...) {
+        LOG("[-] ERROR: Unknown error during security analysis\n");
     }
 
     // Cleanup
