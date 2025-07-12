@@ -9,6 +9,7 @@
 *.lib
 *.a
 *.bin
+*.txt
 
 # Executables (but keep testFolder examples)
 peFileParser*
