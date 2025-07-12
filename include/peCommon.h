@@ -265,3 +265,71 @@ typedef struct _WIN_CERTIFICATE {
     WORD wCertificateType;
     BYTE bCertificate[1]; // Variable length
 } WIN_CERTIFICATE, *PWIN_CERTIFICATE;
+
+// Helper function declarations
+inline bool isValidString(const char* str, size_t maxLen) {
+    if (!str) return false;
+    for (size_t i = 0; i < maxLen; ++i) {
+        if (str[i] == '\0') return true;
+        if (str[i] < 32 || str[i] > 126) return false; // Printable ASCII only
+    }
+    return false; // No null terminator found within maxLen
+}
+
+// Logging functions
+#include <ctime>
+#include <fstream>
+
+class Logger {
+private:
+    static std::ofstream logFile;
+    static bool isInitialized;
+    
+public:
+    static void init(const char* filename = "Logs.txt") {
+        if (!isInitialized) {
+            logFile.open(filename, std::ios::app);
+            if (logFile.is_open()) {
+                // Write session header
+                auto now = std::time(nullptr);
+                auto localTime = std::localtime(&now);
+                logFile << "\n=== PE Parser Session Started at " 
+                       << std::asctime(localTime) << "===\n";
+                logFile.flush();
+                isInitialized = true;
+            }
+        }
+    }
+    
+    static void log(const char* message) {
+        if (isInitialized && logFile.is_open()) {
+            auto now = std::time(nullptr);
+            auto localTime = std::localtime(&now);
+            char timeStr[100];
+            std::strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", localTime);
+            logFile << "[" << timeStr << "] " << message << std::endl;
+            logFile.flush();
+        }
+    }
+    
+    static void close() {
+        if (isInitialized && logFile.is_open()) {
+            logFile << "=== PE Parser Session Ended ===\n\n";
+            logFile.close();
+            isInitialized = false;
+        }
+    }
+};
+
+// Logging macros
+#define LOG(msg) do { \
+    printf("%s", msg); \
+    Logger::log(msg); \
+} while(0)
+
+#define LOGF(fmt, ...) do { \
+    char buffer[1024]; \
+    snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
+    printf("%s", buffer); \
+    Logger::log(buffer); \
+} while(0)

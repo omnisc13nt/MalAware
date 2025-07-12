@@ -1,49 +1,85 @@
-# Ignore testFolder and all its contents
-testFolder/
-# Ignore build artifacts
-obj/
-build/
+# Build artifacts
 *.o
 *.obj
 *.exe
 *.out
+*.app
+*.so
+*.dylib
+*.lib
+*.a
 *.bin
-*.log
 
-# Ignore CMake files
+# Executables (but keep testFolder examples)
+peFileParser*
+!peFileParser/
+
+# Build directories
+build/
+build_*/
+obj/
+obj_*/
+bin/
+dist/
+
+# CMake files
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-Makefile
+*.cmake
+!cmake/
 
-# Ignore editor files
+# IDE files
+.vscode/
+.vs/
+.idea/
+*.vcxproj*
+*.sln
+*.suo
+*.user
+*.filters
+
+# Debug files
+*.dSYM/
+*.pdb
+*.ilk
+*.idb
+core
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
 *.swp
 *.swo
 *.bak
-*.tmp
-*.DS_Store
-.vscode/
-.idea/
+*~
+Logs.txt
 
-# Ignore all markdown except README.md
+# Keep important markdown files
 *.md
 !README.md
 
-# Ignore test files
+# Test files and folders
+testFolder/
 *.test
 *.spec
 
-# Ignore other system files
-Thumbs.db
-
-# Ignore sample PE files
-*.dll
-*.sys
-*.exe
-*.msi
+# Archive files (but keep testFolder examples)
 *.zip
 *.tar.gz
+*.rar
+*.7z
 
-# Ignore Python/Node artifacts (if any)
+# Python/Node artifacts (if any)
 __pycache__/
 node_modules/

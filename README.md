@@ -1,7 +1,6 @@
 # PE File Parser
 
-
-PE File Parser is a cross-platform C++ tool for analyzing Portable Executable (PE) files. It supports both 32-bit and 64-bit executables, DLLs, and drivers. The project is modular, maintainable, and suitable for reverse engineering, malware analysis, and research.
+PE File Parser is a cross-platform C++ tool for analyzing Portable Executable (PE) files. It supports both 32-bit and 64-bit executables, DLLs, and drivers with comprehensive logging capabilities.
 
 ---
 
@@ -12,9 +11,11 @@ This project is a remake and modular refactor of the original [PE-Explorer](http
 
 - Parse DOS, NT, File, and Optional headers
 - List all PE sections and their characteristics
-- Analyze Import and Export tables
+- Analyze Import and Export tables with detailed function listing
 - Show all Data Directory entries
 - Detect architecture (x86/x64)
+- Resource parsing and display
+- Comprehensive logging system (Logs.txt)
 - Error handling with clear codes
 - Cross-platform: Windows, Linux, macOS
 
@@ -23,30 +24,64 @@ This project is a remake and modular refactor of the original [PE-Explorer](http
 ```
 peFileParser/
 ├── include/                 # Header files
-│   ├── pe_common.h         # Common definitions
-│   ├── pe_file_handler.h   # File I/O
-│   ├── pe_header_parser.h  # Header parsing
-│   ├── pe_section_parser.h # Section parsing
-│   ├── pe_import_export.h  # Import/Export parsing
-│   └── pe_parser.h         # Main orchestration
+│   ├── peCommon.h          # Common definitions and Logger
+│   ├── peFileHandler.h     # File I/O
+│   ├── peHeaderParser.h    # Header parsing
+│   ├── peSectionParser.h   # Section parsing
+│   ├── peImportExport.h    # Import/Export parsing
+│   ├── peParser.h          # Main orchestration
+│   ├── PEParser.h          # PE parsing class
+│   ├── PERelocationParser.h # Relocation parsing
+│   └── PEResourceParser.h  # Resource parsing
 ├── src/                    # Source files
-│   ├── pe_file_handler.cpp
-│   ├── pe_header_parser.cpp
-│   ├── pe_section_parser.cpp
-│   ├── pe_import_export.cpp
-│   └── pe_parser.cpp
-├── main.cpp                # Original version
-├── main_new.cpp            # Modular version
-├── Makefile                # GNU Make build
-├── CMakeLists.txt          # CMake build
+│   ├── peFileHandler.cpp
+│   ├── peHeaderParser.cpp
+│   ├── peSectionParser.cpp
+│   ├── peImportExport.cpp
+│   ├── peParser.cpp
+│   ├── PEParser.cpp
+│   ├── PERelocationParser.cpp
+│   ├── PEResourceParser.cpp
+│   └── Logger.cpp          # Logging implementation
+├── main.cpp                # Main application
+├── Makefile                # Build system
+├── testFolder/             # Test PE files
 └── README.md
 ```
-
 
 ## Build Instructions
 
 ### Prerequisites
-You need a C++17-compatible compiler and build tools. See below for your platform:
+You need a C++17-compatible compiler and build tools:
+
+#### Linux/WSL
+```bash
+sudo apt-get update
+sudo apt-get install build-essential g++ mingw-w64
+```
+
+#### Windows Cross-compilation
+MinGW-w64 is required for cross-compilation to Windows.
+
+### Building
+
+#### Using Makefile
+```bash
+make              # Build Linux version
+make windows      # Build Windows version
+make cross        # Build both versions
+make clean        # Clean build artifacts
+make help         # Show available targets
+```
+
+#### Manual Build
+```bash
+# Linux
+g++ -std=c++17 -O2 -Iinclude main.cpp src/*.cpp -o peFileParserLinux
+
+# Windows cross-compilation
+x86_64-w64-mingw32-g++ -std=c++17 -O2 -Iinclude main.cpp src/*.cpp -o peFileParserWindows.exe -static-libgcc -static-libstdc++
+```
 
 #### Ubuntu/Debian
 ```bash
@@ -75,25 +110,53 @@ Install [MSYS2](https://www.msys2.org/) and run:
 pacman -S mingw-w64-x86_64-gcc make cmake
 ```
 
+#### Cross-compilation for Windows (Linux/WSL)
+```bash
+sudo apt-get install mingw-w64
+```
+
 ### Using Make
 ```bash
-make            # Build modular version (default)
-make peFileParser  # Build original version
+make            # Build modular version for Linux (default)
+make peFileParser  # Build original version for Linux
+make windows    # Build modular version for Windows
+make windows-all # Build both versions for Windows
+make cross      # Build modular version for both Linux and Windows
 make clean      # Remove build files
 make help       # Show available targets
 ```
 
+### Using the Build Script
+```bash
+./build.sh                  # Build for Linux (default)
+./build.sh --windows        # Build for Windows
+./build.sh --cross          # Build for both Linux and Windows
+./build.sh --cmake --linux  # Build for Linux using CMake
+./build.sh --help           # Show help
+```
+
 ### Using CMake
 ```bash
+# Linux build
 mkdir build && cd build
 cmake ..
+make
+# Executables will be in bin/
+
+# Windows cross-compilation
+mkdir build_windows && cd build_windows
+cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/windows-toolchain.cmake ..
 make
 # Executables will be in bin/
 ```
 
 ### Manual Compilation
 ```bash
+# Linux
 g++ -std=c++17 -O2 -Iinclude main.cpp src/*.cpp -o peFileParserModular
+
+# Windows cross-compilation
+x86_64-w64-mingw32-g++ -std=c++17 -O2 -Iinclude main.cpp src/*.cpp -o peFileParserModular.exe -static-libgcc -static-libstdc++
 ```
 
 ## Usage
