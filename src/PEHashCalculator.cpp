@@ -145,7 +145,7 @@ std::vector<std::string> PEHashCalculator::extractImportedFunctions() {
     
     if (pFileInfo_->bIs64Bit) {
         auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
-        importDir = &pNtHeader64->OptionalHeader.DataDirectory[1]; // IMAGE_DIRECTORY_ENTRY_IMPORT
+        importDir = &pNtHeader64->OptionalHeader.DataDirectory[1]; 
     } else {
         auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
         importDir = &pNtHeader32->OptionalHeader.DataDirectory[1];
@@ -326,9 +326,9 @@ std::string PEHashCalculator::getMagicSignature() {
         subsystem = pNtHeader32->OptionalHeader.Subsystem;
     }
     
-    if (subsystem == 2) { // IMAGE_SUBSYSTEM_WINDOWS_GUI
+    if (subsystem == 2) { 
         magic += " executable (GUI)";
-    } else if (subsystem == 3) { // IMAGE_SUBSYSTEM_WINDOWS_CUI
+    } else if (subsystem == 3) { 
         magic += " executable (console)";
     } else {
         magic += " executable";

@@ -81,7 +81,7 @@ void PEParser::printExceptionData() const {
     }
     const IMAGE_DATA_DIRECTORY* excDir = nullptr;
     if (is64Bit_) {
-        excDir = &ntHeader_->OptionalHeader.OptionalHeader64.DataDirectory[3]; // 3 = Exception Directory
+        excDir = &ntHeader_->OptionalHeader.OptionalHeader64.DataDirectory[3]; 
     } else {
         excDir = &ntHeader_->OptionalHeader.OptionalHeader32.DataDirectory[3];
     }
@@ -144,7 +144,7 @@ void PEParser::printDigitalSignature() const {
     }
     const IMAGE_DATA_DIRECTORY* secDir = nullptr;
     if (is64Bit_) {
-        secDir = &ntHeader_->OptionalHeader.OptionalHeader64.DataDirectory[4]; // 4 = Security Directory
+        secDir = &ntHeader_->OptionalHeader.OptionalHeader64.DataDirectory[4]; 
     } else {
         secDir = &ntHeader_->OptionalHeader.OptionalHeader32.DataDirectory[4];
     }

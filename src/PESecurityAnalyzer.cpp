@@ -89,11 +89,11 @@ PESecurityAnalyzer::SecurityFeatures PESecurityAnalyzer::extractSecurityFeatures
         dllCharacteristics = pNtHeader32->OptionalHeader.DllCharacteristics;
     }
     
-    securityFeatures_.aslr = (dllCharacteristics & 0x0040) != 0;  // IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
-    securityFeatures_.dep = (dllCharacteristics & 0x0100) != 0;   // IMAGE_DLLCHARACTERISTICS_NX_COMPAT
-    securityFeatures_.seh = (dllCharacteristics & 0x0400) != 0;   // IMAGE_DLLCHARACTERISTICS_NO_SEH
-    securityFeatures_.cfg = (dllCharacteristics & 0x4000) != 0;   // IMAGE_DLLCHARACTERISTICS_GUARD_CF
-    securityFeatures_.isolationAware = (dllCharacteristics & 0x0200) != 0; // IMAGE_DLLCHARACTERISTICS_NO_ISOLATION
+    securityFeatures_.aslr = (dllCharacteristics & 0x0040) != 0;  
+    securityFeatures_.dep = (dllCharacteristics & 0x0100) != 0;   
+    securityFeatures_.seh = (dllCharacteristics & 0x0400) != 0;   
+    securityFeatures_.cfg = (dllCharacteristics & 0x4000) != 0;   
+    securityFeatures_.isolationAware = (dllCharacteristics & 0x0200) != 0; 
     securityFeatures_.nxCompat = (dllCharacteristics & 0x0100) != 0;
     securityFeatures_.dynamicBase = (dllCharacteristics & 0x0040) != 0;
     securityFeatures_.forceIntegrity = (dllCharacteristics & 0x0080) != 0;
@@ -131,7 +131,7 @@ PESecurityAnalyzer::PackerInfo PESecurityAnalyzer::detectPacker() {
     
     
     packerInfo_.isPacked = (highEntropySections > 0) || hasHighEntropyText;
-    packerInfo_.confidence = highEntropySections * 25.0; // Basic confidence calculation
+    packerInfo_.confidence = highEntropySections * 25.0; 
     
     if (packerInfo_.isPacked) {
         packerInfo_.packerName = "Unknown Packer";
@@ -323,17 +323,17 @@ std::string PESecurityAnalyzer::toJson() const {
 }
 
 bool PESecurityAnalyzer::isHighEntropy(double entropy) {
-    return entropy > 7.0; // Common threshold for packed sections
+    return entropy > 7.0; 
 }
 
 bool PESecurityAnalyzer::isLowEntropy(double entropy) {
-    return entropy < 3.0; // Very low entropy (repetitive data)
+    return entropy < 3.0; 
 }
 
 DWORD PESecurityAnalyzer::getFileSize() {
     if (!pFileInfo_ || !pFileInfo_->pDosHeader) return 0;
     
-    return 0; // TODO: Implement actual file size calculation
+    return 0; 
 }
 
 DWORD PESecurityAnalyzer::getLastSectionEnd() {

@@ -97,7 +97,7 @@ bool PEDigitalSignatureAnalyzer::parseWinCertificate(const BYTE* certData, size_
         return false;
     }
     
-    if (wCertificateType == 0x0002) { // WIN_CERT_TYPE_PKCS_SIGNED_DATA
+    if (wCertificateType == 0x0002) { 
         const BYTE* pkcs7Data = certData + 8;
         size_t pkcs7Size = dwLength - 8;
         
@@ -149,7 +149,7 @@ bool PEDigitalSignatureAnalyzer::verifySignatureIntegrity(const BYTE* signatureD
         return false;
     }
     
-    if (signatureData[0] == 0x30) { // SEQUENCE tag
+    if (signatureData[0] == 0x30) { 
         return true;
     }
     

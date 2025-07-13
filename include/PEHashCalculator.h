@@ -11,11 +11,11 @@ public:
         std::string md5;
         std::string sha1;
         std::string sha256;
-        std::string imphash;      // Import hash
-        std::string authentihash; // Authenticode hash
-        std::string ssdeep;       // Fuzzy hash
-        std::string tlsh;         // Trend Micro Locality Sensitive Hash
-        std::string vhash;        // VirusTotal hash
+        std::string imphash;      
+        std::string authentihash; 
+        std::string ssdeep;       
+        std::string tlsh;         
+        std::string vhash;        
     };
     
     struct SectionHashes {

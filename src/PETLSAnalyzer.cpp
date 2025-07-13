@@ -1,6 +1,6 @@
 #include "../include/PETLSAnalyzer.h"
 #include "../include/peSectionParser.h"
-#include "../include/peImportExport.h"  // For RvaToFileOffset
+#include "../include/peImportExport.h"  
 #include <vector>
 #include <sstream>
 
@@ -183,7 +183,7 @@ bool PETLSAnalyzer::isCallbackSuspicious(DWORD_PTR callbackAddress, PPE_FILE_INF
     extern int g_NumberOfSections;
     extern PIMAGE_SECTION_HEADER g_SectionHeader;
     
-    if (!g_SectionHeader) return true; // Suspicious if we can't verify
+    if (!g_SectionHeader) return true; 
     
     DWORD imageBase = pFileInfo->bIs64Bit ? 
         (DWORD)pFileInfo->pNtHeader->OptionalHeader.OptionalHeader64.ImageBase :
@@ -197,20 +197,20 @@ bool PETLSAnalyzer::isCallbackSuspicious(DWORD_PTR callbackAddress, PPE_FILE_INF
             rva < section->VirtualAddress + section->Misc.VirtualSize) {
             
             if (!(section->Characteristics & IMAGE_SCN_MEM_EXECUTE)) {
-                return true; // Callback in non-executable section is suspicious
+                return true; 
             }
             
             char sectionName[9] = {0};
             strncpy(sectionName, (char*)section->Name, 8);
             if (strcmp(sectionName, ".text") == 0) {
-                return false; // Normal callback in .text
+                return false; 
             }
             
             return true;
         }
     }
     
-    return true; // Address not found in any section
+    return true; 
 }
 
 std::string PETLSAnalyzer::generateTLSReport(const TLSInfo& tlsInfo) {

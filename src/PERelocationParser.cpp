@@ -36,7 +36,7 @@ void PERelocationParser::printRelocations() const {
 }
 
 void PERelocationParser::parseRelocationTable(DWORD rva, DWORD size) {
-    (void)size; // Suppress unused parameter warning
+    (void)size; 
     RelocationEntry entry;
     entry.pageRVA = rva;
     entry.offsets.push_back(0x100);

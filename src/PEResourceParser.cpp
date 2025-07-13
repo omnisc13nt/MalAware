@@ -94,17 +94,17 @@ void PEResourceParser::parseResourceDirectory(DWORD rva, DWORD baseRVA, int dept
         DWORD entryType = type, entryName = name, entryLang = lang;
         if (depth == 0) {
             if (entries[i].u1.s.NameIsString)
-                entryType = 0; // Named type, not handled here
+                entryType = 0; 
             else
                 entryType = entries[i].u1.Id;
         } else if (depth == 1) {
             if (entries[i].u1.s.NameIsString)
-                entryName = 0; // Named resource, not handled here
+                entryName = 0; 
             else
                 entryName = entries[i].u1.Id;
         } else if (depth == 2) {
             if (entries[i].u1.s.NameIsString)
-                entryLang = 0; // Named language, not handled here
+                entryLang = 0; 
             else
                 entryLang = entries[i].u1.Id;
         }

@@ -57,7 +57,7 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
     LOGF_DEBUG("[DEBUG] fileBase calculated as: %p\n", (void*)fileBase);
     
     int dllCount = 0;
-    int maxDlls = 100; // Prevent infinite loops
+    int maxDlls = 100; 
     
     LOGF_DEBUG("[DEBUG] Starting import descriptor loop\n");
     while (pImageImportDescriptor->Name != 0 && maxDlls-- > 0)
@@ -114,7 +114,7 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         
         int funcCount = 0;
         int invalidCount = 0;
-        int maxFuncs = 1000; // Prevent infinite loops
+        int maxFuncs = 1000; 
         bool possibleObfuscation = false;
         
         LOGF_DEBUG("[DEBUG] Starting function enumeration loop\n");
@@ -267,7 +267,7 @@ void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
     LOGF_DEBUG("[DEBUG] fileBase calculated as: %p\n", (void*)fileBase);
     
     int dllCount = 0;
-    int maxDlls = 100; // Prevent infinite loops
+    int maxDlls = 100; 
     
     LOGF_DEBUG("[DEBUG] Starting while loop, checking pImageImportDescriptor->Name: 0x%X", (unsigned int)pImageImportDescriptor->Name);
     
@@ -290,7 +290,7 @@ void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
                 
                 bool hasValidData = false;
                 
-                if (dllNameOffset + 4 < 0x100000) { // Basic sanity check
+                if (dllNameOffset + 4 < 0x100000) { 
                     char temp[256];
                     temp[0] = '\0';
                     
@@ -301,13 +301,13 @@ void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
                             hasValidData = (i > 0);
                             break;
                         }
-                        if (c >= 32 && c <= 126) { // Printable ASCII
+                        if (c >= 32 && c <= 126) { 
                             temp[i] = c;
                         } else {
                             temp[i] = '?';
                         }
                     }
-                    temp[49] = '\0'; // Ensure null termination
+                    temp[49] = '\0'; 
                     
                     if (hasValidData && strlen(temp) > 0) {
                         strcpy(safeDllName, temp);
@@ -356,7 +356,7 @@ void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         printf("\n\tImported Functions : \n\n");
         
         int funcCount = 0;
-        int maxFuncs = 1000; // Prevent infinite loops
+        int maxFuncs = 1000; 
         
         while (pOriginalFirstThunk && pOriginalFirstThunk->u1.AddressOfData != 0 && maxFuncs-- > 0)
         {

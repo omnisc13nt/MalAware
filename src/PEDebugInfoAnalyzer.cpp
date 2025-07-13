@@ -122,13 +122,13 @@ PEDebugInfoAnalyzer::CodeViewInfo PEDebugInfoAnalyzer::parseCodeViewInfo(const B
     
     DWORD signature = *(DWORD*)data;
     
-    if (signature == 0x53445352) { // 'RSDS' - PDB 7.0 format
+    if (signature == 0x53445352) { 
         info.isValid = parseCodeViewPDB70(data, size);
         info.signature = "RSDS";
-    } else if (signature == 0x3031424E) { // 'NB10' - PDB 2.0 format
+    } else if (signature == 0x3031424E) { 
         info.isValid = parseCodeViewPDB20(data, size);
         info.signature = "NB10";
-    } else if (signature == 0x3131424E) { // 'NB11' - PDB 2.0 format
+    } else if (signature == 0x3131424E) { 
         info.isValid = parseCodeViewPDB20(data, size);
         info.signature = "NB11";
     } else {
@@ -140,7 +140,7 @@ PEDebugInfoAnalyzer::CodeViewInfo PEDebugInfoAnalyzer::parseCodeViewInfo(const B
 }
 
 bool PEDebugInfoAnalyzer::parseCodeViewPDB70(const BYTE* data, size_t size) {
-    if (size < 24) { // 4 bytes signature + 16 bytes GUID + 4 bytes age
+    if (size < 24) { 
         return false;
     }
     
@@ -162,7 +162,7 @@ bool PEDebugInfoAnalyzer::parseCodeViewPDB70(const BYTE* data, size_t size) {
 }
 
 bool PEDebugInfoAnalyzer::parseCodeViewPDB20(const BYTE* data, size_t size) {
-    if (size < 16) { // 4 bytes signature + 4 bytes offset + 4 bytes timestamp + 4 bytes age
+    if (size < 16) { 
         return false;
     }
     
@@ -249,7 +249,7 @@ BYTE* PEDebugInfoAnalyzer::findRichHeader() {
     BYTE* searchEnd = (BYTE*)pFileInfo_->pDosHeader + ntHeaderOffset;
     
     for (BYTE* ptr = searchStart; ptr < searchEnd - 4; ptr++) {
-        if (*(DWORD*)ptr == 0x68636952) { // 'Rich' in little endian
+        if (*(DWORD*)ptr == 0x68636952) { 
             return ptr;
         }
     }

@@ -16,16 +16,16 @@ public:
     };
     
     struct SecurityFeatures {
-        bool aslr;              // Address Space Layout Randomization
-        bool dep;               // Data Execution Prevention  
-        bool seh;               // Structured Exception Handling
-        bool cfg;               // Control Flow Guard
-        bool isolationAware;    // Isolation Aware
-        bool nxCompat;          // NX Compatible
-        bool dynamicBase;       // Dynamic Base
-        bool forceIntegrity;    // Force Integrity
-        bool terminalServer;    // Terminal Server Aware
-        bool largeAddress;      // Large Address Aware
+        bool aslr;              
+        bool dep;               
+        bool seh;               
+        bool cfg;               
+        bool isolationAware;    
+        bool nxCompat;          
+        bool dynamicBase;       
+        bool forceIntegrity;    
+        bool terminalServer;    
+        bool largeAddress;      
     };
     
     struct PackerInfo {

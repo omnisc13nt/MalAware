@@ -22,8 +22,8 @@ typedef void* HANDLE;
 #define FALSE 0
 #define INVALID_HANDLE_VALUE ((HANDLE)-1)
 
-#define IMAGE_DOS_SIGNATURE 0x5A4D     // MZ
-#define IMAGE_NT_SIGNATURE 0x00004550  // PE00
+#define IMAGE_DOS_SIGNATURE 0x5A4D     
+#define IMAGE_NT_SIGNATURE 0x00004550  
 #define IMAGE_NT_OPTIONAL_HDR32_MAGIC 0x10b
 #define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
 #define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
@@ -356,7 +356,7 @@ inline bool isValidString(const char* str, size_t maxLen) {
             (str[i] >= '0' && str[i] <= '9') ||
             str[i] == '_' || str[i] == '.' || str[i] == '@' ||
             str[i] == '$' || str[i] == '?' || str[i] == '#' ||
-            (unsigned char)str[i] >= 128) { // Extended ASCII
+            (unsigned char)str[i] >= 128) { 
             len++;
         } else if (str[i] < 32 && str[i] != '\0') {
             return false;
