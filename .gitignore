@@ -63,6 +63,9 @@ Thumbs.db
 *.swo
 *.bak
 *~
+*.txt
+!README.txt
+!INSTALL.txt
 Logs.txt
 ParseOutput.txt
 ParseResults.txt

@@ -44,6 +44,12 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
 
     extern int g_NumberOfSections;
     extern PIMAGE_SECTION_HEADER g_SectionHeader;
+    extern int g_CorruptedImports;
+    extern int g_InvalidDLLNames;
+    
+    // Reset global counters for each analysis
+    g_CorruptedImports = 0;
+    g_InvalidDLLNames = 0;
     
     LOGF_DEBUG("[DEBUG] g_NumberOfSections: %d\n", g_NumberOfSections);
     LOGF_DEBUG("[DEBUG] g_SectionHeader: %p\n", (void*)g_SectionHeader);
@@ -75,9 +81,12 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
             if (dllName == nullptr || !isValidString(dllName, 256)) {
                 LOGF_DEBUG("[DEBUG] DLL name validation failed\n");
                 dllName = "[Invalid]";
+                g_InvalidDLLNames++;
             } else {
                 LOGF_DEBUG("[DEBUG] DLL name validated successfully: %s\n", dllName);
             }
+        } else {
+            g_InvalidDLLNames++;
         }
         
         LOGF("\n\tDLL NAME : %s\n", dllName);
@@ -126,6 +135,7 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
                 pOriginalFirstThunk->u1.AddressOfData < 0x1000) {
                 LOGF("\t\t[Corrupted Entry - Address: 0x%X]\n", (unsigned int)pOriginalFirstThunk->u1.AddressOfData);
                 invalidCount++;
+                g_CorruptedImports++;
                 possibleObfuscation = true;
                 ++pOriginalFirstThunk;
                 continue;
@@ -168,6 +178,7 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
                         else
                         {
                             invalidCount++;
+                            g_CorruptedImports++;
                             possibleObfuscation = true;
                             
                             WORD hint = pImageImportByName->Hint;

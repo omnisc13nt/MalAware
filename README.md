@@ -1,160 +1,235 @@
 # PE File Parser
 
-A comprehensive, cross-platform C++ tool for advanced Portable Executable (PE) file analysis and malware detection. Designed for security researchers, reverse engineers, and malware analysts.
+A comprehensive cross-platform PE (Portable Executable) file parser and analyzer written in C++. This tool provides detailed analysis of Windows PE files including headers, sections, imports, exports, resources, and security features with accurate malware detection capabilities.
 
-## 🚀 Features
+## Features
 
 ### Core PE Analysis
-- **Complete Header Parsing**: DOS, NT, File, and Optional headers with detailed analysis
-- **Section Analysis**: Comprehensive section characteristics, properties, and flags
-- **Import/Export Tables**: Complete function listings, dependency analysis, and forwarded exports
-- **Data Directories**: All 16 data directory entries with RVA validation and integrity checks
-- **Architecture Detection**: Accurate x86/x64 detection using PE Magic field
-- **Resource Parsing**: Complete resource directory tree with type identification
+- **PE Header Analysis**: DOS header, NT headers, optional headers, and data directories
+- **Section Analysis**: Detailed section information including entropy analysis
+- **Import/Export Table Analysis**: Complete import and export function enumeration with corruption detection
+- **Resource Parsing**: Extraction and analysis of embedded resources
+- **Digital Signature Verification**: Certificate chain validation and signature analysis
+- **Security Features Detection**: ASLR, DEP, SEH, CFG status analysis
 
 ### Advanced Security Analysis
-- **TLS Analysis**: Thread Local Storage directory and callback detection
-- **Malware Detection Engine**: Multi-vector threat analysis with 0-100 risk scoring system
-- **Digital Signature Verification**: Complete certificate chain validation and trust analysis
-- **Entropy Analysis**: Statistical analysis for detecting packed/encrypted content
-- **Anti-Analysis Detection**: Identifies anti-debugging and anti-VM techniques
-- **Obfuscation Detection**: Recognizes import table corruption and code obfuscation
+- **Malware Detection Engine**: Multi-vector threat analysis with calibrated risk scoring
+- **Import Obfuscation Detection**: Identification of corrupted import tables commonly used by malware
+- **Anomaly Detection**: Suspicious characteristics and security violations
+- **Entropy Analysis**: Section-by-section entropy calculation for packed/encrypted content
+- **Hash Generation**: Multiple hash algorithms (MD5, SHA-1, SHA-256, Imphash, SSDeep, TLSH)
+- **Overlay Detection**: Analysis of data appended to PE files
+- **Security Features Assessment**: Comprehensive security posture evaluation
 
-### Hash & Integrity Analysis
-- **Multi-Algorithm Hashing**: MD5, SHA-1, SHA-256, Imphash, Authentihash, SSDeep, TLSH, VHash
-- **Section-Level Hashing**: Individual section integrity verification
-- **Fuzzy Hashing**: SSDeep for similarity analysis and variant detection
-- **Import Hashing**: Imphash for malware family classification
+### Output and Integration
+- **Flexible Output Options**: Customizable output file naming with `-o` option
+- **Cross-Platform**: Native support for Linux and Windows analysis environments
+- **Command-Line Interface**: Easy integration into security workflows
+- **Detailed Reporting**: Structured analysis with evidence-based threat assessment
 
-### Debug & Metadata Analysis
-- **Debug Information**: Symbol tables, CodeView data, and compilation artifacts
-- **Rich Header Analysis**: Compiler and linker version detection for attribution
-- **Overlay Detection**: Identifies and analyzes appended data beyond PE structure
-- **Anomaly Detection**: Structural inconsistencies and malformation detection
+## Installation
 
-### Threat Intelligence
-- **Packer Detection**: Identifies known packers (UPX, ASPack, PECompact, Themida, VMProtect)
-- **Code Injection Indicators**: Process hollowing and DLL injection technique detection
-- **Suspicious Import Analysis**: Identifies malicious API usage patterns
-- **Risk Classification**: Automated threat categorization (Clean/Suspicious/Malicious)
+### Prerequisites
+- C++ compiler with C++11 support (GCC/Clang/MSVC)
+- Make utility
 
-## 🔧 Quick Start
+### Linux Build
+```bash
+# Clone the repository
+git clone <repository-url>
+cd peFileParser
 
-### Build
+# Build using Make
+make clean
+make
+```
+
+### Windows Build
+```bash
+# Using MinGW or Visual Studio
+make clean
+make
+```
+
+## Usage
+
+### Basic Syntax
+```bash
+./peFileParserLinux <pe-file> [options]
+```
+
+### Command Line Options
+- `-o <filename>` : Specify custom output file name
+- `-h` : Display help information
+
+### Example Usage
+
+#### Basic Analysis
+```bash
+./peFileParserLinux sample.exe
+```
+
+#### Custom Output File
+```bash
+./peFileParserLinux sample.exe -o custom_analysis.txt
+```
+
+#### Cross-Platform Analysis
+```bash
+# Linux
+./peFileParserLinux target.exe -o linux_analysis.txt
+
+# Windows  
+peFileParserLinux.exe target.exe -o windows_analysis.txt
+```
+
+## Real-World Analysis Examples
+
+### Legitimate Software Analysis
+Analysis of Telegram Desktop installer (`tsetup-x64.5.9.0.exe`):
+
+```
+[+] PE IMAGE INFORMATION
+Architecture: x64
+File Type: Win32 EXE
+File Size: 47.85 MB (50,184,728 bytes)
+Compilation Time: 2024-04-30 10:15:30 UTC
+
+[+] SECURITY FEATURES
+ASLR (Address Space Layout Randomization): ENABLED
+DEP (Data Execution Prevention): ENABLED
+SEH (Structured Exception Handling): ENABLED
+CFG (Control Flow Guard): ENABLED
+
+[+] IMPORTED DLL ANALYSIS
+- 146 imported functions across 5 legitimate DLLs
+- All import entries valid and properly structured
+- No obfuscation detected
+
+[+] DIGITAL SIGNATURE ANALYSIS
+File is digitally signed: YES
+Signature Valid: YES
+Signer: Telegram FZ-LLC
+Certificate Chain: Valid
+
+[+] MALWARE ANALYSIS
+Risk Score: 0/100
+Classification: Clean/Low Risk
+Suspicious: NO
+Threat Indicators: None detected
+Recommendation: File appears legitimate and safe.
+```
+
+### Malware Analysis
+Analysis of suspicious executable with obfuscated imports:
+
+```
+[+] PE IMAGE INFORMATION
+Architecture: x86
+File Type: Win32 EXE
+File Size: 0.36 MB (379,056 bytes)
+Compilation Time: 2007-12-24 21:04:20 UTC
+
+[+] SECURITY FEATURES
+ASLR (Address Space Layout Randomization): DISABLED
+DEP (Data Execution Prevention): DISABLED
+SEH (Structured Exception Handling): ENABLED
+
+[+] IMPORTED DLL ANALYSIS
+DLL NAME: emTextA [INVALID]
+- 589 imported functions (19 invalid/corrupted)
+- [POSSIBLE OBFUSCATION DETECTED]
+- Import table shows signs of obfuscation
+
+DLL NAME: [Invalid] [SUSPICIOUS]
+- 522 imported functions (17 invalid/corrupted)
+- Import obfuscation commonly used by malware
+
+[+] ANOMALY DETECTION
+Anomalies found: 2
+[1] ASLR is disabled - potential security risk
+[2] DEP is disabled - potential security risk
+
+[+] MALWARE ANALYSIS
+Risk Score: 20/100
+Classification: Suspicious
+Suspicious: YES
+Threat Indicators (1 found):
+  [Obfuscation] Import table obfuscation detected (Severity: 8/10)
+  Evidence: Corrupted import table entries detected during parsing
+Recommendation: Exercise caution. Consider additional analysis with behavioral tools.
+```
+
+## Key Capabilities
+
+### Import/Export Analysis
+- Complete function enumeration with corruption detection
+- Obfuscation detection in import tables using statistical analysis
+- Invalid DLL name identification
+- Import address table (IAT) analysis with integrity checking
+
+### Security Assessment
+- Calibrated risk scoring system (0-100 scale)
+- Evidence-based threat indicator classification
+- Security feature compliance checking
+- Comprehensive anomaly detection and reporting
+
+### Hash Generation
+- Complete hash suite: MD5, SHA-1, SHA-256, Imphash
+- Fuzzy hashing (SSDeep) for similarity analysis
+- Locality-sensitive hashing (TLSH) for clustering
+- Section-level hash calculation
+
+### Cross-Platform Support
+- Native Linux execution for Windows PE analysis
+- Consistent output format across platforms
+- Flexible output file management with `-o` option
+- Command-line integration ready for automation
+
+## Technical Details
+
+### Supported PE Features
+- 32-bit and 64-bit PE files
+- DLL and EXE analysis
+- Resource extraction and enumeration
+- Digital signature verification
+- Rich header parsing
+- Overlay detection and analysis
+
+### Security Analysis Engine
+- Heuristic-based threat detection with configurable thresholds
+- Multi-vector analysis approach combining static indicators
+- Evidence-based reporting with severity scoring
+- Reduced false positives through statistical analysis
+
+### Output Formats
+- Human-readable text analysis
+- Structured data presentation with clear categorization
+- Detailed technical information for security researchers
+- Security-focused summaries with actionable recommendations
+
+## Build System
+
+### Makefile Targets
 ```bash
 make          # Build for Linux
-make windows  # Cross-compile for Windows
+make windows  # Cross-compile for Windows (requires MinGW)
 make clean    # Clean build artifacts
 ```
 
-### Usage
-```bash
-./peFileParserLinux <pe_file>
-```
+### Dependencies
+- Standard C++ libraries only
+- No external dependencies required
+- Cross-platform compatibility with GCC/MinGW
 
-### Output
-- **Console**: Real-time analysis with detailed logging
-- **ParseResults.txt**: Complete analysis report
-- **Logs.txt**: Technical debugging information
+## Contributing
 
-## 📊 Sample Analysis Output
+Contributions are welcome! Please feel free to submit pull requests, report bugs, or suggest improvements.
 
-For a complete example of the parser's output when analyzing a malware sample, see: [Sample Output Example](SAMPLE_OUTPUT.md)
+## License
 
-The analysis includes:
-- Complete PE structure breakdown
-- Malware risk assessment (0-100 score)
-- Threat indicator identification
-- TLS callback analysis
-- Import/export table examination
-- Hash fingerprinting
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🏗️ Architecture
+## Acknowledgments
 
-### Core Components
-- **peParser**: Main PE parsing and validation engine
-- **PEMalwareAnalysisEngine**: Advanced threat detection and risk scoring
-- **PETLSAnalyzer**: Thread Local Storage analysis and callback detection
-- **PESecurityAnalyzer**: Security feature and anomaly detection
-- **PEHashCalculator**: Multi-algorithm hash computation and integrity verification
-
-### Cross-Platform Design
-- **Linux**: Native GCC compilation
-- **Windows**: MinGW cross-compilation support
-- **Dependencies**: Standard C++ libraries only - no external dependencies
-
-## 🎯 Use Cases
-
-### Malware Analysis
-- Threat assessment and triage
-- Malware family classification
-- Packer identification and unpacking preparation
-- Anti-analysis technique detection
-
-### Digital Forensics
-- File authenticity verification
-- Evidence integrity validation
-- Timeline analysis via compilation timestamps
-- Malware attribution through metadata analysis
-
-### Reverse Engineering
-- PE structure exploration and understanding
-- Import/export dependency mapping
-- Resource extraction and analysis planning
-- Debug symbol availability assessment
-
-### Security Research
-- Vulnerability research preparation
-- Binary analysis automation
-- Threat intelligence gathering
-- Attack technique identification
-
-## � Detection Capabilities
-
-### Malware Indicators
-- **Packers**: UPX, ASPack, PECompact, Themida, VMProtect, and custom packers
-- **Anti-Debug**: IsDebuggerPresent, CheckRemoteDebuggerPresent, NtQueryInformationProcess
-- **Anti-VM**: VMware, VirtualBox, Sandboxie detection techniques
-- **Code Injection**: Process hollowing, DLL injection, manual DLL loading
-- **Obfuscation**: Import table corruption, string obfuscation, control flow obfuscation
-
-### Risk Assessment Metrics
-- **Risk Score**: 0-100 numerical assessment
-- **Severity Levels**: Individual indicator severity (1-10 scale)
-- **Classification**: Clean, Suspicious, Malicious categories
-- **Confidence**: Analysis confidence indicators
-
-## 📋 System Requirements
-
-### Minimum Requirements
-- **OS**: Linux (Ubuntu 18.04+) or Windows 10+
-- **Compiler**: GCC 7.0+ or MinGW-w64
-- **RAM**: 512MB available memory
-- **Storage**: 50MB for binaries and temporary files
-
-### Recommended
-- **OS**: Recent Linux distribution or Windows 10/11
-- **RAM**: 2GB+ for large file analysis
-- **Storage**: 1GB+ for extensive logging and output files
-
-## 🛡️ Security Considerations
-
-### Safe Analysis Practices
-- **Isolated Environment**: Always analyze unknown files in sandboxed environments
-- **Network Isolation**: Disconnect from networks when analyzing active malware
-- **Backup Systems**: Maintain clean system snapshots before analysis
-- **Access Controls**: Limit tool access to authorized personnel only
-
-### Handling Malicious Files
-- Use virtual machines for malware analysis
-- Implement proper containment procedures
-- Maintain updated antivirus definitions
-- Follow organizational incident response procedures
-
-## 📄 License
-
-MIT License - see LICENSE file for complete terms.
-
-## 🙏 Attribution
-
-This project enhances and extends the original [PE-Explorer](https://github.com/adamhlt/PE-Explorer) by adamhlt, adding comprehensive malware analysis capabilities and cross-platform support.
+Built with focus on practical malware analysis and security research applications. Designed for both automated analysis pipelines and manual security assessment workflows with emphasis on accuracy and reduced false positives.

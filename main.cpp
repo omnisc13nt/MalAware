@@ -35,6 +35,8 @@ FILE* g_output_file = nullptr;
 
 int g_NumberOfSections = 0;
 PIMAGE_SECTION_HEADER g_SectionHeader = nullptr;
+int g_CorruptedImports = 0;
+int g_InvalidDLLNames = 0;
 
 int main(int argc, char* argv[])
 {
@@ -49,9 +51,10 @@ int main(int argc, char* argv[])
         fflush(g_output_file);
     }
     
-    if (argc != 2)
+    if (argc < 2 || argc > 4)
     {
-        LOGF("[HELP] Usage: %s <PE_file_path>\n", argv[0]);
+        LOGF("[HELP] Usage: %s <PE_file_path> [-o output_file]\n", argv[0]);
+        LOGF("[HELP] Example: %s sample.exe -o analysis_report.txt\n", argv[0]);
         
         if (g_output_file) {
             fclose(g_output_file);
@@ -61,19 +64,43 @@ int main(int argc, char* argv[])
         return PE_ERROR_INVALID_PE;
     }
 
-    LOGF("[INFO] Starting PE file analysis for: %s\n", argv[1]);
+    std::string inputFile = argv[1];
+    std::string outputFile = "ParseResults.txt";
+    
+    // Parse command line arguments
+    for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
+            outputFile = argv[i + 1];
+            i++; // Skip next argument since it's the output filename
+        }
+    }
+    
+    // Close the default output file and open the specified one
+    if (g_output_file) {
+        fclose(g_output_file);
+    }
+    g_output_file = fopen(outputFile.c_str(), "w");
+    if (g_output_file) {
+        auto now = std::time(nullptr);
+        auto localTime = std::localtime(&now);
+        fprintf(g_output_file, "=== PE Parser Results - %s===\n\n", std::asctime(localTime));
+        fflush(g_output_file);
+    }
+
+    LOGF("[INFO] Starting PE file analysis for: %s\n", inputFile.c_str());
+    LOGF("[INFO] Output will be saved to: %s\n", outputFile.c_str());
     
     PE_FILE_INFO fileInfo;
     
-    int result = LoadPEFile(argv[1], &fileInfo);
+    int result = LoadPEFile(inputFile.c_str(), &fileInfo);
     if (result != PE_SUCCESS)
     {
-        LOGF("[-] ERROR: Failed to load PE file: %s (Error code: %d)\n", argv[1], result);
+        LOGF("[-] ERROR: Failed to load PE file: %s (Error code: %d)\n", inputFile.c_str(), result);
         Logger::close();
         return result;
     }
 
-    LOGF("[+] Successfully loaded PE file: %s\n", argv[1]);
+    LOGF("[+] Successfully loaded PE file: %s\n", inputFile.c_str());
     LOGF("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
 
     if (fileInfo.bIs64Bit)
