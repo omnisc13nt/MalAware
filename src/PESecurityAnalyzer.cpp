@@ -6,7 +6,6 @@
 #include <cstring>
 
 PESecurityAnalyzer::PESecurityAnalyzer(PPE_FILE_INFO pFileInfo) : pFileInfo_(pFileInfo) {
-    // Initialize all analysis results
     entropyResults_.clear();
     securityFeatures_ = {};
     packerInfo_ = {};
@@ -21,7 +20,6 @@ std::vector<PESecurityAnalyzer::EntropyResult> PESecurityAnalyzer::calculateSect
         return entropyResults_;
     }
     
-    // Get section headers
     PIMAGE_SECTION_HEADER sectionHeader;
     if (pFileInfo_->bIs64Bit) {
         auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
@@ -31,11 +29,9 @@ std::vector<PESecurityAnalyzer::EntropyResult> PESecurityAnalyzer::calculateSect
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
     
-    // Calculate entropy for each section
     for (int i = 0; i < pFileInfo_->pNtHeader->FileHeader.NumberOfSections; i++) {
         EntropyResult result;
         
-        // Get section name (null-terminated)
         char sectionName[9] = {0};
         memcpy(sectionName, sectionHeader[i].Name, 8);
         result.sectionName = std::string(sectionName);
@@ -43,10 +39,8 @@ std::vector<PESecurityAnalyzer::EntropyResult> PESecurityAnalyzer::calculateSect
         result.size = sectionHeader[i].SizeOfRawData;
         
         if (sectionHeader[i].SizeOfRawData > 0 && sectionHeader[i].PointerToRawData > 0) {
-            // Calculate section data pointer
             BYTE* sectionData = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + sectionHeader[i].PointerToRawData);
             
-            // Calculate entropy
             result.entropy = calculateEntropy(sectionData, sectionHeader[i].SizeOfRawData);
             result.isPacked = isHighEntropy(result.entropy);
         } else {
@@ -63,13 +57,11 @@ std::vector<PESecurityAnalyzer::EntropyResult> PESecurityAnalyzer::calculateSect
 double PESecurityAnalyzer::calculateEntropy(const BYTE* data, size_t size) {
     if (!data || size == 0) return 0.0;
     
-    // Count frequency of each byte value
     unsigned int frequency[256] = {0};
     for (size_t i = 0; i < size; i++) {
         frequency[data[i]]++;
     }
     
-    // Calculate entropy using Shannon's formula
     double entropy = 0.0;
     for (int i = 0; i < 256; i++) {
         if (frequency[i] > 0) {
@@ -97,7 +89,6 @@ PESecurityAnalyzer::SecurityFeatures PESecurityAnalyzer::extractSecurityFeatures
         dllCharacteristics = pNtHeader32->OptionalHeader.DllCharacteristics;
     }
     
-    // Extract security features from DllCharacteristics
     securityFeatures_.aslr = (dllCharacteristics & 0x0040) != 0;  // IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
     securityFeatures_.dep = (dllCharacteristics & 0x0100) != 0;   // IMAGE_DLLCHARACTERISTICS_NX_COMPAT
     securityFeatures_.seh = (dllCharacteristics & 0x0400) != 0;   // IMAGE_DLLCHARACTERISTICS_NO_SEH
@@ -119,7 +110,6 @@ PESecurityAnalyzer::PackerInfo PESecurityAnalyzer::detectPacker() {
         return packerInfo_;
     }
     
-    // Check for high entropy sections (common in packed files)
     calculateSectionEntropy();
     int highEntropySections = 0;
     for (const auto& result : entropyResults_) {
@@ -128,12 +118,10 @@ PESecurityAnalyzer::PackerInfo PESecurityAnalyzer::detectPacker() {
         }
     }
     
-    // Basic packer detection heuristics
     bool hasHighEntropyText = false;
     bool hasSmallNumberOfImports = false;
     bool hasSuspiciousEntryPoint = false;
     
-    // Check if .text section has high entropy
     for (const auto& result : entropyResults_) {
         if (result.sectionName == ".text" && result.entropy > 7.0) {
             hasHighEntropyText = true;
@@ -141,10 +129,6 @@ PESecurityAnalyzer::PackerInfo PESecurityAnalyzer::detectPacker() {
         }
     }
     
-    // TODO: Add more sophisticated packer detection
-    // - Check for known packer signatures
-    // - Analyze import table size
-    // - Check entry point location
     
     packerInfo_.isPacked = (highEntropySections > 0) || hasHighEntropyText;
     packerInfo_.confidence = highEntropySections * 25.0; // Basic confidence calculation
@@ -175,7 +159,6 @@ PESecurityAnalyzer::OverlayInfo PESecurityAnalyzer::detectOverlay() {
         overlayInfo_.overlayOffset = lastSectionEnd;
         overlayInfo_.overlaySize = fileSize - lastSectionEnd;
         
-        // Calculate overlay entropy
         BYTE* overlayData = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + lastSectionEnd);
         overlayInfo_.overlayEntropy = calculateEntropy(overlayData, overlayInfo_.overlaySize);
     }
@@ -190,12 +173,10 @@ std::vector<std::string> PESecurityAnalyzer::detectAnomalies() {
         return anomalies_;
     }
     
-    // Check for various anomalies
     calculateSectionEntropy();
     extractSecurityFeatures();
     detectOverlay();
     
-    // Anomaly 1: Sections with extremely high entropy
     for (const auto& result : entropyResults_) {
         if (result.entropy > 7.8) {
             anomalies_.push_back("Section " + result.sectionName + " has extremely high entropy (" + 
@@ -203,7 +184,6 @@ std::vector<std::string> PESecurityAnalyzer::detectAnomalies() {
         }
     }
     
-    // Anomaly 2: Missing security features
     if (!securityFeatures_.aslr) {
         anomalies_.push_back("ASLR is disabled - potential security risk");
     }
@@ -211,12 +191,10 @@ std::vector<std::string> PESecurityAnalyzer::detectAnomalies() {
         anomalies_.push_back("DEP is disabled - potential security risk");
     }
     
-    // Anomaly 3: Suspicious overlay
     if (overlayInfo_.hasOverlay && overlayInfo_.overlayEntropy > 7.0) {
         anomalies_.push_back("High entropy overlay detected - possible packed data");
     }
     
-    // Anomaly 4: Unusual section names
     for (const auto& result : entropyResults_) {
         if (result.sectionName.find("UPX") != std::string::npos ||
             result.sectionName.find("FSG") != std::string::npos ||
@@ -344,7 +322,6 @@ std::string PESecurityAnalyzer::toJson() const {
     return json.str();
 }
 
-// Helper methods
 bool PESecurityAnalyzer::isHighEntropy(double entropy) {
     return entropy > 7.0; // Common threshold for packed sections
 }
@@ -356,15 +333,12 @@ bool PESecurityAnalyzer::isLowEntropy(double entropy) {
 DWORD PESecurityAnalyzer::getFileSize() {
     if (!pFileInfo_ || !pFileInfo_->pDosHeader) return 0;
     
-    // This is a simplified implementation
-    // In a real implementation, you'd get the actual file size from the file system
     return 0; // TODO: Implement actual file size calculation
 }
 
 DWORD PESecurityAnalyzer::getLastSectionEnd() {
     if (!pFileInfo_ || !pFileInfo_->pNtHeader) return 0;
     
-    // Get section headers
     PIMAGE_SECTION_HEADER sectionHeader;
     if (pFileInfo_->bIs64Bit) {
         auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;

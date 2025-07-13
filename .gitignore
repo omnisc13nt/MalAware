@@ -9,7 +9,6 @@
 *.lib
 *.a
 *.bin
-*.txt
 
 # Executables (but keep testFolder examples)
 peFileParser*
@@ -65,10 +64,14 @@ Thumbs.db
 *.bak
 *~
 Logs.txt
+ParseOutput.txt
+ParseResults.txt
 
-# Keep important markdown files
+# Important markdown files
 *.md
 !README.md
+!SAMPLE_OUTPUT.md
+PROJECT_SUMMARY.md
 
 # Test files and folders
 testFolder/

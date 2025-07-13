@@ -5,10 +5,6 @@
 #include <vector>
 #include <string>
 
-/**
- * Advanced security analysis for PE files
- * Implements entropy analysis, packer detection, and security features extraction
- */
 class PESecurityAnalyzer {
 public:
     struct EntropyResult {
@@ -49,30 +45,23 @@ public:
     explicit PESecurityAnalyzer(PPE_FILE_INFO pFileInfo);
     ~PESecurityAnalyzer() = default;
     
-    // Entropy analysis
     std::vector<EntropyResult> calculateSectionEntropy();
     double calculateEntropy(const BYTE* data, size_t size);
     
-    // Security features extraction
     SecurityFeatures extractSecurityFeatures();
     
-    // Packer detection
     PackerInfo detectPacker();
     
-    // Overlay detection
     OverlayInfo detectOverlay();
     
-    // Anomaly detection
     std::vector<std::string> detectAnomalies();
     
-    // Print analysis results
     void printEntropyAnalysis();
     void printSecurityFeatures();
     void printPackerInfo();
     void printOverlayInfo();
     void printAnomalies();
     
-    // JSON output
     std::string toJson() const;
 
 private:
@@ -83,7 +72,6 @@ private:
     OverlayInfo overlayInfo_;
     std::vector<std::string> anomalies_;
     
-    // Helper methods
     bool isHighEntropy(double entropy);
     bool isLowEntropy(double entropy);
     std::string getPackerSignature(const BYTE* data, size_t size);

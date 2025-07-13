@@ -6,6 +6,8 @@
 #include "include/PEDigitalSignatureAnalyzer.h"
 #include "include/PEDebugInfoAnalyzer.h"
 #include "include/PEHashCalculator.h"
+#include "include/PETLSAnalyzer.h"
+#include "include/PEMalwareAnalysisEngine.h"
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -28,20 +30,17 @@
 #define fileno_fd fileno
 #endif
 
-// Global variables for output redirection
 int g_original_stdout = -1;
 FILE* g_output_file = nullptr;
 
-// Globals for import/export parsing
 int g_NumberOfSections = 0;
 PIMAGE_SECTION_HEADER g_SectionHeader = nullptr;
 
 int main(int argc, char* argv[])
 {
-    // Initialize logging
+    
     Logger::init("Logs.txt", "ParseOutput.txt");
     
-    // Open output file for complete results
     g_output_file = fopen("ParseResults.txt", "w");
     if (g_output_file) {
         auto now = std::time(nullptr);
@@ -54,7 +53,6 @@ int main(int argc, char* argv[])
     {
         LOGF("[HELP] Usage: %s <PE_file_path>\n", argv[0]);
         
-        // Close output file
         if (g_output_file) {
             fclose(g_output_file);
             g_output_file = nullptr;
@@ -67,7 +65,6 @@ int main(int argc, char* argv[])
     
     PE_FILE_INFO fileInfo;
     
-    // Load and validate PE file
     int result = LoadPEFile(argv[1], &fileInfo);
     if (result != PE_SUCCESS)
     {
@@ -79,7 +76,6 @@ int main(int argc, char* argv[])
     LOGF("[+] Successfully loaded PE file: %s\n", argv[1]);
     LOGF("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
 
-    // Set globals for import/export parsing
     if (fileInfo.bIs64Bit)
     {
         auto pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
@@ -93,7 +89,6 @@ int main(int argc, char* argv[])
         g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
 
-    // Parse PE file
     result = ParsePEFile(&fileInfo);
     if (result != PE_SUCCESS)
     {
@@ -105,7 +100,6 @@ int main(int argc, char* argv[])
 
     LOG("\n[+] PE file parsing completed successfully!\n");
 
-    // Resource parsing and display
     try {
         PEResourceParser resourceParser(fileInfo.hFileContent, fileInfo.pNtHeader);
         resourceParser.parseResources();
@@ -117,11 +111,9 @@ int main(int argc, char* argv[])
         LOG("[-] ERROR: Unknown error during resource parsing\n");
     }
 
-    // Advanced security analysis
     try {
         PESecurityAnalyzer securityAnalyzer(&fileInfo);
         
-        // Perform comprehensive security analysis
         securityAnalyzer.printEntropyAnalysis();
         securityAnalyzer.printSecurityFeatures();
         securityAnalyzer.printPackerInfo();
@@ -135,11 +127,9 @@ int main(int argc, char* argv[])
         LOG("[-] ERROR: Unknown error during security analysis\n");
     }
 
-    // Digital signature analysis
     try {
         PEDigitalSignatureAnalyzer signatureAnalyzer(&fileInfo);
         
-        // Perform digital signature analysis
         signatureAnalyzer.analyzeSignature();
         signatureAnalyzer.printSignatureInfo();
         signatureAnalyzer.printCertificateChain();
@@ -152,11 +142,9 @@ int main(int argc, char* argv[])
         LOG("[-] ERROR: Unknown error during digital signature analysis\n");
     }
 
-    // Debug information analysis
     try {
         PEDebugInfoAnalyzer debugAnalyzer(&fileInfo);
         
-        // Perform debug information analysis
         debugAnalyzer.analyzeDebugInfo();
         debugAnalyzer.printDebugInfo();
         debugAnalyzer.printDebugDirectories();
@@ -170,11 +158,29 @@ int main(int argc, char* argv[])
         LOG("[-] ERROR: Unknown error during debug information analysis\n");
     }
 
-    // Hash calculation and comprehensive file analysis
+    try {
+        PETLSAnalyzer::TLSInfo tlsInfo = PETLSAnalyzer::analyzeTLS(&fileInfo);
+        PETLSAnalyzer::logTLSAnalysis(tlsInfo);
+        LOG("[+] TLS analysis completed successfully!\n");
+    } catch (const std::exception& e) {
+        LOGF("[-] ERROR: TLS analysis failed: %s\n", e.what());
+    } catch (...) {
+        LOG("[-] ERROR: Unknown error during TLS analysis\n");
+    }
+
+    try {
+        auto malwareResult = PEMalwareAnalysisEngine::analyzeFile(&fileInfo);
+        PEMalwareAnalysisEngine::logMalwareAnalysis(malwareResult);
+        LOG("[+] Malware analysis completed successfully!\n");
+    } catch (const std::exception& e) {
+        LOGF("[-] ERROR: Malware analysis failed: %s\n", e.what());
+    } catch (...) {
+        LOG("[-] ERROR: Unknown error during malware analysis\n");
+    }
+
     try {
         PEHashCalculator hashCalculator(&fileInfo);
         
-        // Perform comprehensive hash analysis
         hashCalculator.printFileHashes();
         hashCalculator.printFileInfo();
         hashCalculator.printSectionHashes();
@@ -187,11 +193,9 @@ int main(int argc, char* argv[])
         LOG("[-] ERROR: Unknown error during hash calculation\n");
     }
 
-    // Cleanup
     CleanupPEFile(&fileInfo);
     LOG("[+] PE file analysis completed successfully!\n");
     
-    // Close output file
     if (g_output_file) {
         fprintf(g_output_file, "\n=== Analysis Complete ===\n");
         fclose(g_output_file);

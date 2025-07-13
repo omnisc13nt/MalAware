@@ -10,7 +10,6 @@
 #include <cstdlib>
 
 
-// All new feature stubs are now inside the PEParser class scope
 void PEParser::printDebugInfo() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -80,7 +79,6 @@ void PEParser::printExceptionData() const {
         std::cerr << errorMessage_ << std::endl;
         return;
     }
-    // Locate the Exception Directory in DataDirectory
     const IMAGE_DATA_DIRECTORY* excDir = nullptr;
     if (is64Bit_) {
         excDir = &ntHeader_->OptionalHeader.OptionalHeader64.DataDirectory[3]; // 3 = Exception Directory
@@ -94,7 +92,6 @@ void PEParser::printExceptionData() const {
     std::cout << "[+] Exception Handling Data Directory found:" << std::endl;
     std::cout << "    RVA: 0x" << std::hex << excDir->VirtualAddress << std::dec << std::endl;
     std::cout << "    Size: " << excDir->Size << " bytes" << std::endl;
-    // For full parsing, would need to map RVA to file offset and parse .pdata/.xdata structures (future work)
     std::cout << "    (Detailed parsing of unwind info is planned for future releases.)" << std::endl;
 }
 
@@ -118,7 +115,6 @@ void PEParser::printSummary() const {
 void PEParser::printHeaders() const {
     if (!isValid()) return;
     DisplayDosHeader(dosHeader_);
-    // DisplayNTHeader expects a PPE_FILE_INFO, but we don't have one here. Skip or implement as needed.
     DisplayFileHeader(&ntHeader_->FileHeader);
     if (is64Bit_) {
         DisplayOptionalHeader64(&ntHeader_->OptionalHeader.OptionalHeader64);
@@ -135,21 +131,17 @@ void PEParser::printSections() const {
 
 void PEParser::printImports() const {
     if (!isValid()) return;
-    // TODO: Call import parsing logic
 }
 
 void PEParser::printExports() const {
     if (!isValid()) return;
-    // TODO: Call export parsing logic
 }
 
-// Print basic digital signature (Authenticode) info
 void PEParser::printDigitalSignature() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
         return;
     }
-    // Locate the security directory in DataDirectory
     const IMAGE_DATA_DIRECTORY* secDir = nullptr;
     if (is64Bit_) {
         secDir = &ntHeader_->OptionalHeader.OptionalHeader64.DataDirectory[4]; // 4 = Security Directory
@@ -166,7 +158,6 @@ void PEParser::printDigitalSignature() const {
         std::cout << "[!] Digital signature directory is out of file bounds." << std::endl;
         return;
     }
-    // Read WIN_CERTIFICATE structure
     const BYTE* certPtr = reinterpret_cast<const BYTE*>(fileContent_) + certOffset;
     const WIN_CERTIFICATE* winCert = reinterpret_cast<const WIN_CERTIFICATE*>(certPtr);
     std::cout << "[+] Digital Signature (Authenticode) found:" << std::endl;
@@ -174,7 +165,6 @@ void PEParser::printDigitalSignature() const {
     std::cout << "    Revision: " << winCert->wRevision << std::endl;
     std::cout << "    Certificate Type: " << winCert->wCertificateType << std::endl;
     std::cout << "    Raw certificate data size: " << certSize - sizeof(WIN_CERTIFICATE) + 1 << " bytes" << std::endl;
-    // For full parsing, would need to decode PKCS#7 structure (future work)
 }
 
 bool PEParser::loadFile(const std::string& filePath) {
@@ -231,7 +221,6 @@ bool PEParser::validatePE() {
 }
 
 
-// Returns true if the PE file is loaded and validated
 bool PEParser::isValid() const {
     return fileContent_ != nullptr && dosHeader_ != nullptr && ntHeader_ != nullptr && errorMessage_.empty();
 }

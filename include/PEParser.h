@@ -18,37 +18,25 @@ public:
     void printSections() const;
     void printImports() const;
     void printExports() const;
-    // Future: void printResources() const;
-    // Future: void printRelocations() const;
 
-    // Digital signature (Authenticode) parsing
     void printDigitalSignature() const;
 
-    // Exception handling data parsing
     void printExceptionData() const;
 
-    // Debug information parsing
     void printDebugInfo() const;
 
-    // TLS callbacks parsing
     void printTLSCallbacks() const;
 
-    // Delay-loaded imports parsing
     void printDelayImports() const;
 
-    // Bound imports parsing
     void printBoundImports() const;
 
-    // .NET metadata parsing
     void printDotNetMetadata() const;
 
-    // IAT reconstruction
     void printIATReconstruction() const;
 
-    // Disassembly (basic)
     void printDisassembly() const;
 
-    // Dependency scanner
     void printDependencies() const;
 
 private:

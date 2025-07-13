@@ -118,10 +118,8 @@ std::string JSONOutputManager::generateXML() const {
 std::string JSONOutputManager::generateCSV() const {
     std::stringstream ss;
     
-    // Header
     ss << "Analysis Type,Status,Error Message,Key,Value\n";
     
-    // Data rows
     for (const auto& pair : results_) {
         const auto& result = pair.second;
         
@@ -246,7 +244,6 @@ std::string JSONOutputManager::getCurrentTimestamp() const {
 }
 
 std::string JSONOutputManager::formatValue(const std::string& value) const {
-    // Check if value is numeric
     if (value.empty()) return "\"\"";
     
     bool isNumeric = true;

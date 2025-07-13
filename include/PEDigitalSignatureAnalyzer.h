@@ -6,10 +6,6 @@
 #include <string>
 #include <chrono>
 
-/**
- * Digital Signature Analysis for PE files
- * Parses Authenticode signatures and certificate chains
- */
 class PEDigitalSignatureAnalyzer {
 public:
     struct CertificateInfo {
@@ -49,27 +45,21 @@ public:
     explicit PEDigitalSignatureAnalyzer(PPE_FILE_INFO pFileInfo);
     ~PEDigitalSignatureAnalyzer() = default;
     
-    // Main analysis methods
     SignatureInfo analyzeSignature();
     SecurityCatalogInfo checkSecurityCatalog();
     
-    // Certificate chain analysis
     std::vector<CertificateInfo> parseCertificateChain(const BYTE* certData, size_t certSize);
     bool verifyCertificateChain(const std::vector<CertificateInfo>& chain);
     
-    // Signature verification
     bool verifyAuthenticodeSignature();
     bool verifyFileHash();
     
-    // Print analysis results
     void printSignatureInfo();
     void printCertificateChain();
     void printSecurityCatalog();
     
-    // JSON output
     std::string toJson() const;
     
-    // Utility methods
     static std::string formatTime(const std::chrono::system_clock::time_point& timePoint);
     static std::string bytesToHex(const BYTE* data, size_t size);
 
@@ -78,7 +68,6 @@ private:
     SignatureInfo signatureInfo_;
     SecurityCatalogInfo catalogInfo_;
     
-    // Helper methods
     bool extractSignatureData(BYTE** signatureData, DWORD* signatureSize);
     bool parseWinCertificate(const BYTE* certData, size_t certSize);
     bool parsePKCS7Signature(const BYTE* pkcs7Data, size_t pkcs7Size);
@@ -86,12 +75,10 @@ private:
     bool isSignatureExpired(const std::chrono::system_clock::time_point& signingTime);
     bool verifySignatureIntegrity(const BYTE* signatureData, size_t signatureSize);
     
-    // Certificate parsing helpers
     bool parseCertificateFields(const BYTE* certData, size_t certSize, CertificateInfo& certInfo);
     std::string getAlgorithmName(const std::string& oid);
     std::chrono::system_clock::time_point parseASN1Time(const BYTE* timeData, size_t timeSize);
     
-    // Hash calculation
     std::string calculateFileHash(const std::string& algorithm = "SHA256");
     std::string calculateSectionHash(DWORD sectionRVA, DWORD sectionSize, const std::string& algorithm = "SHA256");
 };

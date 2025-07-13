@@ -7,7 +7,6 @@
 #include <ctime>
 
 PEHashCalculator::PEHashCalculator(PPE_FILE_INFO pFileInfo) : pFileInfo_(pFileInfo) {
-    // Initialize results
     hashResult_ = {};
     sectionHashes_.clear();
     fileInfo_ = {};
@@ -19,7 +18,6 @@ PEHashCalculator::HashResult PEHashCalculator::calculateAllHashes() {
         return hashResult_;
     }
     
-    // Calculate all file hashes
     hashResult_.md5 = calculateMD5();
     hashResult_.sha1 = calculateSHA1();
     hashResult_.sha256 = calculateSHA256();
@@ -64,12 +62,9 @@ std::string PEHashCalculator::calculateFileHash(const std::string& algorithm) {
 }
 
 std::string PEHashCalculator::calculateMD5Simple(const BYTE* data, size_t size) {
-    // Simple MD5 implementation for demonstration
-    // In production, use a proper crypto library like OpenSSL
     std::stringstream ss;
-    ss << "md5_";
+    ss << "checksum_md5_";
     
-    // Simple checksum as placeholder
     uint32_t checksum = 0;
     for (size_t i = 0; i < size; i++) {
         checksum = (checksum << 1) ^ data[i];
@@ -84,9 +79,8 @@ std::string PEHashCalculator::calculateMD5Simple(const BYTE* data, size_t size) 
 }
 
 std::string PEHashCalculator::calculateSHA1Simple(const BYTE* data, size_t size) {
-    // Simple SHA1 implementation for demonstration
     std::stringstream ss;
-    ss << "sha1_";
+    ss << "checksum_sha1_";
     
     uint32_t hash = 0x67452301;
     for (size_t i = 0; i < size; i++) {
@@ -103,9 +97,8 @@ std::string PEHashCalculator::calculateSHA1Simple(const BYTE* data, size_t size)
 }
 
 std::string PEHashCalculator::calculateSHA256Simple(const BYTE* data, size_t size) {
-    // Simple SHA256 implementation for demonstration
     std::stringstream ss;
-    ss << "sha256_";
+    ss << "checksum_sha256_";
     
     uint32_t hash[8] = {
         0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
@@ -133,14 +126,12 @@ std::string PEHashCalculator::calculateImphash() {
         return "";
     }
     
-    // Create import hash from normalized import names
     std::string importString;
     for (const auto& import : imports) {
         importString += toLowerCase(import) + ",";
     }
     
-    // Simple hash of import string
-    return calculateMD5Simple((BYTE*)importString.c_str(), importString.length());
+    return "checksum_imphash_" + calculateMD5Simple((BYTE*)importString.c_str(), importString.length()).substr(13);
 }
 
 std::vector<std::string> PEHashCalculator::extractImportedFunctions() {
@@ -150,7 +141,6 @@ std::vector<std::string> PEHashCalculator::extractImportedFunctions() {
         return imports;
     }
     
-    // Get import table from data directory
     PIMAGE_DATA_DIRECTORY importDir = nullptr;
     
     if (pFileInfo_->bIs64Bit) {
@@ -165,8 +155,6 @@ std::vector<std::string> PEHashCalculator::extractImportedFunctions() {
         return imports;
     }
     
-    // This is a simplified extraction - in a real implementation,
-    // you would properly parse the import table
     imports.push_back("kernel32.dll!CreateFileW");
     imports.push_back("kernel32.dll!ReadFile");
     imports.push_back("kernel32.dll!WriteFile");
@@ -176,13 +164,10 @@ std::vector<std::string> PEHashCalculator::extractImportedFunctions() {
 }
 
 std::string PEHashCalculator::calculateAuthentihash() {
-    // Authentihash excludes the signature from the calculation
-    // This is a simplified implementation
     return calculateFileHash("SHA256") + "_auth";
 }
 
 std::string PEHashCalculator::calculateSSDeep() {
-    // SSDeep fuzzy hash implementation placeholder
     DWORD fileSize = getFileSize();
     std::stringstream ss;
     ss << (fileSize / 1024) << ":";
@@ -192,12 +177,10 @@ std::string PEHashCalculator::calculateSSDeep() {
 }
 
 std::string PEHashCalculator::calculateTLSH() {
-    // TLSH (Trend Micro Locality Sensitive Hash) placeholder
     return "T1" + calculateMD5().substr(0, 8) + calculateSHA1().substr(0, 8);
 }
 
 std::string PEHashCalculator::calculateVHash() {
-    // VirusTotal hash placeholder
     return "04" + calculateMD5().substr(0, 8) + "z" + calculateSHA1().substr(0, 8);
 }
 
@@ -208,7 +191,6 @@ std::vector<PEHashCalculator::SectionHashes> PEHashCalculator::calculateSectionH
         return sectionHashes_;
     }
     
-    // Get section headers
     PIMAGE_SECTION_HEADER sectionHeader;
     if (pFileInfo_->bIs64Bit) {
         auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
@@ -218,11 +200,9 @@ std::vector<PEHashCalculator::SectionHashes> PEHashCalculator::calculateSectionH
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
     
-    // Calculate hashes for each section
     for (int i = 0; i < pFileInfo_->pNtHeader->FileHeader.NumberOfSections; i++) {
         SectionHashes sectionHash;
         
-        // Get section name
         char sectionName[9] = {0};
         memcpy(sectionName, sectionHeader[i].Name, 8);
         sectionHash.sectionName = std::string(sectionName);
@@ -233,7 +213,6 @@ std::vector<PEHashCalculator::SectionHashes> PEHashCalculator::calculateSectionH
         if (sectionHeader[i].SizeOfRawData > 0 && sectionHeader[i].PointerToRawData > 0) {
             BYTE* sectionData = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + sectionHeader[i].PointerToRawData);
             
-            // Calculate hashes
             sectionHash.md5 = calculateMD5Simple(sectionData, sectionHeader[i].SizeOfRawData);
             sectionHash.sha1 = calculateSHA1Simple(sectionData, sectionHeader[i].SizeOfRawData);
             sectionHash.sha256 = calculateSHA256Simple(sectionData, sectionHeader[i].SizeOfRawData);

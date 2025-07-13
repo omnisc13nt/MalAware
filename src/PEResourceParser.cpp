@@ -5,7 +5,6 @@
 
 PEResourceParser::PEResourceParser(HANDLE fileContent, PIMAGE_NT_HEADERS ntHeader)
     : fileContent_(fileContent), ntHeader_(ntHeader) {
-    // Estimate file size (for bounds checking)
     fileSize_ = 0;
     if (ntHeader_) {
         if (ntHeader_->OptionalHeader.OptionalHeader64.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
@@ -18,7 +17,6 @@ PEResourceParser::PEResourceParser(HANDLE fileContent, PIMAGE_NT_HEADERS ntHeade
 
 std::vector<ResourceEntry> PEResourceParser::parseResources() {
     resources_.clear();
-    // Locate resource directory
     DWORD rsrcRVA = 0;
     DWORD rsrcSize = 0;
     if (ntHeader_->OptionalHeader.OptionalHeader64.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
@@ -45,7 +43,6 @@ void PEResourceParser::printResources() const {
     }
 }
 
-// Structures for resource parsing
 typedef struct _IMAGE_RESOURCE_DIRECTORY {
     DWORD Characteristics;
     DWORD TimeDateStamp;
@@ -81,7 +78,6 @@ typedef struct _IMAGE_RESOURCE_DATA_ENTRY {
 } IMAGE_RESOURCE_DATA_ENTRY, *PIMAGE_RESOURCE_DATA_ENTRY;
 
 void PEResourceParser::parseResourceDirectory(DWORD rva, DWORD baseRVA, int depth, DWORD type, DWORD name, DWORD lang) {
-    // Bounds check
     if (rva == 0 || rva > fileSize_ || !fileContent_)
         return;
     BYTE* base = reinterpret_cast<BYTE*>(fileContent_);
@@ -97,32 +93,27 @@ void PEResourceParser::parseResourceDirectory(DWORD rva, DWORD baseRVA, int dept
     for (int i = 0; i < totalEntries; ++i) {
         DWORD entryType = type, entryName = name, entryLang = lang;
         if (depth == 0) {
-            // Type level
             if (entries[i].u1.s.NameIsString)
                 entryType = 0; // Named type, not handled here
             else
                 entryType = entries[i].u1.Id;
         } else if (depth == 1) {
-            // Name/ID level
             if (entries[i].u1.s.NameIsString)
                 entryName = 0; // Named resource, not handled here
             else
                 entryName = entries[i].u1.Id;
         } else if (depth == 2) {
-            // Language level
             if (entries[i].u1.s.NameIsString)
                 entryLang = 0; // Named language, not handled here
             else
                 entryLang = entries[i].u1.Id;
         }
         if (entries[i].u2.s2.DataIsDirectory) {
-            // Directory: recurse
             DWORD subdirRVA = entries[i].u2.s2.OffsetToDirectory;
             if (subdirRVA == 0 || subdirRVA > fileSize_)
                 continue;
             parseResourceDirectory(subdirRVA, baseRVA, depth + 1, entryType, entryName, entryLang);
         } else {
-            // Data entry
             DWORD dataEntryRVA = entries[i].u2.OffsetToData;
             size_t dataEntryOffset = dataEntryRVA - baseRVA;
             if (dataEntryRVA == 0 || dataEntryOffset + sizeof(IMAGE_RESOURCE_DATA_ENTRY) > fileSize_)

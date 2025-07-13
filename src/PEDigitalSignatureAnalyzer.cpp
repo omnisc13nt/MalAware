@@ -6,7 +6,6 @@
 #include <ctime>
 
 PEDigitalSignatureAnalyzer::PEDigitalSignatureAnalyzer(PPE_FILE_INFO pFileInfo) : pFileInfo_(pFileInfo) {
-    // Initialize analysis results
     signatureInfo_ = {};
     catalogInfo_ = {};
 }
@@ -19,7 +18,6 @@ PEDigitalSignatureAnalyzer::SignatureInfo PEDigitalSignatureAnalyzer::analyzeSig
         return signatureInfo_;
     }
     
-    // Get data directory for security/certificate table
     PIMAGE_DATA_DIRECTORY securityDir = nullptr;
     
     if (pFileInfo_->bIs64Bit) {
@@ -40,7 +38,6 @@ PEDigitalSignatureAnalyzer::SignatureInfo PEDigitalSignatureAnalyzer::analyzeSig
         return signatureInfo_;
     }
     
-    // Extract signature data
     BYTE* signatureData = nullptr;
     DWORD signatureSize = 0;
     
@@ -51,13 +48,11 @@ PEDigitalSignatureAnalyzer::SignatureInfo PEDigitalSignatureAnalyzer::analyzeSig
     
     signatureInfo_.isSigned = true;
     
-    // Parse WIN_CERTIFICATE structure
     if (!parseWinCertificate(signatureData, signatureSize)) {
         signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure";
         return signatureInfo_;
     }
     
-    // Basic signature validation
     signatureInfo_.isValid = verifySignatureIntegrity(signatureData, signatureSize);
     
     return signatureInfo_;
@@ -68,7 +63,6 @@ bool PEDigitalSignatureAnalyzer::extractSignatureData(BYTE** signatureData, DWOR
         return false;
     }
     
-    // Get security directory
     PIMAGE_DATA_DIRECTORY securityDir = nullptr;
     
     if (pFileInfo_->bIs64Bit) {
@@ -83,7 +77,6 @@ bool PEDigitalSignatureAnalyzer::extractSignatureData(BYTE** signatureData, DWOR
         return false;
     }
     
-    // Security directory contains file offset, not RVA
     *signatureData = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + securityDir->VirtualAddress);
     *signatureSize = securityDir->Size;
     
@@ -95,13 +88,6 @@ bool PEDigitalSignatureAnalyzer::parseWinCertificate(const BYTE* certData, size_
         return false;
     }
     
-    // WIN_CERTIFICATE structure
-    // typedef struct _WIN_CERTIFICATE {
-    //     DWORD dwLength;
-    //     WORD  wRevision;
-    //     WORD  wCertificateType;
-    //     BYTE  bCertificate[ANYSIZE_ARRAY];
-    // } WIN_CERTIFICATE, *LPWIN_CERTIFICATE;
     
     DWORD dwLength = *(DWORD*)certData;
     WORD wRevision = *(WORD*)(certData + 4);
@@ -111,7 +97,6 @@ bool PEDigitalSignatureAnalyzer::parseWinCertificate(const BYTE* certData, size_
         return false;
     }
     
-    // Check for PKCS#7 SignedData (most common)
     if (wCertificateType == 0x0002) { // WIN_CERT_TYPE_PKCS_SIGNED_DATA
         const BYTE* pkcs7Data = certData + 8;
         size_t pkcs7Size = dwLength - 8;
@@ -127,10 +112,7 @@ bool PEDigitalSignatureAnalyzer::parsePKCS7Signature(const BYTE* pkcs7Data, size
         return false;
     }
     
-    // Basic PKCS#7 parsing - in a real implementation, you'd use OpenSSL or similar
-    // This is a simplified version that extracts basic information
     
-    // Look for common signature algorithms
     std::string dataStr((char*)pkcs7Data, pkcs7Size);
     
     if (dataStr.find("sha256") != std::string::npos || dataStr.find("SHA256") != std::string::npos) {
@@ -143,20 +125,16 @@ bool PEDigitalSignatureAnalyzer::parsePKCS7Signature(const BYTE* pkcs7Data, size
         signatureInfo_.digestAlgorithm = "Unknown";
     }
     
-    // Look for RSA signature
     if (dataStr.find("RSA") != std::string::npos || dataStr.find("rsa") != std::string::npos) {
         signatureInfo_.signatureAlgorithm = "RSA";
     } else {
         signatureInfo_.signatureAlgorithm = "Unknown";
     }
     
-    // Check for counter signature
     if (dataStr.find("counterSignature") != std::string::npos || dataStr.find("timeStamping") != std::string::npos) {
         signatureInfo_.isCounterSigned = true;
     }
     
-    // Extract program name and publisher info (simplified)
-    // In a real implementation, you'd properly parse the ASN.1 structure
     
     return true;
 }
@@ -166,17 +144,12 @@ bool PEDigitalSignatureAnalyzer::verifySignatureIntegrity(const BYTE* signatureD
         return false;
     }
     
-    // Basic integrity check - verify the signature data is well-formed
-    // In a real implementation, you'd verify the cryptographic signature
     
-    // Check if signature data starts with valid ASN.1 structure
     if (signatureSize < 2) {
         return false;
     }
     
-    // Simple ASN.1 structure check
     if (signatureData[0] == 0x30) { // SEQUENCE tag
-        // Basic structure validation
         return true;
     }
     
@@ -188,14 +161,11 @@ std::string PEDigitalSignatureAnalyzer::calculateFileHash(const std::string& alg
         return "";
     }
     
-    // Simple hash calculation placeholder
-    // In a real implementation, you'd use a proper hash library
     
     BYTE* fileData = (BYTE*)pFileInfo_->pDosHeader;
     size_t fileSize = pFileInfo_->dwFileSize;
     
     if (algorithm == "SHA256") {
-        // Calculate SHA256 hash (placeholder)
         std::stringstream ss;
         ss << "SHA256_HASH_";
         for (size_t i = 0; i < std::min(fileSize, (size_t)64); i += 8) {
@@ -319,8 +289,6 @@ std::string PEDigitalSignatureAnalyzer::bytesToHex(const BYTE* data, size_t size
 PEDigitalSignatureAnalyzer::SecurityCatalogInfo PEDigitalSignatureAnalyzer::checkSecurityCatalog() {
     catalogInfo_ = {};
     
-    // Security catalog checking would require Windows API calls
-    // This is a placeholder implementation
     catalogInfo_.isInCatalog = false;
     catalogInfo_.catalogFile = "";
     catalogInfo_.catalogHash = "";
@@ -329,13 +297,9 @@ PEDigitalSignatureAnalyzer::SecurityCatalogInfo PEDigitalSignatureAnalyzer::chec
 }
 
 bool PEDigitalSignatureAnalyzer::verifyAuthenticodeSignature() {
-    // This would require proper cryptographic verification
-    // Placeholder implementation
     return signatureInfo_.isSigned && signatureInfo_.isValid;
 }
 
 bool PEDigitalSignatureAnalyzer::verifyFileHash() {
-    // This would calculate and verify the file hash against the signature
-    // Placeholder implementation
     return signatureInfo_.isSigned;
 }

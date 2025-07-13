@@ -4,7 +4,6 @@
 #include <iostream>
 #include <memory>
 
-// Use a unique_ptr for file content to ensure automatic cleanup
 struct FileContentDeleter {
     void operator()(void* ptr) const {
         free(ptr);
@@ -33,7 +32,6 @@ int LoadPEFile(const char* lpFilePath, PPE_FILE_INFO pFileInfo)
         return PE_ERROR_FILE_OPEN;
     }
 
-    // Use unique_ptr for automatic cleanup
     std::unique_ptr<void, FileContentDeleter> fileContent(malloc(static_cast<size_t>(size)));
     if (!fileContent) {
         fprintf(stderr, "[-] Error: Memory allocation failed for PE file: %s\n", lpFilePath);
@@ -82,7 +80,6 @@ int ValidatePEFile(PPE_FILE_INFO pFileInfo)
         return PE_ERROR_INVALID_PE;
     }
 
-    // Determine if it's 64-bit or 32-bit
     if (pFileInfo->pNtHeader->OptionalHeader.OptionalHeader64.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     {
         pFileInfo->bIs64Bit = TRUE;

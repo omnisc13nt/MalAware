@@ -18,16 +18,13 @@ int ParsePE32(PPE_FILE_INFO pFileInfo)
     printf("\n[+] Architecture x86\n");
     Logger::output("\n[+] Architecture x86");
 
-    // Display headers
     DisplayDosHeader(pFileInfo->pDosHeader);
     DisplayNTHeader(pFileInfo);
     DisplayFileHeader(&imageFileHeader);
     DisplayOptionalHeader32(&imageOptionalHeader32);
 
-    // Display sections
     DisplaySections(pImageSectionHeader, imageFileHeader.NumberOfSections);
 
-    // Parse imports and exports
     int result = ParseImports(pFileInfo);
     if (result != PE_SUCCESS) {
         return result;
@@ -56,16 +53,13 @@ int ParsePE64(PPE_FILE_INFO pFileInfo)
     printf("\n[+] Architecture x64\n");
     Logger::output("\n[+] Architecture x64");
 
-    // Display headers
     DisplayDosHeader(pFileInfo->pDosHeader);
     DisplayNTHeader(pFileInfo);
     DisplayFileHeader(&imageFileHeader);
     DisplayOptionalHeader64(&imageOptionalHeader64);
 
-    // Display sections
     DisplaySections(pImageSectionHeader, imageFileHeader.NumberOfSections);
 
-    // Parse imports and exports
     int result = ParseImports(pFileInfo);
     if (result != PE_SUCCESS) {
         return result;

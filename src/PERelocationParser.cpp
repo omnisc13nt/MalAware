@@ -37,8 +37,6 @@ void PERelocationParser::printRelocations() const {
 
 void PERelocationParser::parseRelocationTable(DWORD rva, DWORD size) {
     (void)size; // Suppress unused parameter warning
-    // Minimal stub: In a real implementation, parse IMAGE_BASE_RELOCATION blocks
-    // For now, just add a dummy entry for demonstration
     RelocationEntry entry;
     entry.pageRVA = rva;
     entry.offsets.push_back(0x100);

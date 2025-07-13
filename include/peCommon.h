@@ -5,13 +5,9 @@
 #include <cstring>
 #include <cstdarg>
 
-// Include output capture for global printf override
 #include "outputCapture.h"
 
-// Cross-platform PE parsing definitions
-// These definitions are based on Windows PE format but made cross-platform
 
-// Basic types
 typedef uint8_t BYTE;
 typedef uint16_t WORD;
 typedef uint32_t DWORD;
@@ -26,14 +22,12 @@ typedef void* HANDLE;
 #define FALSE 0
 #define INVALID_HANDLE_VALUE ((HANDLE)-1)
 
-// PE constants
 #define IMAGE_DOS_SIGNATURE 0x5A4D     // MZ
 #define IMAGE_NT_SIGNATURE 0x00004550  // PE00
 #define IMAGE_NT_OPTIONAL_HDR32_MAGIC 0x10b
 #define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
 #define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
 
-// Directory entry indices
 #define IMAGE_DIRECTORY_ENTRY_EXPORT         0
 #define IMAGE_DIRECTORY_ENTRY_IMPORT         1
 #define IMAGE_DIRECTORY_ENTRY_RESOURCE       2
@@ -50,21 +44,17 @@ typedef void* HANDLE;
 #define IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT   13
 #define IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR 14
 
-// File characteristics
 #define IMAGE_FILE_EXECUTABLE_IMAGE 0x0002
 #define IMAGE_FILE_DLL 0x2000
 #define IMAGE_FILE_SYSTEM 0x1000
 
-// Section characteristics
 #define IMAGE_SCN_MEM_EXECUTE 0x20000000
 #define IMAGE_SCN_MEM_READ 0x40000000
 #define IMAGE_SCN_MEM_WRITE 0x80000000
 
-// Ordinal flags
 #define IMAGE_ORDINAL_FLAG32 0x80000000
 #define IMAGE_ORDINAL_FLAG64 0x8000000000000000ULL
 
-// DOS Header
 typedef struct _IMAGE_DOS_HEADER {
     WORD e_magic;
     WORD e_cblp;
@@ -87,7 +77,6 @@ typedef struct _IMAGE_DOS_HEADER {
     LONG e_lfanew;
 } IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
 
-// File Header
 typedef struct _IMAGE_FILE_HEADER {
     WORD Machine;
     WORD NumberOfSections;
@@ -98,13 +87,11 @@ typedef struct _IMAGE_FILE_HEADER {
     WORD Characteristics;
 } IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
 
-// Data Directory
 typedef struct _IMAGE_DATA_DIRECTORY {
     DWORD VirtualAddress;
     DWORD Size;
 } IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
 
-// Optional Header 32
 typedef struct _IMAGE_OPTIONAL_HEADER32 {
     WORD Magic;
     BYTE MajorLinkerVersion;
@@ -139,7 +126,6 @@ typedef struct _IMAGE_OPTIONAL_HEADER32 {
     IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 } IMAGE_OPTIONAL_HEADER32, *PIMAGE_OPTIONAL_HEADER32;
 
-// Optional Header 64
 typedef struct _IMAGE_OPTIONAL_HEADER64 {
     WORD Magic;
     BYTE MajorLinkerVersion;
@@ -173,7 +159,6 @@ typedef struct _IMAGE_OPTIONAL_HEADER64 {
     IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 } IMAGE_OPTIONAL_HEADER64, *PIMAGE_OPTIONAL_HEADER64;
 
-// NT Headers
 typedef struct _IMAGE_NT_HEADERS32 {
     DWORD Signature;
     IMAGE_FILE_HEADER FileHeader;
@@ -186,7 +171,6 @@ typedef struct _IMAGE_NT_HEADERS64 {
     IMAGE_OPTIONAL_HEADER64 OptionalHeader;
 } IMAGE_NT_HEADERS64, *PIMAGE_NT_HEADERS64;
 
-// Generic NT Headers union
 typedef struct _IMAGE_NT_HEADERS {
     DWORD Signature;
     IMAGE_FILE_HEADER FileHeader;
@@ -196,7 +180,6 @@ typedef struct _IMAGE_NT_HEADERS {
     } OptionalHeader;
 } IMAGE_NT_HEADERS, *PIMAGE_NT_HEADERS;
 
-// Section Header
 typedef struct _IMAGE_SECTION_HEADER {
     BYTE Name[8];
     union {
@@ -213,7 +196,6 @@ typedef struct _IMAGE_SECTION_HEADER {
     DWORD Characteristics;
 } IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER;
 
-// Import structures
 typedef struct _IMAGE_IMPORT_DESCRIPTOR {
     union {
         DWORD Characteristics;
@@ -248,7 +230,6 @@ typedef struct _IMAGE_IMPORT_BY_NAME {
     BYTE Name[1];
 } IMAGE_IMPORT_BY_NAME, *PIMAGE_IMPORT_BY_NAME;
 
-// Export structures
 typedef struct _IMAGE_EXPORT_DIRECTORY {
     DWORD Characteristics;
     DWORD TimeDateStamp;
@@ -263,7 +244,6 @@ typedef struct _IMAGE_EXPORT_DIRECTORY {
     DWORD AddressOfNameOrdinals;
 } IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
 
-// Debug Directory
 typedef struct _IMAGE_DEBUG_DIRECTORY {
     DWORD Characteristics;
     DWORD TimeDateStamp;
@@ -275,7 +255,6 @@ typedef struct _IMAGE_DEBUG_DIRECTORY {
     DWORD PointerToRawData;
 } IMAGE_DEBUG_DIRECTORY, *PIMAGE_DEBUG_DIRECTORY;
 
-// Debug Types
 #define IMAGE_DEBUG_TYPE_UNKNOWN         0
 #define IMAGE_DEBUG_TYPE_COFF            1
 #define IMAGE_DEBUG_TYPE_CODEVIEW        2
@@ -294,7 +273,6 @@ typedef struct _IMAGE_DEBUG_DIRECTORY {
 #define IMAGE_DEBUG_TYPE_MPX             15
 #define IMAGE_DEBUG_TYPE_REPRO           16
 
-// Symbol Table Entry
 typedef struct _IMAGE_SYMBOL {
     union {
         BYTE ShortName[8];
@@ -311,7 +289,6 @@ typedef struct _IMAGE_SYMBOL {
     BYTE NumberOfAuxSymbols;
 } IMAGE_SYMBOL, *PIMAGE_SYMBOL;
 
-// Common types and constants used across the PE parser
 typedef struct _PE_FILE_INFO {
     HANDLE hFileContent;
     PIMAGE_DOS_HEADER pDosHeader;
@@ -320,7 +297,6 @@ typedef struct _PE_FILE_INFO {
     DWORD dwFileSize;
 } PE_FILE_INFO, *PPE_FILE_INFO;
 
-// Error codes
 #define PE_SUCCESS 0
 #define PE_ERROR_FILE_OPEN -1
 #define PE_ERROR_INVALID_PE -2
@@ -336,7 +312,6 @@ typedef struct _PE_FILE_INFO {
 #define PE_ERROR_IMPORT_PARSING_FAILED -12
 #define PE_ERROR_EXPORT_PARSING_FAILED -13
 
-// Error handling structure
 typedef struct _PE_ERROR_INFO {
     int errorCode;
     const char* errorMessage;
@@ -345,7 +320,6 @@ typedef struct _PE_ERROR_INFO {
     int lineNumber;
 } PE_ERROR_INFO, *PPE_ERROR_INFO;
 
-// Error handling macros
 #define PE_SET_ERROR(info, code, msg, detail) \
     do { \
         (info)->errorCode = (code); \
@@ -363,25 +337,60 @@ typedef struct _PE_ERROR_INFO {
         } \
     } while(0)
 
-// WIN_CERTIFICATE structure for digital signature parsing
 typedef struct _WIN_CERTIFICATE {
     DWORD dwLength;
     WORD wRevision;
     WORD wCertificateType;
-    BYTE bCertificate[1]; // Variable length
+    BYTE bCertificate[1];
 } WIN_CERTIFICATE, *PWIN_CERTIFICATE;
 
-// Helper function declarations
 inline bool isValidString(const char* str, size_t maxLen) {
     if (!str) return false;
+    size_t len = 0;
     for (size_t i = 0; i < maxLen; ++i) {
-        if (str[i] == '\0') return true;
-        if (str[i] < 32 || str[i] > 126) return false; // Printable ASCII only
+        if (str[i] == '\0') {
+            return len >= 1 && len <= 255; 
+        }
+        if ((str[i] >= 'a' && str[i] <= 'z') ||
+            (str[i] >= 'A' && str[i] <= 'Z') ||
+            (str[i] >= '0' && str[i] <= '9') ||
+            str[i] == '_' || str[i] == '.' || str[i] == '@' ||
+            str[i] == '$' || str[i] == '?' || str[i] == '#' ||
+            (unsigned char)str[i] >= 128) { // Extended ASCII
+            len++;
+        } else if (str[i] < 32 && str[i] != '\0') {
+            return false;
+        } else {
+            len++;
+        }
     }
-    return false; // No null terminator found within maxLen
+    return false; 
 }
 
-// Logging functions
+inline bool isLikelyObfuscated(const char* str, size_t len) {
+    if (!str || len == 0) return true;
+    
+    int nonPrintable = 0;
+    int uppercase = 0;
+    int lowercase = 0;
+    int digits = 0;
+    int symbols = 0;
+    
+    for (size_t i = 0; i < len && str[i] != '\0'; ++i) {
+        if (str[i] < 32 || str[i] > 126) nonPrintable++;
+        else if (str[i] >= 'A' && str[i] <= 'Z') uppercase++;
+        else if (str[i] >= 'a' && str[i] <= 'z') lowercase++;
+        else if (str[i] >= '0' && str[i] <= '9') digits++;
+        else symbols++;
+    }
+    
+    if (nonPrintable > len / 4) return true;  
+    if (len > 3 && uppercase == 0 && lowercase == 0) return true; 
+    if (len > 10 && symbols > len / 2) return true;
+    
+    return false;
+}
+
 #include <ctime>
 #include <fstream>
 
@@ -394,7 +403,6 @@ private:
 public:
     static void init(const char* logFilename = "Logs.txt", const char* outputFilename = "ParseOutput.txt") {
         if (!isInitialized) {
-            // Initialize log file
             logFile.open(logFilename, std::ios::app);
             if (logFile.is_open()) {
                 auto now = std::time(nullptr);
@@ -404,8 +412,7 @@ public:
                 logFile.flush();
             }
             
-            // Initialize output file
-            outputFile.open(outputFilename, std::ios::trunc); // Overwrite for each session
+            outputFile.open(outputFilename, std::ios::trunc);
             if (outputFile.is_open()) {
                 auto now = std::time(nullptr);
                 auto localTime = std::localtime(&now);
@@ -443,10 +450,8 @@ public:
         vsnprintf(buffer, sizeof(buffer), format, args);
         va_end(args);
         
-        // Print to console
         printf("%s", buffer);
         
-        // Write to output file
         if (isInitialized && outputFile.is_open()) {
             outputFile << buffer;
             outputFile.flush();
@@ -468,7 +473,6 @@ public:
     }
 };
 
-// Logging macros
 #define LOG(msg) do { \
     printf("%s", msg); \
     Logger::log(msg); \
@@ -490,7 +494,6 @@ public:
     } \
 } while(0)
 
-// Debug logging macros (only write to log file, not console or output)
 #define LOG_DEBUG(msg) do { \
     Logger::log(msg); \
 } while(0)
@@ -501,7 +504,6 @@ public:
     Logger::log(buffer); \
 } while(0)
 
-// Output-only macros (write to console and output file, but not debug logs)
 #define LOG_OUTPUT(msg) do { \
     printf("%s", msg); \
     Logger::output(msg); \
@@ -514,5 +516,4 @@ public:
     Logger::output(buffer); \
 } while(0)
 
-// Macro to replace printf with output logging
 #define PRINTF_OUTPUT(...) Logger::printf_and_output(__VA_ARGS__)

@@ -6,7 +6,6 @@
 #include <ctime>
 
 PEDebugInfoAnalyzer::PEDebugInfoAnalyzer(PPE_FILE_INFO pFileInfo) : pFileInfo_(pFileInfo) {
-    // Initialize debug info
     debugInfo_ = {};
 }
 
@@ -17,11 +16,9 @@ PEDebugInfoAnalyzer::DebugInfo PEDebugInfoAnalyzer::analyzeDebugInfo() {
         return debugInfo_;
     }
     
-    // Parse debug directories
     debugInfo_.debugDirectories = parseDebugDirectories();
     debugInfo_.hasDebugInfo = !debugInfo_.debugDirectories.empty();
     
-    // Parse CodeView information
     for (const auto& entry : debugInfo_.debugDirectories) {
         if (entry.type == IMAGE_DEBUG_TYPE_CODEVIEW) {
             BYTE* data = nullptr;
@@ -32,14 +29,11 @@ PEDebugInfoAnalyzer::DebugInfo PEDebugInfoAnalyzer::analyzeDebugInfo() {
         }
     }
     
-    // Identify compiler and build environment
     debugInfo_.compiledWith = identifyCompiler();
     debugInfo_.buildEnvironment = extractBuildEnvironment();
     
-    // Check for symbols
     debugInfo_.hasSymbols = hasSymbolTable();
     
-    // Basic optimization detection
     debugInfo_.isOptimized = (debugInfo_.debugDirectories.empty() || 
                              debugInfo_.codeViewInfo.pdbPath.empty());
     
@@ -53,7 +47,6 @@ std::vector<PEDebugInfoAnalyzer::DebugDirectoryEntry> PEDebugInfoAnalyzer::parse
         return entries;
     }
     
-    // Get debug data directory
     PIMAGE_DATA_DIRECTORY debugDir = nullptr;
     
     if (pFileInfo_->bIs64Bit) {
@@ -72,14 +65,11 @@ std::vector<PEDebugInfoAnalyzer::DebugDirectoryEntry> PEDebugInfoAnalyzer::parse
         return entries;
     }
     
-    // Calculate number of debug directory entries
     DWORD entryCount = debugDir->Size / sizeof(IMAGE_DEBUG_DIRECTORY);
     
-    // Convert RVA to file offset
     DWORD fileOffset = 0;
     bool found = false;
     
-    // Get section headers to convert RVA to file offset
     PIMAGE_SECTION_HEADER sectionHeader;
     if (pFileInfo_->bIs64Bit) {
         auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
@@ -89,7 +79,6 @@ std::vector<PEDebugInfoAnalyzer::DebugDirectoryEntry> PEDebugInfoAnalyzer::parse
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
     
-    // Find section containing debug directory
     for (int i = 0; i < pFileInfo_->pNtHeader->FileHeader.NumberOfSections; i++) {
         if (debugDir->VirtualAddress >= sectionHeader[i].VirtualAddress &&
             debugDir->VirtualAddress < sectionHeader[i].VirtualAddress + sectionHeader[i].SizeOfRawData) {
@@ -104,7 +93,6 @@ std::vector<PEDebugInfoAnalyzer::DebugDirectoryEntry> PEDebugInfoAnalyzer::parse
         return entries;
     }
     
-    // Parse debug directory entries
     PIMAGE_DEBUG_DIRECTORY debugEntries = (PIMAGE_DEBUG_DIRECTORY)((DWORD_PTR)pFileInfo_->pDosHeader + fileOffset);
     
     for (DWORD i = 0; i < entryCount; i++) {
@@ -132,7 +120,6 @@ PEDebugInfoAnalyzer::CodeViewInfo PEDebugInfoAnalyzer::parseCodeViewInfo(const B
         return info;
     }
     
-    // Check CodeView signature
     DWORD signature = *(DWORD*)data;
     
     if (signature == 0x53445352) { // 'RSDS' - PDB 7.0 format
@@ -145,7 +132,6 @@ PEDebugInfoAnalyzer::CodeViewInfo PEDebugInfoAnalyzer::parseCodeViewInfo(const B
         info.isValid = parseCodeViewPDB20(data, size);
         info.signature = "NB11";
     } else {
-        // Unknown CodeView format
         info.signature = "Unknown";
         info.isValid = false;
     }
@@ -158,14 +144,11 @@ bool PEDebugInfoAnalyzer::parseCodeViewPDB70(const BYTE* data, size_t size) {
         return false;
     }
     
-    // Skip signature (4 bytes)
     const BYTE* guidBytes = data + 4;
     debugInfo_.codeViewInfo.guid = formatGuid(guidBytes);
     
-    // Read age (4 bytes)
     debugInfo_.codeViewInfo.age = *(DWORD*)(data + 20);
     
-    // Read PDB path (null-terminated string)
     if (size > 24) {
         const char* pdbPath = (const char*)(data + 24);
         size_t maxLen = size - 24;
@@ -183,15 +166,10 @@ bool PEDebugInfoAnalyzer::parseCodeViewPDB20(const BYTE* data, size_t size) {
         return false;
     }
     
-    // Skip signature (4 bytes)
-    // Skip offset (4 bytes)
-    // Read timestamp (4 bytes)
     DWORD timestamp = *(DWORD*)(data + 8);
     
-    // Read age (4 bytes)
     debugInfo_.codeViewInfo.age = *(DWORD*)(data + 12);
     
-    // Read PDB path (null-terminated string)
     if (size > 16) {
         const char* pdbPath = (const char*)(data + 16);
         size_t maxLen = size - 16;
@@ -207,7 +185,6 @@ bool PEDebugInfoAnalyzer::parseCodeViewPDB20(const BYTE* data, size_t size) {
 std::string PEDebugInfoAnalyzer::identifyCompiler() {
     std::string compiler = "Unknown";
     
-    // Check PDB path for compiler hints
     if (!debugInfo_.codeViewInfo.pdbPath.empty()) {
         const std::string& pdbPath = debugInfo_.codeViewInfo.pdbPath;
         
@@ -224,7 +201,6 @@ std::string PEDebugInfoAnalyzer::identifyCompiler() {
         }
     }
     
-    // Check for Rich header
     if (hasRichHeader()) {
         std::string richInfo = parseRichHeader();
         if (!richInfo.empty()) {
@@ -238,11 +214,9 @@ std::string PEDebugInfoAnalyzer::identifyCompiler() {
 std::string PEDebugInfoAnalyzer::extractBuildEnvironment() {
     std::string environment = "Unknown";
     
-    // Extract from PDB path
     if (!debugInfo_.codeViewInfo.pdbPath.empty()) {
         const std::string& pdbPath = debugInfo_.codeViewInfo.pdbPath;
         
-        // Extract directory path
         size_t lastSlash = pdbPath.find_last_of("\\/");
         if (lastSlash != std::string::npos) {
             environment = pdbPath.substr(0, lastSlash);
@@ -270,12 +244,10 @@ BYTE* PEDebugInfoAnalyzer::findRichHeader() {
         return nullptr;
     }
     
-    // Rich header is located between DOS header and NT header
     DWORD ntHeaderOffset = pFileInfo_->pDosHeader->e_lfanew;
     BYTE* searchStart = (BYTE*)pFileInfo_->pDosHeader + sizeof(IMAGE_DOS_HEADER);
     BYTE* searchEnd = (BYTE*)pFileInfo_->pDosHeader + ntHeaderOffset;
     
-    // Look for "Rich" signature (0x68636952)
     for (BYTE* ptr = searchStart; ptr < searchEnd - 4; ptr++) {
         if (*(DWORD*)ptr == 0x68636952) { // 'Rich' in little endian
             return ptr;
@@ -291,7 +263,6 @@ std::string PEDebugInfoAnalyzer::parseRichHeader() {
         return "";
     }
     
-    // Rich header analysis would be complex - simplified version
     return "Rich header present";
 }
 
@@ -413,7 +384,6 @@ std::string PEDebugInfoAnalyzer::formatGuid(const BYTE* guidBytes) {
     std::stringstream ss;
     ss << std::hex << std::setfill('0');
     
-    // Format as standard GUID: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
     DWORD* d1 = (DWORD*)guidBytes;
     WORD* w1 = (WORD*)(guidBytes + 4);
     WORD* w2 = (WORD*)(guidBytes + 6);
