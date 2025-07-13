@@ -146,13 +146,7 @@ Control Flow Guard: Not Present | High Entropy VA: Disabled
 - **Advanced Packer Detection**: Enhanced obfuscation detection
 - **YARA Rule Integration**: Custom malware signature matching
 - **Enhanced Output Formats**: XML, CSV export options
-- **Configuration Profiles**: User-defined analysis templates
-
-## 📚 Documentation
-
-- **[changesTracker.md](changesTracker.md)** - Complete development history and technical changes
-- **[changelogs.md](changelogs.md)** - Feature releases and major updates
-- **[analysis_results/](analysis_results/)** - Real-world malware analysis examples
+- **Configuration Profiles**: User-defined analysis template
 
 ## ⚠️ Security Notice
 
