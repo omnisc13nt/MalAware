@@ -80,16 +80,40 @@ typedef struct _IMAGE_RESOURCE_DATA_ENTRY {
 void PEResourceParser::parseResourceDirectory(DWORD rva, DWORD baseRVA, int depth, DWORD type, DWORD name, DWORD lang) {
     if (rva == 0 || rva > fileSize_ || !fileContent_)
         return;
+    
+    // Add better validation and error checking
+    if (depth > 3) {
+        std::cerr << "[WARNING] Resource directory depth exceeded limit" << std::endl;
+        return;
+    }
+    
     BYTE* base = reinterpret_cast<BYTE*>(fileContent_);
     size_t dirOffset = rva - baseRVA;
-    if (dirOffset + sizeof(IMAGE_RESOURCE_DIRECTORY) > fileSize_)
+    
+    // Improved bounds checking
+    if (dirOffset + sizeof(IMAGE_RESOURCE_DIRECTORY) > fileSize_) {
+        std::cerr << "[ERROR] Resource directory offset out of bounds" << std::endl;
         return;
+    }
+    
     PIMAGE_RESOURCE_DIRECTORY resDir = reinterpret_cast<PIMAGE_RESOURCE_DIRECTORY>(base + dirOffset);
+    
+    // Validate resource directory structure
+    if (resDir->NumberOfNamedEntries + resDir->NumberOfIdEntries > 1000) {
+        std::cerr << "[WARNING] Suspicious number of resource entries detected" << std::endl;
+        return;
+    }
+    
     int totalEntries = resDir->NumberOfNamedEntries + resDir->NumberOfIdEntries;
     size_t entriesOffset = dirOffset + sizeof(IMAGE_RESOURCE_DIRECTORY);
-    if (entriesOffset + totalEntries * sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY) > fileSize_)
+    
+    if (entriesOffset + totalEntries * sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY) > fileSize_) {
+        std::cerr << "[ERROR] Resource entries offset out of bounds" << std::endl;
         return;
+    }
+    
     PIMAGE_RESOURCE_DIRECTORY_ENTRY entries = reinterpret_cast<PIMAGE_RESOURCE_DIRECTORY_ENTRY>(base + entriesOffset);
+    
     for (int i = 0; i < totalEntries; ++i) {
         DWORD entryType = type, entryName = name, entryLang = lang;
         if (depth == 0) {
@@ -104,30 +128,40 @@ void PEResourceParser::parseResourceDirectory(DWORD rva, DWORD baseRVA, int dept
                 entryName = entries[i].u1.Id;
         } else if (depth == 2) {
             if (entries[i].u1.s.NameIsString)
-                entryLang = 0; 
+                entryLang = 0;
             else
                 entryLang = entries[i].u1.Id;
         }
+        
+        // Add proper validation for resource entries
         if (entries[i].u2.s2.DataIsDirectory) {
-            DWORD subdirRVA = entries[i].u2.s2.OffsetToDirectory;
-            if (subdirRVA == 0 || subdirRVA > fileSize_)
+            DWORD nextRVA = baseRVA + entries[i].u2.s2.OffsetToDirectory;
+            if (nextRVA > fileSize_) {
+                std::cerr << "[ERROR] Invalid resource directory RVA" << std::endl;
                 continue;
-            parseResourceDirectory(subdirRVA, baseRVA, depth + 1, entryType, entryName, entryLang);
+            }
+            parseResourceDirectory(nextRVA, baseRVA, depth + 1, entryType, entryName, entryLang);
         } else {
-            DWORD dataEntryRVA = entries[i].u2.OffsetToData;
-            size_t dataEntryOffset = dataEntryRVA - baseRVA;
-            if (dataEntryRVA == 0 || dataEntryOffset + sizeof(IMAGE_RESOURCE_DATA_ENTRY) > fileSize_)
-                continue;
-            PIMAGE_RESOURCE_DATA_ENTRY dataEntry = reinterpret_cast<PIMAGE_RESOURCE_DATA_ENTRY>(base + dataEntryOffset);
-            if (!dataEntry || dataEntry->OffsetToData == 0 || dataEntry->Size == 0)
-                continue;
-            ResourceEntry entry;
-            entry.type = entryType;
-            entry.name = entryName;
-            entry.lang = entryLang;
-            entry.rva = dataEntry->OffsetToData;
-            entry.size = dataEntry->Size;
-            resources_.push_back(entry);
+            // Process resource data entry with validation
+            DWORD dataRVA = baseRVA + entries[i].u2.OffsetToData;
+            if (dataRVA + sizeof(IMAGE_RESOURCE_DATA_ENTRY) <= fileSize_) {
+                PIMAGE_RESOURCE_DATA_ENTRY dataEntry = reinterpret_cast<PIMAGE_RESOURCE_DATA_ENTRY>(base + dataRVA - baseRVA);
+                
+                // Validate data entry
+                if (dataEntry->OffsetToData < fileSize_ && dataEntry->Size < fileSize_) {
+                    ResourceEntry entry;
+                    entry.type = entryType;
+                    entry.name = entryName;
+                    entry.lang = entryLang;
+                    entry.rva = dataEntry->OffsetToData;
+                    entry.size = dataEntry->Size;
+                    
+                    // Only add valid resource entries
+                    if (entry.rva != 0 && entry.size != 0 && entry.rva < fileSize_) {
+                        resources_.push_back(entry);
+                    }
+                }
+            }
         }
     }
 }

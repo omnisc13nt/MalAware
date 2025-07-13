@@ -1,6 +1,8 @@
 # PE File Parser
 
-A comprehensive cross-platform PE (Portable Executable) file parser and analyzer written in C++. This tool provides detailed analysis of Windows PE files including headers, sections, imports, exports, resources, and security features with accurate malware detection capabilities.
+A comprehensive cross-platform PE (Portable Executable) file parser and analyzer written in C++. This tool provides detailed analysis of Windows PE files including headers, sections, imports, exports, and resources with **advanced malware detection capabilities** featuring import obfuscation detection, security assessment, and evidence-based threat classification.
+
+> 📊 **Quick Start**: See [sampleOutput.md](sampleOutput.md) for comprehensive analysis examples
 
 ## Features
 
@@ -13,13 +15,14 @@ A comprehensive cross-platform PE (Portable Executable) file parser and analyzer
 - **Security Features Detection**: ASLR, DEP, SEH, CFG status analysis
 
 ### Advanced Security Analysis
-- **Malware Detection Engine**: Multi-vector threat analysis with calibrated risk scoring
-- **Import Obfuscation Detection**: Identification of corrupted import tables commonly used by malware
-- **Anomaly Detection**: Suspicious characteristics and security violations
-- **Entropy Analysis**: Section-by-section entropy calculation for packed/encrypted content
-- **Hash Generation**: Multiple hash algorithms (MD5, SHA-1, SHA-256, Imphash, SSDeep, TLSH)
-- **Overlay Detection**: Analysis of data appended to PE files
-- **Security Features Assessment**: Comprehensive security posture evaluation
+- **Malware Detection Engine**: Multi-vector threat analysis with calibrated risk scoring (0-100 scale)
+- **Import Obfuscation Detection**: Identifies corrupted import tables with 119+ invalid entries in malware samples
+- **Security Feature Assessment**: ASLR/DEP/SEH/CFG analysis with compliance checking
+- **Anomaly Detection**: Suspicious characteristics identification and security violations
+- **Entropy Analysis**: Section-by-section entropy calculation for packed/encrypted content detection
+- **Hash Generation**: Multiple algorithms (MD5, SHA-1, SHA-256, Imphash) plus fuzzy hashing support
+- **Overlay Detection**: Analysis of data appended to PE files with entropy assessment
+- **Threat Classification**: Evidence-based assessment with actionable security recommendations
 
 ### Output and Integration
 - **Flexible Output Options**: Customizable output file naming with `-o` option
@@ -83,8 +86,13 @@ make
 peFileParserLinux.exe target.exe -o windows_analysis.txt
 ```
 
+> 💡 **Tip**: See [sampleOutput.md](sampleOutput.md) for real analysis examples comparing legitimate software (0/100 risk) vs malware (20/100 risk) with detailed technical breakdowns.
+
 ## Real-World Analysis Examples
 
+> 📊 **For comprehensive side-by-side analysis examples, see [sampleOutput.md](sampleOutput.md)**
+
+The following examples demonstrate the parser's capabilities on real-world samples:
 ### Legitimate Software Analysis
 Analysis of Telegram Desktop installer (`tsetup-x64.5.9.0.exe`):
 
@@ -159,6 +167,24 @@ Threat Indicators (1 found):
   Evidence: Corrupted import table entries detected during parsing
 Recommendation: Exercise caution. Consider additional analysis with behavioral tools.
 ```
+
+> 🔍 **See [sampleOutput.md](sampleOutput.md) for detailed side-by-side comparison** showing how the parser differentiates between legitimate software and malware with comprehensive analysis results.
+
+## Documentation
+
+### Sample Analysis Showcase
+📋 **[sampleOutput.md](sampleOutput.md)** - Comprehensive side-by-side analysis comparison
+- Legitimate software vs malware sample analysis
+- Detailed feature-by-feature comparison tables
+- Security assessment methodology demonstration
+- Import obfuscation detection examples
+- Risk scoring and threat classification examples
+
+### Analysis Reports
+- **Import/Export Analysis**: Function enumeration with corruption detection
+- **Security Assessment**: Evidence-based threat indicators with severity scoring
+- **Malware Detection**: Multi-vector analysis with calibrated risk assessment
+- **Cross-Platform Compatibility**: Consistent results across Linux and Windows environments
 
 ## Key Capabilities
 

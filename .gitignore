@@ -73,6 +73,7 @@ ParseResults.txt
 # Important markdown files
 *.md
 !README.md
+!sampleOutput.md
 !SAMPLE_OUTPUT.md
 PROJECT_SUMMARY.md
 
