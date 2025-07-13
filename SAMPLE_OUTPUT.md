@@ -202,5 +202,3 @@ This example demonstrates the parser's ability to:
 - Maintain structural analysis despite corruption
 - Provide comprehensive hash fingerprinting
 - Generate actionable security assessments
-
-For the complete raw output, see the generated `sample_output_raw.txt` file.
