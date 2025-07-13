@@ -3,12 +3,10 @@
 #include "outputCapture.h"
 #include <vector>
 #include <string>
-
 struct RelocationEntry {
     DWORD pageRVA;
     std::vector<DWORD> offsets;
 };
-
 class PERelocationParser {
 public:
     PERelocationParser(HANDLE fileContent, PIMAGE_NT_HEADERS ntHeader);

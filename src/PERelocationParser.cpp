@@ -1,9 +1,7 @@
 #include "../include/PERelocationParser.h"
 #include <iostream>
-
 PERelocationParser::PERelocationParser(HANDLE fileContent, PIMAGE_NT_HEADERS ntHeader)
     : fileContent_(fileContent), ntHeader_(ntHeader) {}
-
 std::vector<RelocationEntry> PERelocationParser::parseRelocations() {
     relocations_.clear();
     DWORD relocRVA = 0;
@@ -19,7 +17,6 @@ std::vector<RelocationEntry> PERelocationParser::parseRelocations() {
     parseRelocationTable(relocRVA, relocSize);
     return relocations_;
 }
-
 void PERelocationParser::printRelocations() const {
     if (relocations_.empty()) {
         std::cout << "No relocations found." << std::endl;
@@ -34,7 +31,6 @@ void PERelocationParser::printRelocations() const {
         std::cout << std::dec << std::endl;
     }
 }
-
 void PERelocationParser::parseRelocationTable(DWORD rva, DWORD size) {
     (void)size; 
     RelocationEntry entry;

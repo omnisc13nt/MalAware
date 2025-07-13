@@ -1,11 +1,8 @@
 #pragma once
-
 #include "peCommon.h"
 #include <vector>
 #include <sstream>
-
 typedef uint64_t ULONGLONG;
-
 typedef struct _IMAGE_TLS_DIRECTORY32 {
     DWORD   StartAddressOfRawData;
     DWORD   EndAddressOfRawData;
@@ -14,7 +11,6 @@ typedef struct _IMAGE_TLS_DIRECTORY32 {
     DWORD   SizeOfZeroFill;
     DWORD   Characteristics;
 } IMAGE_TLS_DIRECTORY32, *PIMAGE_TLS_DIRECTORY32;
-
 typedef struct _IMAGE_TLS_DIRECTORY64 {
     ULONGLONG StartAddressOfRawData;
     ULONGLONG EndAddressOfRawData;
@@ -23,7 +19,6 @@ typedef struct _IMAGE_TLS_DIRECTORY64 {
     DWORD     SizeOfZeroFill;
     DWORD     Characteristics;
 } IMAGE_TLS_DIRECTORY64, *PIMAGE_TLS_DIRECTORY64;
-
 class PETLSAnalyzer {
 public:
     struct TLSInfo {
@@ -39,14 +34,12 @@ public:
         bool isSuspicious;
         int suspicionLevel;
     };
-
     static TLSInfo analyzeTLS(PPE_FILE_INFO pFileInfo);
     static std::string generateTLSReport(const TLSInfo& tlsInfo);
     static bool hasTLSDirectory(PPE_FILE_INFO pFileInfo);
     static std::vector<DWORD_PTR> extractTLSCallbacks(PPE_FILE_INFO pFileInfo);
     static bool isCallbackSuspicious(DWORD_PTR callback, PPE_FILE_INFO pFileInfo);
     static void logTLSAnalysis(const TLSInfo& tlsInfo);
-
 private:
     static PIMAGE_TLS_DIRECTORY32 getTLSDirectory32(PPE_FILE_INFO pFileInfo);
     static PIMAGE_TLS_DIRECTORY64 getTLSDirectory64(PPE_FILE_INFO pFileInfo);

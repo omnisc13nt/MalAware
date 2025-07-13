@@ -1,19 +1,14 @@
 #include "../include/peHeaderParser.h"
-
 const char* GetImageCharacteristics(DWORD_PTR dCharacteristics)
 {
     if (dCharacteristics & IMAGE_FILE_DLL)
         return "(DLL)";
-
     if (dCharacteristics & IMAGE_FILE_SYSTEM)
         return "(DRIVER)";
-
     if (dCharacteristics & IMAGE_FILE_EXECUTABLE_IMAGE)
         return "(EXE)";
-
     return "(UNKNOWN)";
 }
-
 const char* GetSubsystem(WORD wSubsystem)
 {
     switch (wSubsystem)
@@ -28,7 +23,6 @@ const char* GetSubsystem(WORD wSubsystem)
             return "(UNKNOWN)";
     }
 }
-
 const char* GetDataDirectoryName(int nDirectoryNumber)
 {
     switch (nDirectoryNumber)
@@ -67,7 +61,6 @@ const char* GetDataDirectoryName(int nDirectoryNumber)
             return "Unknown";
     }
 }
-
 void DisplayDosHeader(PIMAGE_DOS_HEADER pDosHeader)
 {
     printf("\n[+] DOS HEADER\n");
@@ -89,13 +82,11 @@ void DisplayDosHeader(PIMAGE_DOS_HEADER pDosHeader)
     printf("\te_oeminfo : 0x%X\n", (unsigned int)pDosHeader->e_oeminfo);
     printf("\te_lfanew : 0x%X\n", (unsigned int)pDosHeader->e_lfanew);
 }
-
 void DisplayNTHeader(PPE_FILE_INFO pFileInfo)
 {
     printf("\n[+] NT HEADER\n");
     printf("\tSignature : 0x%X\n", (unsigned int)pFileInfo->pNtHeader->Signature);
 }
-
 void DisplayFileHeader(const IMAGE_FILE_HEADER* pFileHeader)
 {
     printf("\n[+] FILE HEADER\n");
@@ -107,7 +98,6 @@ void DisplayFileHeader(const IMAGE_FILE_HEADER* pFileHeader)
     printf("\tSizeOfOptionalHeader : 0x%X\n", (unsigned int)pFileHeader->SizeOfOptionalHeader);
     printf("\tCharacteristics : 0x%X %s\n", (unsigned int)pFileHeader->Characteristics, GetImageCharacteristics(pFileHeader->Characteristics));
 }
-
 void DisplayOptionalHeader32(const IMAGE_OPTIONAL_HEADER32* pOptionalHeader)
 {
     printf("\n[+] OPTIONAL HEADER\n");
@@ -141,10 +131,8 @@ void DisplayOptionalHeader32(const IMAGE_OPTIONAL_HEADER32* pOptionalHeader)
     printf("\tSizeOfHeapCommit : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfHeapCommit);
     printf("\tLoaderFlags : 0x%X\n", (unsigned int)pOptionalHeader->LoaderFlags);
     printf("\tNumberOfRvaAndSizes : 0x%X\n", (unsigned int)pOptionalHeader->NumberOfRvaAndSizes);
-    
     DisplayDataDirectories(pOptionalHeader->DataDirectory);
 }
-
 void DisplayOptionalHeader64(const IMAGE_OPTIONAL_HEADER64* pOptionalHeader)
 {
     printf("\n[+] OPTIONAL HEADER\n");
@@ -177,19 +165,15 @@ void DisplayOptionalHeader64(const IMAGE_OPTIONAL_HEADER64* pOptionalHeader)
     printf("\tSizeOfHeapCommit : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfHeapCommit);
     printf("\tLoaderFlags : 0x%X\n", (unsigned int)pOptionalHeader->LoaderFlags);
     printf("\tNumberOfRvaAndSizes : 0x%X\n", (unsigned int)pOptionalHeader->NumberOfRvaAndSizes);
-    
     DisplayDataDirectories(pOptionalHeader->DataDirectory);
 }
-
 void DisplayDataDirectories(const IMAGE_DATA_DIRECTORY* pImageDataDirectory)
 {
     printf("\n[+] DATA DIRECTORIES\n");
-    
     for (int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; ++i, ++pImageDataDirectory)
     {
         if (pImageDataDirectory->VirtualAddress == 0)
             continue;
-
         printf("\tDataDirectory (%s) VirtualAddress : 0x%X\n", GetDataDirectoryName(i), (unsigned int)pImageDataDirectory->VirtualAddress);
         printf("\tDataDirectory (%s) Size : 0x%X\n\n", GetDataDirectoryName(i), (unsigned int)pImageDataDirectory->Size);
     }

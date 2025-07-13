@@ -8,8 +8,6 @@
 #include <string>
 #include <cstddef>
 #include <cstdlib>
-
-
 void PEParser::printDebugInfo() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -17,7 +15,6 @@ void PEParser::printDebugInfo() const {
     }
     std::cout << "[+] Debug information parsing is planned for future releases." << std::endl;
 }
-
 void PEParser::printTLSCallbacks() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -25,7 +22,6 @@ void PEParser::printTLSCallbacks() const {
     }
     std::cout << "[+] TLS callbacks parsing is planned for future releases." << std::endl;
 }
-
 void PEParser::printDelayImports() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -33,7 +29,6 @@ void PEParser::printDelayImports() const {
     }
     std::cout << "[+] Delay-loaded imports parsing is planned for future releases." << std::endl;
 }
-
 void PEParser::printBoundImports() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -41,7 +36,6 @@ void PEParser::printBoundImports() const {
     }
     std::cout << "[+] Bound imports parsing is planned for future releases." << std::endl;
 }
-
 void PEParser::printDotNetMetadata() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -49,7 +43,6 @@ void PEParser::printDotNetMetadata() const {
     }
     std::cout << "[+] .NET metadata parsing is planned for future releases." << std::endl;
 }
-
 void PEParser::printIATReconstruction() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -57,7 +50,6 @@ void PEParser::printIATReconstruction() const {
     }
     std::cout << "[+] IAT reconstruction is planned for future releases." << std::endl;
 }
-
 void PEParser::printDisassembly() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -65,7 +57,6 @@ void PEParser::printDisassembly() const {
     }
     std::cout << "[+] Disassembly feature is planned for future releases." << std::endl;
 }
-
 void PEParser::printDependencies() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -73,7 +64,6 @@ void PEParser::printDependencies() const {
     }
     std::cout << "[+] Dependency scanner feature is planned for future releases." << std::endl;
 }
-
 void PEParser::printExceptionData() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -94,15 +84,12 @@ void PEParser::printExceptionData() const {
     std::cout << "    Size: " << excDir->Size << " bytes" << std::endl;
     std::cout << "    (Detailed parsing of unwind info is planned for future releases.)" << std::endl;
 }
-
 bool PEParser::is64Bit() const {
     return is64Bit_;
 }
-
 std::string PEParser::getErrorMessage() const {
     return errorMessage_;
 }
-
 void PEParser::printSummary() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -111,7 +98,6 @@ void PEParser::printSummary() const {
     std::cout << "[+] Successfully loaded PE file" << std::endl;
     std::cout << "[+] Architecture: " << (is64Bit_ ? "x64" : "x86") << std::endl;
 }
-
 void PEParser::printHeaders() const {
     if (!isValid()) return;
     DisplayDosHeader(dosHeader_);
@@ -122,21 +108,17 @@ void PEParser::printHeaders() const {
         DisplayOptionalHeader32(&ntHeader_->OptionalHeader.OptionalHeader32);
     }
 }
-
 void PEParser::printSections() const {
     if (!isValid()) return;
     auto* sectionHeader = reinterpret_cast<PIMAGE_SECTION_HEADER>((DWORD_PTR)ntHeader_ + 4 + sizeof(IMAGE_FILE_HEADER) + ntHeader_->FileHeader.SizeOfOptionalHeader);
     DisplaySections(sectionHeader, ntHeader_->FileHeader.NumberOfSections);
 }
-
 void PEParser::printImports() const {
     if (!isValid()) return;
 }
-
 void PEParser::printExports() const {
     if (!isValid()) return;
 }
-
 void PEParser::printDigitalSignature() const {
     if (!isValid()) {
         std::cerr << errorMessage_ << std::endl;
@@ -166,7 +148,6 @@ void PEParser::printDigitalSignature() const {
     std::cout << "    Certificate Type: " << winCert->wCertificateType << std::endl;
     std::cout << "    Raw certificate data size: " << certSize - sizeof(WIN_CERTIFICATE) + 1 << " bytes" << std::endl;
 }
-
 bool PEParser::loadFile(const std::string& filePath) {
     std::ifstream file(filePath, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
@@ -197,7 +178,6 @@ bool PEParser::loadFile(const std::string& filePath) {
     file.close();
     return true;
 }
-
 bool PEParser::validatePE() {
     dosHeader_ = (PIMAGE_DOS_HEADER)fileContent_;
     if (!dosHeader_ || dosHeader_->e_magic != IMAGE_DOS_SIGNATURE) {
@@ -219,12 +199,9 @@ bool PEParser::validatePE() {
     }
     return true;
 }
-
-
 bool PEParser::isValid() const {
     return fileContent_ != nullptr && dosHeader_ != nullptr && ntHeader_ != nullptr && errorMessage_.empty();
 }
-
 void PEParser::cleanup() {
     if (fileContent_) {
         free(fileContent_);

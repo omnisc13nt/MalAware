@@ -76,8 +76,15 @@ ParseResults.txt
 !sampleOutput.md
 !SAMPLE_OUTPUT.md
 PROJECT_SUMMARY.md
+CRITICAL_ISSUES_ANALYSIS.md
+FINAL_VALIDATION_REPORT.md
+COMPREHENSIVE_ANALYSIS_REPORT.md
+
+# Internal documentation (private)
+changelogs.md
 
 # Test files and folders
+theZoo/
 testFolder/
 *.test
 *.spec
