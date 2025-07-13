@@ -59,6 +59,12 @@ public:
         double entropy;
         double chi2;
         std::string fileType;
+        std::string detectedContent;
+        std::vector<std::string> warnings;
+        std::string suspicionLevel;
+        bool isCompressed;
+        bool isEncrypted;
+        bool isSelfExtractor;
     };
     OverlayInfo analyzeOverlay();
     void printFileHashes();
@@ -66,6 +72,7 @@ public:
     void printFileInfo();
     void printOverlayInfo();
     std::string toJson() const;
+    std::string getSHA256() const;
 private:
     PPE_FILE_INFO pFileInfo_;
     HashResult hashResult_;
@@ -84,6 +91,9 @@ private:
     double calculateChi2(const BYTE* data, size_t size);
     std::string detectFileType();
     std::string getMagicSignature();
+    std::string detectOverlayType(const BYTE* data, size_t size);
+    std::string analyzeOverlayContent(const BYTE* data, size_t size);
+    std::vector<std::string> generateOverlayWarnings(const OverlayInfo& info);
     std::string bytesToHex(const BYTE* data, size_t size);
     std::string toLowerCase(const std::string& str);
     DWORD getFileSize();

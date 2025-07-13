@@ -66,6 +66,7 @@ bool PESuspiciousTechniqueAnalyzer::isKnownMalwareTimestamp(DWORD timestamp) {
 }
 
 bool PESuspiciousTechniqueAnalyzer::analyzeTimestampManipulation(DWORD timestamp, const std::string& filename) {
+    (void)filename; // Parameter intentionally unused in current implementation
     bool suspicious = false;
     
     // Check for null timestamp
@@ -137,6 +138,7 @@ bool PESuspiciousTechniqueAnalyzer::analyzeTimestampManipulation(DWORD timestamp
 }
 
 bool PESuspiciousTechniqueAnalyzer::analyzeEntryPointObfuscation(DWORD entryPoint, DWORD imageBase, DWORD sizeOfCode) {
+    (void)imageBase; // Parameter intentionally unused in current implementation
     bool suspicious = false;
     
     // Check for entry point outside code section
@@ -403,6 +405,8 @@ void PESuspiciousTechniqueAnalyzer::analyzeFile(
     const std::vector<std::string>& importedFunctions,
     bool is64Bit) {
     
+    (void)is64Bit; // Parameter intentionally unused in current implementation
+    
     // Clear previous results
     detectedTechniques.clear();
     
@@ -418,13 +422,13 @@ void PESuspiciousTechniqueAnalyzer::analyzeFile(
 }
 
 void PESuspiciousTechniqueAnalyzer::printAnalysis() const {
-    LOGF("\n[+] SUSPICIOUS TECHNIQUE ANALYSIS");
-    LOGF("=================================================");
+    LOGF("\n[+] SUSPICIOUS TECHNIQUE ANALYSIS\n");
+    LOGF("=================================================\n");
     
     if (detectedTechniques.empty()) {
-        LOGF("[INFO] No suspicious techniques detected");
-        LOGF("Status: Clean");
-        LOGF("=================================================");
+        LOGF("[INFO] No suspicious techniques detected\n");
+        LOGF("Status: Clean\n");
+        LOGF("=================================================\n");
         return;
     }
     
@@ -432,54 +436,54 @@ void PESuspiciousTechniqueAnalyzer::printAnalysis() const {
     int totalScore = getTotalSeverityScore();
     std::string threatLevel = getThreatLevel();
     
-    LOGF("Techniques Detected: %d", static_cast<int>(detectedTechniques.size()));
-    LOGF("Total Threat Score: %d/100", totalScore);
-    LOGF("Threat Level: %s", threatLevel.c_str());
-    LOGF("Assessment: %s", isSuspicious() ? "HIGHLY SUSPICIOUS" : "MODERATE RISK");
-    LOGF("");
+    LOGF("Techniques Detected: %d\n", static_cast<int>(detectedTechniques.size()));
+    LOGF("Total Threat Score: %d/100\n", totalScore);
+    LOGF("Threat Level: %s\n", threatLevel.c_str());
+    LOGF("Assessment: %s\n", isSuspicious() ? "HIGHLY SUSPICIOUS" : "MODERATE RISK");
+    LOGF("\n");
     
     // List each technique in dropdown vertical format
     for (size_t i = 0; i < detectedTechniques.size(); i++) {
         const auto& technique = detectedTechniques[i];
         
-        LOGF("Technique #%d: %s", static_cast<int>(i + 1), technique.name.c_str());
-        LOGF("├─ Severity Level: %d/10 (%s)", technique.severity, getSeverityDescription(technique.severity).c_str());
-        LOGF("├─ Description:");
-        LOGF("│  %s", technique.description.c_str());
-        LOGF("├─ Evidence Found:");
-        LOGF("│  %s", technique.evidence.c_str());
-        LOGF("└─ Analysis:");
-        LOGF("   %s", technique.mitigation.c_str());
+        LOGF("Technique #%d: %s\n", static_cast<int>(i + 1), technique.name.c_str());
+        LOGF("├─ Severity Level: %d/10 (%s)\n", technique.severity, getSeverityDescription(technique.severity).c_str());
+        LOGF("├─ Description:\n");
+        LOGF("│  %s\n", technique.description.c_str());
+        LOGF("├─ Evidence Found:\n");
+        LOGF("│  %s\n", technique.evidence.c_str());
+        LOGF("└─ Analysis:\n");
+        LOGF("   %s\n", technique.mitigation.c_str());
         
         if (i < detectedTechniques.size() - 1) {
-            LOGF("");
+            LOGF("\n");
         }
     }
     
-    LOGF("");
-    LOGF("RISK ASSESSMENT:");
+    LOGF("\n");
+    LOGF("RISK ASSESSMENT:\n");
     if (totalScore >= 25) {
-        LOGF("  [CRITICAL] Immediate action required");
-        LOGF("  - This file exhibits multiple high-severity malicious indicators");
-        LOGF("  - Recommend quarantine and detailed forensic analysis");
-        LOGF("  - Do not execute under any circumstances");
+        LOGF("  [CRITICAL] Immediate action required\n");
+        LOGF("  - This file exhibits multiple high-severity malicious indicators\n");
+        LOGF("  - Recommend quarantine and detailed forensic analysis\n");
+        LOGF("  - Do not execute under any circumstances\n");
     } else if (totalScore >= 15) {
-        LOGF("  [HIGH] Suspicious file - exercise extreme caution");
-        LOGF("  - File shows concerning behavioral patterns");
-        LOGF("  - Recommend sandboxed analysis before trust");
-        LOGF("  - Monitor closely if execution is necessary");
+        LOGF("  [HIGH] Suspicious file - exercise extreme caution\n");
+        LOGF("  - File shows concerning behavioral patterns\n");
+        LOGF("  - Recommend sandboxed analysis before trust\n");
+        LOGF("  - Monitor closely if execution is necessary\n");
     } else if (totalScore >= 8) {
-        LOGF("  [MEDIUM] Potentially suspicious - investigate further");
-        LOGF("  - Some suspicious indicators detected");
-        LOGF("  - Additional analysis recommended");
-        LOGF("  - Exercise normal security precautions");
+        LOGF("  [MEDIUM] Potentially suspicious - investigate further\n");
+        LOGF("  - Some suspicious indicators detected\n");
+        LOGF("  - Additional analysis recommended\n");
+        LOGF("  - Exercise normal security precautions\n");
     } else {
-        LOGF("  [LOW] Minor concerns detected");
-        LOGF("  - Low-level indicators present");
-        LOGF("  - Standard security practices sufficient");
+        LOGF("  [LOW] Minor concerns detected\n");
+        LOGF("  - Low-level indicators present\n");
+        LOGF("  - Standard security practices sufficient\n");
     }
     
-    LOGF("=================================================");
+    LOGF("=================================================\n");
 }
 
 const std::vector<SuspiciousTechnique>& PESuspiciousTechniqueAnalyzer::getDetectedTechniques() const {

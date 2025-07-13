@@ -36,7 +36,7 @@ PEDigitalSignatureAnalyzer::SignatureInfo PEDigitalSignatureAnalyzer::analyzeSig
     BYTE* signatureData = nullptr;
     DWORD signatureSize = 0;
     if (!extractSignatureData(&signatureData, &signatureSize)) {
-        signatureInfo_.errorMessage = "Failed to extract signature data";
+        signatureInfo_.errorMessage = "Failed to extract signature data from PE security directory. The file may be corrupted or the security directory may be invalid.";
         return signatureInfo_;
     }
     signatureInfo_.isSigned = true;
@@ -68,7 +68,7 @@ bool PEDigitalSignatureAnalyzer::extractSignatureData(BYTE** signatureData, DWOR
 }
 bool PEDigitalSignatureAnalyzer::parseWinCertificate(const BYTE* certData, size_t certSize) {
     if (!certData || certSize < 8) {
-        signatureInfo_.errorMessage = "Certificate data too small (minimum 8 bytes required)";
+        signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Certificate data too small (minimum 8 bytes required for WIN_CERTIFICATE header)";
         return false;
     }
     
@@ -78,12 +78,12 @@ bool PEDigitalSignatureAnalyzer::parseWinCertificate(const BYTE* certData, size_
     WORD wCertificateType = *(WORD*)(certData + 6);
     
     if (dwLength > certSize) {
-        signatureInfo_.errorMessage = "Certificate length field exceeds available data";
+        signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Certificate length field exceeds available data. This may indicate a corrupted or malformed certificate.";
         return false;
     }
     
     if (dwLength < 8) {
-        signatureInfo_.errorMessage = "Invalid certificate length (too small)";
+        signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Invalid certificate length (too small). Minimum size is 8 bytes for header.";
         return false;
     }
     
@@ -92,13 +92,13 @@ bool PEDigitalSignatureAnalyzer::parseWinCertificate(const BYTE* certData, size_
         size_t pkcs7Size = dwLength - 8;
         
         if (pkcs7Size == 0) {
-            signatureInfo_.errorMessage = "Empty PKCS#7 data in certificate";
+            signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Empty PKCS#7 data in certificate. The certificate contains no signature data.";
             return false;
         }
         
         return parsePKCS7Signature(pkcs7Data, pkcs7Size);
     } else {
-        signatureInfo_.errorMessage = "Unsupported certificate type (not PKCS#7)";
+        signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Unsupported certificate type. Only PKCS#7 (type 0x0002) certificates are supported.";
         return false;
     }
 }

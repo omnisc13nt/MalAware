@@ -16,6 +16,7 @@
 #include "include/EnhancedOutputManager.h"
 #include "include/PerformanceMetrics.h"
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <ctime>
 #include <cstdio>
@@ -41,6 +42,9 @@ int g_NumberOfSections = 0;
 PIMAGE_SECTION_HEADER g_SectionHeader = nullptr;
 int g_CorruptedImports = 0;
 int g_InvalidDLLNames = 0;
+
+// Function declarations
+void generateAnalysisSummary(const PE_FILE_INFO& fileInfo, const std::string& inputFile);
 int main(int argc, char* argv[])
 {
     // Initialize OutputManager first
@@ -65,8 +69,31 @@ int main(int argc, char* argv[])
         fprintf(g_output_file, "=== PE Parser Results - %s===\n\n", std::asctime(localTime));
         fflush(g_output_file);
     }
-    if (argc < 2)
-    {
+    // Find the input file (first non-flag argument)
+    std::string inputFile = "";
+    std::string outputFile = "";
+    std::string outputFormat = "text";
+    bool outputToFile = false;
+    
+    // Find the input file among arguments
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        
+        // Skip flags and their values
+        if (arg.front() == '-') {
+            // Skip flags that take values
+            if ((arg == "-o" || arg == "-f" || arg == "--vt-api-key") && i + 1 < argc) {
+                i++; // Skip the value too
+            }
+            continue;
+        }
+        
+        // This is the input file
+        inputFile = arg;
+        break;
+    }
+    
+    if (inputFile.empty()) {
         outputManager.printUsage();
         if (g_output_file) {
             fclose(g_output_file);
@@ -75,12 +102,8 @@ int main(int argc, char* argv[])
         Logger::close();
         return PE_ERROR_INVALID_PE;
     }
-    std::string inputFile = argv[1];
-    std::string outputFile = "";
-    std::string outputFormat = "text";
-    bool outputToFile = false;
     
-    for (int i = 2; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
             outputFile = argv[i + 1];
             outputToFile = true;
@@ -114,12 +137,12 @@ int main(int argc, char* argv[])
         printf("[INFO] Results will be displayed in terminal\n");
     }
     PE_FILE_INFO fileInfo;
-    int result = LoadPEFile(inputFile.c_str(), &fileInfo);
-    if (result != PE_SUCCESS)
+    int loadResult = LoadPEFile(inputFile.c_str(), &fileInfo);
+    if (loadResult != PE_SUCCESS)
     {
-        LOGF("[-] ERROR: Failed to load PE file: %s (Error code: %d)\n", inputFile.c_str(), result);
+        LOGF("[-] ERROR: Failed to load PE file: %s (Error code: %d)\n", inputFile.c_str(), loadResult);
         Logger::close();
-        return result;
+        return loadResult;
     }
     LOGF("[+] Successfully loaded PE file: %s\n", inputFile.c_str());
     LOGF("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
@@ -136,27 +159,35 @@ int main(int argc, char* argv[])
         g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
     PerformanceMetrics perfMetrics;
+    perfMetrics.setFileSize(fileInfo.dwFileSize);
     perfMetrics.startAnalysis();
-    result = ParsePEFile(&fileInfo);
-    if (result != PE_SUCCESS)
+    int parseResult = ParsePEFile(&fileInfo);
+    if (parseResult != PE_SUCCESS)
     {
-        LOGF("[-] ERROR: Failed to parse PE file! (Error code: %d)\n", result);
+        LOGF("[-] ERROR: Failed to parse PE file! (Error code: %d)\n", parseResult);
         CleanupPEFile(&fileInfo);
         Logger::close();
-        return result;
+        return parseResult;
     }
     LOG("\n[+] PE file parsing completed successfully!\n");
+    
+    // Generate analysis summary
+    generateAnalysisSummary(fileInfo, inputFile);
     
     // Resource Analysis (conditional)
     if (outputManager.shouldShowResources()) {
         try {
+            perfMetrics.startModule("Resource Analysis");
             PEResourceParser resourceParser(fileInfo.hFileContent, fileInfo.pNtHeader);
             resourceParser.parseResources();
             resourceParser.printResources();
+            perfMetrics.endModule("Resource Analysis", true);
             LOG("[+] Resource parsing completed successfully!\n");
         } catch (const std::exception& e) {
+            perfMetrics.endModule("Resource Analysis", false);
             LOGF("[-] ERROR: Resource parsing failed: %s\n", e.what());
         } catch (...) {
+            perfMetrics.endModule("Resource Analysis", false);
             LOG("[-] ERROR: Unknown error during resource parsing\n");
         }
     }
@@ -164,6 +195,7 @@ int main(int argc, char* argv[])
     // Security Analysis (conditional)
     if (outputManager.shouldRunSecurityAnalysis()) {
         try {
+            perfMetrics.startModule("Security Analysis");
             PESecurityAnalyzer securityAnalyzer(&fileInfo);
             if (outputManager.shouldShowEntropy()) {
                 securityAnalyzer.printEntropyAnalysis();
@@ -174,10 +206,13 @@ int main(int argc, char* argv[])
                 securityAnalyzer.printOverlayInfo();
                 securityAnalyzer.printAnomalies();
             }
+            perfMetrics.endModule("Security Analysis", true);
             LOG("[+] Security analysis completed successfully!\n");
         } catch (const std::exception& e) {
+            perfMetrics.endModule("Security Analysis", false);
             LOGF("[-] ERROR: Security analysis failed: %s\n", e.what());
         } catch (...) {
+            perfMetrics.endModule("Security Analysis", false);
             LOG("[-] ERROR: Unknown error during security analysis\n");
         }
     }
@@ -205,9 +240,24 @@ int main(int argc, char* argv[])
             AdvancedEntropyAnalyzer entropyAnalyzer;
             auto entropyResults = entropyAnalyzer.analyzeFile(inputFile);
             LOG("\n[+] ADVANCED ENTROPY ANALYSIS\n");
-            LOGF("	Overall File Entropy: %.2f\n", entropyResults.fileOverall.entropy);
+            LOGF("	Overall File Entropy: %.2f (Scale: 0.0 = ordered, 8.0 = random)\n", entropyResults.fileOverall.entropy);
+            LOGF("	Classification: %s\n", entropyResults.fileOverall.classification.c_str());
+            
+            // Add entropy context
+            if (entropyResults.fileOverall.entropy >= 7.8) {
+                LOG("	⚠️  VERY HIGH ENTROPY - Likely packed, encrypted, or compressed\n");
+            } else if (entropyResults.fileOverall.entropy >= 7.5) {
+                LOG("	⚠️  HIGH ENTROPY - May indicate compression or obfuscation\n");
+            } else if (entropyResults.fileOverall.entropy >= 6.0) {
+                LOG("	✅ NORMAL ENTROPY - Typical for executable code and data\n");
+            } else if (entropyResults.fileOverall.entropy >= 3.0) {
+                LOG("	ℹ️  LOW ENTROPY - Contains repetitive data\n");
+            } else {
+                LOG("	ℹ️  VERY LOW ENTROPY - Mostly padding or zeros\n");
+            }
+            
             LOGF("	Packing Detected: %s\n", entropyResults.fileOverall.isPacked ? "YES" : "NO");
-            LOGF("	Risk Score: %.1f/10\n", entropyResults.riskScore);
+            LOGF("	Risk Score: %.1f/100\n", entropyResults.riskScore);
             if (outputManager.shouldShowDetails()) {
                 for (const auto& section : entropyResults.sections) {
                     LOGF("	Section %s: Entropy %.2f (%s)\n", 
@@ -227,6 +277,7 @@ int main(int argc, char* argv[])
     // Digital Signature Analysis (conditional)
     if (outputManager.shouldShowDigitalSignatures()) {
         try {
+            perfMetrics.startModule("Digital Signature Analysis");
             PEDigitalSignatureAnalyzer signatureAnalyzer(&fileInfo);
             signatureAnalyzer.analyzeSignature();
             signatureAnalyzer.printSignatureInfo();
@@ -234,10 +285,13 @@ int main(int argc, char* argv[])
                 signatureAnalyzer.printCertificateChain();
             }
             signatureAnalyzer.printSecurityCatalog();
+            perfMetrics.endModule("Digital Signature Analysis", true);
             LOG("[+] Digital signature analysis completed successfully!\n");
         } catch (const std::exception& e) {
+            perfMetrics.endModule("Digital Signature Analysis", false);
             LOGF("[-] ERROR: Digital signature analysis failed: %s\n", e.what());
         } catch (...) {
+            perfMetrics.endModule("Digital Signature Analysis", false);
             LOG("[-] ERROR: Unknown error during digital signature analysis\n");
         }
     }
@@ -384,6 +438,7 @@ int main(int argc, char* argv[])
                 hashCalculator.printSectionHashes();
                 hashCalculator.printOverlayInfo();
             }
+            
             LOG("[+] Hash calculation and file analysis completed successfully!\n");
         } catch (const std::exception& e) {
             LOGF("[-] ERROR: Hash calculation failed: %s\n", e.what());
@@ -391,12 +446,17 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during hash calculation\n");
         }
     }
+    
     try {
         perfMetrics.endAnalysis();
         auto metrics = perfMetrics.generateReport();
         LOG("\n[+] PERFORMANCE METRICS\n");
         LOGF("	Total Analysis Time: %.2f seconds\n", metrics.totalTime);
-        LOGF("	Peak Memory Usage: %.2f MB\n", metrics.peakMemory / (1024.0 * 1024.0));
+        if (metrics.peakMemory > 1024) { // Only show if > 1KB
+            LOGF("	Peak Memory Usage: %.2f MB\n", metrics.peakMemory / (1024.0 * 1024.0));
+        } else {
+            LOGF("	Peak Memory Usage: < 1 MB (minimal footprint)\n");
+        }
         LOGF("	Performance Grade: %s\n", metrics.performanceGrade.c_str());
         if (!metrics.bottlenecks.empty()) {
             LOG("	Bottlenecks Identified:\n");
@@ -605,4 +665,42 @@ int main(int argc, char* argv[])
     }
     Logger::close();
     return PE_SUCCESS;
+}
+
+// Function to generate analysis summary
+void generateAnalysisSummary(const PE_FILE_INFO& fileInfo, const std::string& inputFile) {
+    LOG("\n===============================\n");
+    LOG("    ANALYSIS SUMMARY\n");
+    LOG("===============================\n");
+    
+    // Basic file information
+    LOGF("File: %s\n", inputFile.c_str());
+    LOGF("Size: %.2f MB (%u bytes)\n", 
+         fileInfo.dwFileSize / (1024.0 * 1024.0), 
+         static_cast<DWORD>(fileInfo.dwFileSize));
+    LOGF("Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
+    
+    // File type
+    WORD characteristics = fileInfo.pNtHeader->FileHeader.Characteristics;
+    std::string fileType = "Unknown";
+    if (characteristics & IMAGE_FILE_DLL) {
+        fileType = "Dynamic Link Library (DLL)";
+    } else if (characteristics & IMAGE_FILE_EXECUTABLE_IMAGE) {
+        fileType = "Executable";
+    } else if (characteristics & IMAGE_FILE_SYSTEM) {
+        fileType = "System File";
+    }
+    LOGF("File Type: %s\n", fileType.c_str());
+    
+    // Quick security indicators
+    LOG("\nQuick Security Assessment:\n");
+    
+    // Check if digitally signed (placeholder - will be determined during actual analysis)
+    LOG("🔍 Digital Signature: Will be analyzed below\n");
+    LOG("🔍 Entropy Analysis: Will be analyzed below\n");
+    LOG("🔍 Packing Detection: Will be analyzed below\n");
+    LOG("🔍 Suspicious Patterns: Will be analyzed below\n");
+    
+    LOG("\n📝 Detailed analysis results follow...\n");
+    LOG("===============================\n");
 }

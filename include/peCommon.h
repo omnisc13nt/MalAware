@@ -428,14 +428,14 @@ public:
     Logger::output(msg); \
 } while(0)
 #define LOGF(fmt, ...) do { \
-    char buffer[2048]; \
+    char buffer[8192]; \
     int result = snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
     if (result > 0 && result < (int)sizeof(buffer)) { \
         printf("%s", buffer); \
         Logger::log(buffer); \
         Logger::output(buffer); \
     } else { \
-        const char* truncated_msg = "[ERROR: Message too long for buffer]\n"; \
+        const char* truncated_msg = "[ERROR: Message too long for buffer - Consider using shorter output format]\n"; \
         printf("%s", truncated_msg); \
         Logger::log(truncated_msg); \
         Logger::output(truncated_msg); \
@@ -445,7 +445,7 @@ public:
     Logger::log(msg); \
 } while(0)
 #define LOGF_DEBUG(fmt, ...) do { \
-    char buffer[1024]; \
+    char buffer[4096]; \
     snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
     Logger::log(buffer); \
 } while(0)
@@ -454,7 +454,7 @@ public:
     Logger::output(msg); \
 } while(0)
 #define LOGF_OUTPUT(fmt, ...) do { \
-    char buffer[1024]; \
+    char buffer[4096]; \
     snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
     printf("%s", buffer); \
     Logger::output(buffer); \

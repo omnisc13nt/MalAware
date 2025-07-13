@@ -253,11 +253,37 @@ PEHashCalculator::OverlayInfo PEHashCalculator::analyzeOverlay() {
         overlayInfo_.offset = lastSectionEnd;
         overlayInfo_.size = fileSize - lastSectionEnd;
         BYTE* overlayData = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + lastSectionEnd);
+        
+        // Calculate hashes and entropy
         overlayInfo_.md5 = calculateMD5Simple(overlayData, overlayInfo_.size);
         overlayInfo_.sha256 = calculateSHA256Simple(overlayData, overlayInfo_.size);
         overlayInfo_.entropy = calculateEntropy(overlayData, overlayInfo_.size);
         overlayInfo_.chi2 = calculateChi2(overlayData, overlayInfo_.size);
-        overlayInfo_.fileType = "unknown";
+        
+        // Enhanced analysis
+        overlayInfo_.fileType = detectOverlayType(overlayData, overlayInfo_.size);
+        overlayInfo_.detectedContent = analyzeOverlayContent(overlayData, overlayInfo_.size);
+        
+        // Determine suspicion level based on entropy and size
+        if (overlayInfo_.entropy > 7.5) {
+            overlayInfo_.suspicionLevel = "HIGH";
+            overlayInfo_.isEncrypted = true;
+        } else if (overlayInfo_.entropy > 6.5) {
+            overlayInfo_.suspicionLevel = "MEDIUM";
+            overlayInfo_.isCompressed = true;
+        } else {
+            overlayInfo_.suspicionLevel = "LOW";
+        }
+        
+        // Check for self-extractor patterns
+        if (overlayInfo_.fileType.find("Archive") != std::string::npos || 
+            overlayInfo_.fileType.find("ZIP") != std::string::npos ||
+            overlayInfo_.fileType.find("RAR") != std::string::npos) {
+            overlayInfo_.isSelfExtractor = true;
+        }
+        
+        // Generate warnings
+        overlayInfo_.warnings = generateOverlayWarnings(overlayInfo_);
     }
     return overlayInfo_;
 }
@@ -325,10 +351,19 @@ void PEHashCalculator::printSectionHashes() {
         LOGF("\t\tVirtual Address: 0x%08X\n", section.virtualAddress);
         LOGF("\t\tVirtual Size: 0x%08X\n", section.virtualSize);
         LOGF("\t\tRaw Size: 0x%08X\n", section.rawSize);
-        LOGF("\t\tEntropy: %.2f\n", section.entropy);
-        LOGF("\t\tChi2: %.2f\n", section.chi2);
-        LOGF("\t\tMD5: %s\n", section.md5.c_str());
-        LOGF("\t\tSHA-256: %s\n", section.sha256.c_str());
+        
+        if (section.rawSize > 0) {
+            LOGF("\t\tEntropy: %.2f\n", section.entropy);
+            LOGF("\t\tChi2: %.2f\n", section.chi2);
+            LOGF("\t\tMD5: %s\n", section.md5.c_str());
+            LOGF("\t\tSHA-256: %s\n", section.sha256.c_str());
+        } else {
+            LOG("\t\tNote: Section has no raw data (virtual section)\n");
+            LOG("\t\tEntropy: N/A\n");
+            LOG("\t\tChi2: N/A\n");
+            LOG("\t\tMD5: N/A\n");
+            LOG("\t\tSHA-256: N/A\n");
+        }
         LOG("\n");
     }
 }
@@ -351,18 +386,60 @@ void PEHashCalculator::printFileInfo() {
 }
 void PEHashCalculator::printOverlayInfo() {
     analyzeOverlay();
-    LOG("\n[+] OVERLAY INFORMATION\n");
+    LOG("\n[+] OVERLAY ANALYSIS\n");
     if (overlayInfo_.hasOverlay) {
         LOGF("\tOverlay Detected: YES\n");
         LOGF("\tOffset: 0x%08X\n", overlayInfo_.offset);
-        LOGF("\tSize: %u bytes\n", overlayInfo_.size);
+        LOGF("\tSize: %u bytes (%.2f MB)\n", overlayInfo_.size, overlayInfo_.size / (1024.0 * 1024.0));
+        
+        // Calculate and show overlay percentage of file
+        double overlayPercentage = ((double)overlayInfo_.size / pFileInfo_->dwFileSize) * 100.0;
+        LOGF("\tPercentage of File: %.1f%%\n", overlayPercentage);
+        
         LOGF("\tEntropy: %.2f\n", overlayInfo_.entropy);
         LOGF("\tChi2: %.2f\n", overlayInfo_.chi2);
+        LOGF("\tDetected Type: %s\n", overlayInfo_.fileType.c_str());
+        LOGF("\tContent Analysis: %s\n", overlayInfo_.detectedContent.c_str());
+        LOGF("\tSuspicion Level: %s\n", overlayInfo_.suspicionLevel.c_str());
+        
+        // Show flags
+        std::string flags = "";
+        if (overlayInfo_.isCompressed) flags += "COMPRESSED ";
+        if (overlayInfo_.isEncrypted) flags += "ENCRYPTED ";
+        if (overlayInfo_.isSelfExtractor) flags += "SELF-EXTRACTOR ";
+        if (!flags.empty()) {
+            LOGF("\tFlags: %s\n", flags.c_str());
+        }
+        
         LOGF("\tMD5: %s\n", overlayInfo_.md5.c_str());
         LOGF("\tSHA-256: %s\n", overlayInfo_.sha256.c_str());
-        LOGF("\tFile Type: %s\n", overlayInfo_.fileType.c_str());
+        
+        // Display warnings
+        if (!overlayInfo_.warnings.empty()) {
+            LOG("\n\t🔍 OVERLAY WARNINGS:\n");
+            for (const auto& warning : overlayInfo_.warnings) {
+                LOGF("\t  ⚠️  %s\n", warning.c_str());
+            }
+        }
+        
+        // Recommendations
+        LOG("\n\t📋 RECOMMENDATIONS:\n");
+        if (overlayInfo_.suspicionLevel == "HIGH") {
+            LOG("\t  • Submit to sandbox for dynamic analysis\n");
+            LOG("\t  • Do not execute in production environment\n");
+            LOG("\t  • Consider this file potentially malicious\n");
+        } else if (overlayInfo_.suspicionLevel == "MEDIUM") {
+            LOG("\t  • Review overlay contents manually\n");
+            LOG("\t  • Verify file source and legitimacy\n");
+            LOG("\t  • Consider additional scanning tools\n");
+        } else {
+            LOG("\t  • Overlay appears normal for this file type\n");
+            LOG("\t  • Standard security practices apply\n");
+        }
+        
     } else {
         LOGF("\tOverlay Detected: NO\n");
+        LOG("\tFile ends immediately after last section - no overlay data present\n");
     }
 }
 std::string PEHashCalculator::bytesToHex(const BYTE* data, size_t size) {
@@ -401,4 +478,159 @@ std::string PEHashCalculator::toJson() const {
     ss << "  }\n";
     ss << "}\n";
     return ss.str();
+}
+std::string PEHashCalculator::detectOverlayType(const BYTE* data, size_t size) {
+    if (!data || size < 4) {
+        return "Unknown";
+    }
+    
+    // Check for common file signatures
+    if (size >= 2 && data[0] == 'M' && data[1] == 'Z') {
+        return "PE Executable";
+    }
+    if (size >= 4 && data[0] == 'P' && data[1] == 'K' && data[2] == 0x03 && data[3] == 0x04) {
+        return "ZIP Archive";
+    }
+    if (size >= 4 && data[0] == 'R' && data[1] == 'a' && data[2] == 'r' && data[3] == '!') {
+        return "RAR Archive";
+    }
+    if (size >= 3 && data[0] == 0x1F && data[1] == 0x8B && data[2] == 0x08) {
+        return "GZIP Archive";
+    }
+    if (size >= 4 && data[0] == 0x7F && data[1] == 'E' && data[2] == 'L' && data[3] == 'F') {
+        return "ELF Executable";
+    }
+    if (size >= 4 && data[0] == 0xCA && data[1] == 0xFE && data[2] == 0xBA && data[3] == 0xBE) {
+        return "Mach-O Executable";
+    }
+    if (size >= 8 && memcmp(data, "\x89PNG\r\n\x1a\n", 8) == 0) {
+        return "PNG Image";
+    }
+    if (size >= 3 && data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF) {
+        return "JPEG Image";
+    }
+    if (size >= 4 && memcmp(data, "RIFF", 4) == 0) {
+        return "RIFF Container (AVI/WAV)";
+    }
+    if (size >= 4 && memcmp(data, "%PDF", 4) == 0) {
+        return "PDF Document";
+    }
+    
+    // Check for installer signatures
+    if (size >= 16) {
+        std::string dataStr(reinterpret_cast<const char*>(data), std::min(size, (size_t)256));
+        if (dataStr.find("Inno Setup") != std::string::npos) {
+            return "Inno Setup Installer";
+        }
+        if (dataStr.find("NSIS") != std::string::npos) {
+            return "NSIS Installer";
+        }
+        if (dataStr.find("WinRAR SFX") != std::string::npos) {
+            return "WinRAR Self-Extractor";
+        }
+        if (dataStr.find("7-Zip") != std::string::npos) {
+            return "7-Zip Self-Extractor";
+        }
+    }
+    
+    return "Unknown Binary Data";
+}
+
+std::string PEHashCalculator::analyzeOverlayContent(const BYTE* data, size_t size) {
+    if (!data || size == 0) {
+        return "Empty overlay";
+    }
+    
+    // Check for patterns that might indicate content type
+    std::string analysis = "";
+    
+    // Check for high entropy (possible compression/encryption)
+    double entropy = calculateEntropy(data, size);
+    if (entropy > 7.8) {
+        analysis += "High entropy data (likely encrypted/compressed); ";
+    } else if (entropy > 6.5) {
+        analysis += "Medium entropy data (possibly compressed); ";
+    } else if (entropy < 3.0) {
+        analysis += "Low entropy data (repetitive/padding); ";
+    }
+    
+    // Check for null bytes (common in padding)
+    size_t nullCount = 0;
+    for (size_t i = 0; i < std::min(size, (size_t)1024); i++) {
+        if (data[i] == 0) nullCount++;
+    }
+    double nullRatio = (double)nullCount / std::min(size, (size_t)1024);
+    if (nullRatio > 0.8) {
+        analysis += "Mostly null bytes (likely padding); ";
+    } else if (nullRatio > 0.5) {
+        analysis += "Many null bytes (sparse data); ";
+    }
+    
+    // Check for ASCII text
+    size_t asciiCount = 0;
+    for (size_t i = 0; i < std::min(size, (size_t)1024); i++) {
+        if ((data[i] >= 32 && data[i] <= 126) || data[i] == 9 || data[i] == 10 || data[i] == 13) {
+            asciiCount++;
+        }
+    }
+    double asciiRatio = (double)asciiCount / std::min(size, (size_t)1024);
+    if (asciiRatio > 0.7) {
+        analysis += "Contains readable text; ";
+    }
+    
+    if (analysis.empty()) {
+        analysis = "Binary data, no specific patterns detected";
+    } else {
+        // Remove trailing semicolon and space
+        if (analysis.length() > 2) {
+            analysis = analysis.substr(0, analysis.length() - 2);
+        }
+    }
+    
+    return analysis;
+}
+
+std::vector<std::string> PEHashCalculator::generateOverlayWarnings(const OverlayInfo& info) {
+    std::vector<std::string> warnings;
+    
+    // Size-based warnings
+    double sizeMB = info.size / (1024.0 * 1024.0);
+    if (sizeMB > 100) {
+        warnings.push_back("CRITICAL: Extremely large overlay (" + std::to_string((int)sizeMB) + " MB) - possible malware payload");
+    } else if (sizeMB > 10) {
+        warnings.push_back("WARNING: Large overlay (" + std::to_string((int)sizeMB) + " MB) - review contents carefully");
+    } else if (sizeMB > 1) {
+        warnings.push_back("NOTICE: Overlay size (" + std::to_string((int)sizeMB) + " MB) - moderate size, check if expected");
+    }
+    
+    // Entropy-based warnings  
+    if (info.entropy > 7.8) {
+        warnings.push_back("HIGH RISK: Very high entropy (" + std::to_string(info.entropy) + ") - likely encrypted or packed data");
+    } else if (info.entropy > 7.5) {
+        warnings.push_back("MEDIUM RISK: High entropy (" + std::to_string(info.entropy) + ") - possibly compressed data");
+    }
+    
+    // Content-based warnings
+    if (info.fileType == "PE Executable") {
+        warnings.push_back("SUSPICIOUS: Overlay contains another PE executable - possible dropper");
+    } else if (info.fileType.find("Archive") != std::string::npos && !info.isSelfExtractor) {
+        warnings.push_back("REVIEW: Overlay contains archive data - verify if legitimate installer");
+    } else if (info.fileType == "Unknown Binary Data" && info.entropy > 7.0) {
+        warnings.push_back("INVESTIGATE: Unknown high-entropy data - potential obfuscated payload");
+    }
+    
+    // Ratio warning (overlay vs file size)
+    double totalFileSize = pFileInfo_->dwFileSize;
+    double overlayRatio = (double)info.size / totalFileSize;
+    if (overlayRatio > 0.8) {
+        warnings.push_back("ANOMALY: Overlay is " + std::to_string((int)(overlayRatio * 100)) + "% of file size - unusual structure");
+    } else if (overlayRatio > 0.5) {
+        warnings.push_back("NOTICE: Overlay is " + std::to_string((int)(overlayRatio * 100)) + "% of file size - verify legitimacy");
+    }
+    
+    return warnings;
+}
+
+std::string PEHashCalculator::getSHA256() const {
+    return hashResult_.sha256;
 }

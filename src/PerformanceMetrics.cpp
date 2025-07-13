@@ -36,9 +36,13 @@ void PerformanceMetrics::endModule(const std::string& moduleName, bool success) 
     if (it != moduleStartTimes.end()) {
         auto endTime = std::chrono::high_resolution_clock::now();
         double elapsed = calculateElapsedTime(it->second, endTime);
+        
+        size_t currentMemory = getProcessMemoryUsage();
+        peakMemoryUsage = std::max(peakMemoryUsage, currentMemory);
+        
         moduleResults[moduleName].executionTime = elapsed;
         moduleResults[moduleName].success = success;
-        moduleResults[moduleName].memoryUsed = getProcessMemoryUsage() - baslineMemory;
+        moduleResults[moduleName].memoryUsed = currentMemory - baslineMemory;
         moduleResults[moduleName].peakMemory = peakMemoryUsage - baslineMemory;
         moduleStartTimes.erase(it);
     }

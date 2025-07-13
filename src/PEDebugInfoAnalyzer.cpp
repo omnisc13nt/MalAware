@@ -225,6 +225,11 @@ void PEDebugInfoAnalyzer::printDebugInfo() {
     LOG("\n[+] DEBUG INFORMATION ANALYSIS\n");
     if (!debugInfo_.hasDebugInfo) {
         LOG("\tNo debug information found\n");
+        LOG("\tNote: Debug information includes symbols, source code references, and development metadata.\n");
+        LOG("\t      Absence is normal for release builds and may indicate:\n");
+        LOG("\t      - Stripped release build (common for deployed software)\n");
+        LOG("\t      - Compiled without debug symbols for size optimization\n");
+        LOG("\t      - Not relevant for malware analysis unless reversing is needed\n");
         return;
     }
     LOGF("\tHas Debug Info: %s\n", debugInfo_.hasDebugInfo ? "YES" : "NO");
