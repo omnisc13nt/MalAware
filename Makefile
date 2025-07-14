@@ -3,7 +3,7 @@ CXX = g++
 CXX_WIN = x86_64-w64-mingw32-g++
 CXXFLAGS = -std=c++17 -O2 -Wall -Wextra
 INCLUDES = -Iinclude
-LIBS = 
+LIBS = -lfuzzy 
 
 SOURCES = main.cpp src/*.cpp
 

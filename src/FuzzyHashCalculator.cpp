@@ -1,26 +1,43 @@
 #include "../include/FuzzyHashCalculator.h"
+#include <fuzzy.h>  // Real ssdeep library
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <algorithm>
 #include <cmath>
+
 FuzzyHashCalculator::FuzzyHashCalculator() {
 }
+
 FuzzyHashCalculator::~FuzzyHashCalculator() {
 }
+
 std::string FuzzyHashCalculator::calculateSSDeep(const uint8_t* data, size_t size) {
     if (!data || size == 0) {
         return "[Error: Invalid data for SSDeep calculation]";
     }
-    SSDeepState state;
-    uint32_t blocksize = 3;
-    while (blocksize * 64 < size && blocksize < 12000) {
-        blocksize *= 2;
+    
+    // Use real ssdeep library
+    char result[FUZZY_MAX_RESULT];
+    int ret = fuzzy_hash_buf(data, static_cast<uint32_t>(size), result);
+    
+    if (ret != 0) {
+        return "[Error: SSDeep calculation failed]";
     }
-    initSSDeepState(state, blocksize);
-    updateSSDeepHash(state, data, size);
-    return finalizeSSDeepHash(state);
+    
+    return std::string(result);
+}
+
+std::string FuzzyHashCalculator::calculateSSDeep(const std::string& filePath) {
+    char result[FUZZY_MAX_RESULT];
+    int ret = fuzzy_hash_filename(filePath.c_str(), result);
+    
+    if (ret != 0) {
+        return "[Error: Could not calculate SSDeep for file]";
+    }
+    
+    return std::string(result);
 }
 std::string FuzzyHashCalculator::calculateTLSH(const uint8_t* data, size_t size) {
     if (!data || size < 50) {  
@@ -61,24 +78,17 @@ FuzzyHashCalculator::FuzzyHashes FuzzyHashCalculator::calculateAllHashes(const s
     std::vector<uint8_t> fileData(fileSize);
     file.read(reinterpret_cast<char*>(fileData.data()), fileSize);
     file.close();
-    result.ssdeep = calculateSSDeep(fileData.data(), fileSize);
+    // For file-based calculation, use direct file API for better performance
+    result.ssdeep = calculateSSDeep(filePath);
     result.tlsh = calculateTLSH(fileData.data(), fileSize);
     result.vhash = calculateVHash(fileData.data(), fileSize);
     result.success = true;
     return result;
 }
+
 int FuzzyHashCalculator::compareSSDeep(const std::string& hash1, const std::string& hash2) {
-    if (hash1 == hash2) return 100;
-    if (hash1.empty() || hash2.empty()) return 0;
-    size_t commonChars = 0;
-    size_t maxLen = std::max(hash1.length(), hash2.length());
-    size_t minLen = std::min(hash1.length(), hash2.length());
-    for (size_t i = 0; i < minLen; ++i) {
-        if (hash1[i] == hash2[i]) {
-            commonChars++;
-        }
-    }
-    return static_cast<int>((commonChars * 100) / maxLen);
+    // Use real ssdeep comparison
+    return fuzzy_compare(hash1.c_str(), hash2.c_str());
 }
 int FuzzyHashCalculator::compareTLSH(const std::string& hash1, const std::string& hash2) {
     if (hash1 == hash2) return 0;
@@ -92,34 +102,8 @@ int FuzzyHashCalculator::compareTLSH(const std::string& hash1, const std::string
     }
     return distance;
 }
-void FuzzyHashCalculator::initSSDeepState(SSDeepState& state, uint32_t blocksize) {
-    state.blocksize = blocksize;
-    state.h1 = 0;
-    state.h2 = 0;
-    state.h1_chars.clear();
-    state.h2_chars.clear();
-}
-void FuzzyHashCalculator::updateSSDeepHash(SSDeepState& state, const uint8_t* data, size_t len) {
-    const char* base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    const size_t max_hash_length = 64;  // Limit hash length to prevent buffer overflow
-    
-    for (size_t i = 0; i < len; ++i) {
-        state.h1 = ((state.h1 << 5) + state.h1) + data[i];
-        state.h2 = ((state.h2 << 5) + state.h2) + data[i];
-        
-        if (i % state.blocksize == 0 && state.h1_chars.length() < max_hash_length) {
-            state.h1_chars += base64chars[state.h1 % 64];
-        }
-        if (i % (state.blocksize * 2) == 0 && state.h2_chars.length() < max_hash_length) {
-            state.h2_chars += base64chars[state.h2 % 64];
-        }
-    }
-}
-std::string FuzzyHashCalculator::finalizeSSDeepHash(SSDeepState& state) {
-    std::stringstream ss;
-    ss << state.blocksize << ":" << state.h1_chars << ":" << state.h2_chars;
-    return ss.str();
-}
+
+// TLSH implementation (keeping custom implementation)
 void FuzzyHashCalculator::initTLSHState(TLSHState& state) {
     state.checksum = 0;
     state.sliding_window = 0;
