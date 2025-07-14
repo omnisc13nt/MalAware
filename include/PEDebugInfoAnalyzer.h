@@ -63,7 +63,6 @@ public:
     void printCompilerInfo();
     void printSymbolInfo();
     void printRichHeaderInfo();
-    std::string toJson() const;
     static std::string getDebugTypeName(DWORD type);
     static std::string formatGuid(const BYTE* guidBytes);
     static std::string formatTimestamp(DWORD timestamp);

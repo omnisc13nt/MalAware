@@ -54,7 +54,6 @@ public:
     void printSignatureInfo();
     void printCertificateChain();
     void printSecurityCatalog();
-    std::string toJson() const;
     static std::string formatTime(const std::chrono::system_clock::time_point& timePoint);
     static std::string bytesToHex(const BYTE* data, size_t size);
 private:

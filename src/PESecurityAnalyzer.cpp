@@ -232,39 +232,6 @@ void PESecurityAnalyzer::printAnomalies() {
         }
     }
 }
-std::string PESecurityAnalyzer::toJson() const {
-    std::stringstream json;
-    json << "{\n";
-    json << "  \"entropy_analysis\": [\n";
-    for (size_t i = 0; i < entropyResults_.size(); i++) {
-        const auto& result = entropyResults_[i];
-        json << "    {\n";
-        json << "      \"section\": \"" << result.sectionName << "\",\n";
-        json << "      \"entropy\": " << std::fixed << std::setprecision(2) << result.entropy << ",\n";
-        json << "      \"size\": " << result.size << ",\n";
-        json << "      \"is_packed\": " << (result.isPacked ? "true" : "false") << "\n";
-        json << "    }" << (i < entropyResults_.size() - 1 ? "," : "") << "\n";
-    }
-    json << "  ],\n";
-    json << "  \"security_features\": {\n";
-    json << "    \"aslr\": " << (securityFeatures_.aslr ? "true" : "false") << ",\n";
-    json << "    \"dep\": " << (securityFeatures_.dep ? "true" : "false") << ",\n";
-    json << "    \"seh\": " << (securityFeatures_.seh ? "true" : "false") << ",\n";
-    json << "    \"cfg\": " << (securityFeatures_.cfg ? "true" : "false") << "\n";
-    json << "  },\n";
-    json << "  \"packer_info\": {\n";
-    json << "    \"is_packed\": " << (packerInfo_.isPacked ? "true" : "false") << ",\n";
-    json << "    \"packer_name\": \"" << packerInfo_.packerName << "\",\n";
-    json << "    \"confidence\": " << packerInfo_.confidence << "\n";
-    json << "  },\n";
-    json << "  \"overlay_info\": {\n";
-    json << "    \"has_overlay\": " << (overlayInfo_.hasOverlay ? "true" : "false") << ",\n";
-    json << "    \"overlay_size\": " << overlayInfo_.overlaySize << ",\n";
-    json << "    \"overlay_entropy\": " << std::fixed << std::setprecision(2) << overlayInfo_.overlayEntropy << "\n";
-    json << "  }\n";
-    json << "}\n";
-    return json.str();
-}
 bool PESecurityAnalyzer::isHighEntropy(double entropy) {
     return entropy > 7.0; 
 }

@@ -67,26 +67,22 @@ make clean && make
 
 ### Basic Analysis
 ```bash
-./peParser /path/to/suspicious.exe
+./peFileParser /path/to/suspicious.exe
 ```
 
 ### Advanced Options
 ```bash
 # Verbose analysis with detailed output
-./peParser -v malware_sample.exe
-
-# JSON output for automated processing
-./peParser -j suspicious.dll
+./peFileParser -v malware_sample.exe
 
 # Quiet mode (essential findings only)
-./peParser -q packed_executable.exe
+./peFileParser -q packed_executable.exe
 ```
 
 ### Command Line Reference
 - `-h, --help`: Display comprehensive help and feature overview
 - `-v, --verbose`: Enable detailed analysis output with extended information
 - `-q, --quiet`: Suppress non-essential output, show only critical findings
-- `-j, --json`: Export results in structured JSON format for automation
 
 ## 📈 Performance & Quality
 

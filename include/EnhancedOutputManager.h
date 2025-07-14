@@ -9,7 +9,6 @@ class EnhancedOutputManager {
 public:
     enum class OutputFormat {
         TEXT,
-        JSON,
         XML,
         CSV,
         SUMMARY
@@ -55,7 +54,6 @@ public:
     void setOutputFormat(OutputFormat format);
     void setOutputFile(const std::string& filePath);
     bool generateOutput(const AnalysisData& data);
-    std::string generateJSON(const AnalysisData& data);
     std::string generateXML(const AnalysisData& data);
     std::string generateCSV(const AnalysisData& data);
     std::string generateSummary(const AnalysisData& data);
@@ -65,12 +63,6 @@ public:
 private:
     OutputFormat currentFormat;
     std::string outputFilePath;
-    std::string jsonEscape(const std::string& str);
-    std::string jsonValue(const std::string& value);
-    std::string jsonValue(bool value);
-    std::string jsonValue(uint32_t value);
-    std::string jsonValue(double value);
-    std::string jsonArray(const std::vector<std::string>& values);
     std::string xmlEscape(const std::string& str);
     std::string xmlElement(const std::string& name, const std::string& value);
     std::string xmlElement(const std::string& name, bool value);

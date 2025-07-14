@@ -71,7 +71,6 @@ public:
     void printSectionHashes();
     void printFileInfo();
     void printOverlayInfo();
-    std::string toJson() const;
     std::string getSHA256() const;
 private:
     PPE_FILE_INFO pFileInfo_;

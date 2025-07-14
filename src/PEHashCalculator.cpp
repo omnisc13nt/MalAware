@@ -517,31 +517,6 @@ std::string PEHashCalculator::toLowerCase(const std::string& str) {
     std::transform(result.begin(), result.end(), result.begin(), ::tolower);
     return result;
 }
-std::string PEHashCalculator::toJson() const {
-    std::stringstream ss;
-    ss << "{\n";
-    ss << "  \"fileHashes\": {\n";
-    ss << "    \"md5\": \"" << hashResult_.md5 << "\",\n";
-    ss << "    \"sha1\": \"" << hashResult_.sha1 << "\",\n";
-    ss << "    \"sha256\": \"" << hashResult_.sha256 << "\",\n";
-    ss << "    \"imphash\": \"" << hashResult_.imphash << "\",\n";
-    ss << "    \"authentihash\": \"" << hashResult_.authentihash << "\",\n";
-    ss << "    \"ssdeep\": \"" << hashResult_.ssdeep << "\",\n";
-    ss << "    \"tlsh\": \"" << hashResult_.tlsh << "\",\n";
-    ss << "    \"vhash\": \"" << hashResult_.vhash << "\"\n";
-    ss << "  },\n";
-    ss << "  \"fileInfo\": {\n";
-    ss << "    \"fileType\": \"" << fileInfo_.fileType << "\",\n";
-    ss << "    \"magic\": \"" << fileInfo_.magic << "\",\n";
-    ss << "    \"architecture\": \"" << fileInfo_.architecture << "\",\n";
-    ss << "    \"fileSize\": " << fileInfo_.fileSize << ",\n";
-    ss << "    \"compilationTimestamp\": " << fileInfo_.compilationTimestamp << ",\n";
-    ss << "    \"entryPoint\": " << fileInfo_.entryPoint << ",\n";
-    ss << "    \"numberOfSections\": " << fileInfo_.numberOfSections << "\n";
-    ss << "  }\n";
-    ss << "}\n";
-    return ss.str();
-}
 std::string PEHashCalculator::detectOverlayType(const BYTE* data, size_t size) {
     if (!data || size < 4) {
         return "Unknown";

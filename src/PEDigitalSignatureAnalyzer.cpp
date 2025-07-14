@@ -286,27 +286,6 @@ void PEDigitalSignatureAnalyzer::printSecurityCatalog() {
         LOG("\tFile is not listed in security catalog\n");
     }
 }
-std::string PEDigitalSignatureAnalyzer::toJson() const {
-    std::stringstream ss;
-    ss << "{\n";
-    ss << "  \"digitalSignature\": {\n";
-    ss << "    \"isSigned\": " << (signatureInfo_.isSigned ? "true" : "false") << ",\n";
-    ss << "    \"isValid\": " << (signatureInfo_.isValid ? "true" : "false") << ",\n";
-    ss << "    \"isCounterSigned\": " << (signatureInfo_.isCounterSigned ? "true" : "false") << ",\n";
-    ss << "    \"digestAlgorithm\": \"" << signatureInfo_.digestAlgorithm << "\",\n";
-    ss << "    \"signatureAlgorithm\": \"" << signatureInfo_.signatureAlgorithm << "\",\n";
-    ss << "    \"programName\": \"" << signatureInfo_.programName << "\",\n";
-    ss << "    \"publisherLink\": \"" << signatureInfo_.publisherLink << "\",\n";
-    ss << "    \"errorMessage\": \"" << signatureInfo_.errorMessage << "\"\n";
-    ss << "  },\n";
-    ss << "  \"securityCatalog\": {\n";
-    ss << "    \"isInCatalog\": " << (catalogInfo_.isInCatalog ? "true" : "false") << ",\n";
-    ss << "    \"catalogFile\": \"" << catalogInfo_.catalogFile << "\",\n";
-    ss << "    \"catalogHash\": \"" << catalogInfo_.catalogHash << "\"\n";
-    ss << "  }\n";
-    ss << "}\n";
-    return ss.str();
-}
 std::string PEDigitalSignatureAnalyzer::formatTime(const std::chrono::system_clock::time_point& timePoint) {
     auto timeT = std::chrono::system_clock::to_time_t(timePoint);
     std::stringstream ss;

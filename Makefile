@@ -7,7 +7,7 @@ LIBS =
 
 SOURCES = main.cpp src/*.cpp
 
-TARGET_LINUX = peFileParserLinux
+TARGET_LINUX = peFileParser
 TARGET_WIN = peFileParserWindows.exe
 
 all: $(TARGET_LINUX)

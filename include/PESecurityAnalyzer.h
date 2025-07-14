@@ -52,7 +52,6 @@ public:
     void printPackerInfo();
     void printOverlayInfo();
     void printAnomalies();
-    std::string toJson() const;
 private:
     PPE_FILE_INFO pFileInfo_;
     std::vector<EntropyResult> entropyResults_;

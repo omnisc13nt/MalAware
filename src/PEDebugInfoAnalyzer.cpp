@@ -335,37 +335,3 @@ std::string PEDebugInfoAnalyzer::formatTimestamp(DWORD timestamp) {
     ss << std::put_time(timeinfo, "%Y-%m-%d %H:%M:%S");
     return ss.str();
 }
-std::string PEDebugInfoAnalyzer::toJson() const {
-    std::stringstream ss;
-    ss << "{\n";
-    ss << "  \"debugInfo\": {\n";
-    ss << "    \"hasDebugInfo\": " << (debugInfo_.hasDebugInfo ? "true" : "false") << ",\n";
-    ss << "    \"hasSymbols\": " << (debugInfo_.hasSymbols ? "true" : "false") << ",\n";
-    ss << "    \"isOptimized\": " << (debugInfo_.isOptimized ? "true" : "false") << ",\n";
-    ss << "    \"compiledWith\": \"" << debugInfo_.compiledWith << "\",\n";
-    ss << "    \"buildEnvironment\": \"" << debugInfo_.buildEnvironment << "\",\n";
-    ss << "    \"debugDirectories\": [\n";
-    for (size_t i = 0; i < debugInfo_.debugDirectories.size(); i++) {
-        const auto& entry = debugInfo_.debugDirectories[i];
-        ss << "      {\n";
-        ss << "        \"type\": " << entry.type << ",\n";
-        ss << "        \"typeName\": \"" << entry.typeName << "\",\n";
-        ss << "        \"size\": " << entry.sizeOfData << ",\n";
-        ss << "        \"timestamp\": " << entry.timeDateStamp << ",\n";
-        ss << "        \"version\": \"" << entry.majorVersion << "." << entry.minorVersion << "\"\n";
-        ss << "      }";
-        if (i < debugInfo_.debugDirectories.size() - 1) ss << ",";
-        ss << "\n";
-    }
-    ss << "    ],\n";
-    ss << "    \"codeViewInfo\": {\n";
-    ss << "      \"isValid\": " << (debugInfo_.codeViewInfo.isValid ? "true" : "false") << ",\n";
-    ss << "      \"signature\": \"" << debugInfo_.codeViewInfo.signature << "\",\n";
-    ss << "      \"pdbPath\": \"" << debugInfo_.codeViewInfo.pdbPath << "\",\n";
-    ss << "      \"guid\": \"" << debugInfo_.codeViewInfo.guid << "\",\n";
-    ss << "      \"age\": " << debugInfo_.codeViewInfo.age << "\n";
-    ss << "    }\n";
-    ss << "  }\n";
-    ss << "}\n";
-    return ss.str();
-}

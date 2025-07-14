@@ -518,17 +518,14 @@ int main(int argc, char* argv[])
     } catch (...) {
         LOG("[-] ERROR: Unknown error during performance metrics\n");
     }
-    if (false && outputFormat != "text") { // JSON functionality disabled
+    if (false && outputFormat != "text") { // Enhanced output functionality disabled
         try {
             EnhancedOutputManager outputManager;
             LOG("\n[+] ENHANCED OUTPUT GENERATION\n");
             LOGF("Generating output in %s format...\n", outputFormat.c_str());
             
             // Set output format
-            if (outputFormat == "json") {
-                outputManager.setOutputFormat(EnhancedOutputManager::OutputFormat::JSON);
-                LOG("JSON output format selected\n");
-            } else if (outputFormat == "xml") {
+            if (outputFormat == "xml") {
                 outputManager.setOutputFormat(EnhancedOutputManager::OutputFormat::XML);
                 LOG("XML output format selected\n");
             } else if (outputFormat == "csv") {

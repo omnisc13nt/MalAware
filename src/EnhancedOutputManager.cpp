@@ -17,9 +17,6 @@ void EnhancedOutputManager::setOutputFile(const std::string& filePath) {
 bool EnhancedOutputManager::generateOutput(const AnalysisData& data) {
     std::string output;
     switch (currentFormat) {
-        case OutputFormat::JSON:
-            output = generateJSON(data);
-            break;
         case OutputFormat::XML:
             output = generateXML(data);
             break;
@@ -46,74 +43,6 @@ bool EnhancedOutputManager::generateOutput(const AnalysisData& data) {
         }
         return false;
     }
-}
-std::string EnhancedOutputManager::generateJSON(const AnalysisData& data) {
-    std::stringstream json;
-    json << "{\n";
-    json << "  \"metadata\": {\n";
-    json << "    \"fileName\": " << jsonValue(data.fileName) << ",\n";
-    json << "    \"filePath\": " << jsonValue(data.filePath) << ",\n";
-    json << "    \"fileSize\": " << data.fileSize << ",\n";
-    json << "    \"architecture\": " << jsonValue(data.architecture) << ",\n";
-    json << "    \"analysisTimestamp\": " << jsonValue(data.analysisTimestamp) << "\n";
-    json << "  },\n";
-    json << "  \"hashes\": {\n";
-    json << "    \"md5\": " << jsonValue(data.md5) << ",\n";
-    json << "    \"sha1\": " << jsonValue(data.sha1) << ",\n";
-    json << "    \"sha256\": " << jsonValue(data.sha256) << ",\n";
-    json << "    \"imphash\": " << jsonValue(data.imphash) << ",\n";
-    json << "    \"fuzzyHashes\": {\n";
-    json << "      \"ssdeep\": " << jsonValue(data.ssdeep) << ",\n";
-    json << "      \"tlsh\": " << jsonValue(data.tlsh) << ",\n";
-    json << "      \"vhash\": " << jsonValue(data.vhash) << "\n";
-    json << "    }\n";
-    json << "  },\n";
-    json << "  \"peStructure\": {\n";
-    json << "    \"compilationTime\": " << data.compilationTime << ",\n";
-    json << "    \"compilationTimeFormatted\": " << jsonValue(formatTimestamp(data.compilationTime)) << ",\n";
-    json << "    \"sectionCount\": " << data.sectionCount << ",\n";
-    json << "    \"entryPoint\": \"0x" << std::hex << data.entryPoint << std::dec << "\",\n";
-    json << "    \"subsystem\": " << jsonValue(data.subsystem) << "\n";
-    json << "  },\n";
-    json << "  \"securityFeatures\": {\n";
-    json << "    \"aslr\": " << jsonValue(data.aslrEnabled) << ",\n";
-    json << "    \"dep\": " << jsonValue(data.depEnabled) << ",\n";
-    json << "    \"seh\": " << jsonValue(data.sehEnabled) << ",\n";
-    json << "    \"cfg\": " << jsonValue(data.cfgEnabled) << ",\n";
-    json << "    \"nxCompatible\": " << jsonValue(data.nxCompatible) << "\n";
-    json << "  },\n";
-    json << "  \"imports\": {\n";
-    json << "    \"totalImports\": " << data.importCount << ",\n";
-    json << "    \"dllCount\": " << data.dllCount << ",\n";
-    json << "    \"corruptedImports\": " << data.corruptedImports << ",\n";
-    json << "    \"importedDlls\": " << jsonArray(data.importedDlls) << "\n";
-    json << "  },\n";
-    json << "  \"entropyAnalysis\": {\n";
-    json << "    \"overallEntropy\": " << std::fixed << std::setprecision(2) << data.overallEntropy << ",\n";
-    json << "    \"packingDetected\": " << jsonValue(data.packingDetected) << ",\n";
-    json << "    \"sectionEntropies\": [\n";
-    for (size_t i = 0; i < data.sectionEntropies.size(); ++i) {
-        json << "      {\n";
-        json << "        \"section\": " << jsonValue(data.sectionEntropies[i].first) << ",\n";
-        json << "        \"entropy\": " << std::fixed << std::setprecision(2) << data.sectionEntropies[i].second << "\n";
-        json << "      }";
-        if (i < data.sectionEntropies.size() - 1) json << ",";
-        json << "\n";
-    }
-    json << "    ]\n";
-    json << "  },\n";
-    json << "  \"riskAssessment\": {\n";
-    json << "    \"riskScore\": " << data.riskScore << ",\n";
-    json << "    \"classification\": " << jsonValue(data.classification) << ",\n";
-    json << "    \"threatIndicators\": " << jsonArray(data.threatIndicators) << ",\n";
-    json << "    \"recommendation\": " << jsonValue(data.recommendation) << "\n";
-    json << "  },\n";
-    json << "  \"performance\": {\n";
-    json << "    \"analysisTime\": " << std::fixed << std::setprecision(3) << data.analysisTime << ",\n";
-    json << "    \"memoryUsage\": " << data.memoryUsage << "\n";
-    json << "  }\n";
-    json << "}\n";
-    return json.str();
 }
 std::string EnhancedOutputManager::generateXML(const AnalysisData& data) {
     std::stringstream xml;
@@ -292,48 +221,9 @@ std::string EnhancedOutputManager::getCSVHeader() {
 }
 bool EnhancedOutputManager::isFormatSupported(OutputFormat format) {
     return format == OutputFormat::TEXT || 
-           format == OutputFormat::JSON || 
            format == OutputFormat::XML || 
            format == OutputFormat::CSV || 
            format == OutputFormat::SUMMARY;
-}
-std::string EnhancedOutputManager::jsonEscape(const std::string& str) {
-    std::string escaped;
-    for (char c : str) {
-        switch (c) {
-            case '"': escaped += "\\\""; break;
-            case '\\': escaped += "\\\\"; break;
-            case '\n': escaped += "\\n"; break;
-            case '\r': escaped += "\\r"; break;
-            case '\t': escaped += "\\t"; break;
-            default: escaped += c; break;
-        }
-    }
-    return escaped;
-}
-std::string EnhancedOutputManager::jsonValue(const std::string& value) {
-    return "\"" + jsonEscape(value) + "\"";
-}
-std::string EnhancedOutputManager::jsonValue(bool value) {
-    return value ? "true" : "false";
-}
-std::string EnhancedOutputManager::jsonValue(uint32_t value) {
-    return std::to_string(value);
-}
-std::string EnhancedOutputManager::jsonValue(double value) {
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(2) << value;
-    return ss.str();
-}
-std::string EnhancedOutputManager::jsonArray(const std::vector<std::string>& values) {
-    std::stringstream ss;
-    ss << "[";
-    for (size_t i = 0; i < values.size(); ++i) {
-        ss << jsonValue(values[i]);
-        if (i < values.size() - 1) ss << ", ";
-    }
-    ss << "]";
-    return ss.str();
 }
 std::string EnhancedOutputManager::xmlEscape(const std::string& str) {
     std::string escaped;
