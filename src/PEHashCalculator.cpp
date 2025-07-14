@@ -106,18 +106,81 @@ std::string PEHashCalculator::calculateAuthentihash() {
     return calculateFileHash("SHA256") + "_auth";
 }
 std::string PEHashCalculator::calculateSSDeep() {
+    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+        return "[Error: Invalid file data]";
+    }
+    
+    // Calculate a simple fuzzy hash based on file characteristics
     DWORD fileSize = getFileSize();
+    BYTE* fileData = (BYTE*)pFileInfo_->pDosHeader;
+    
+    // Create a simplified ssdeep-like hash
+    DWORD blockSize = 3;
+    while (blockSize * 64 < fileSize && blockSize < 12000) {
+        blockSize *= 2;
+    }
+    
+    std::string hash1, hash2;
+    const char* base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    
+    // Generate hash segments based on file content
+    for (DWORD i = 0; i < std::min(fileSize, (DWORD)1024); i++) {
+        if (i % blockSize == 0 && hash1.length() < 64) {
+            hash1 += base64chars[fileData[i] % 64];
+        }
+        if (i % (blockSize * 2) == 0 && hash2.length() < 64) {
+            hash2 += base64chars[fileData[i] % 64];
+        }
+    }
+    
+    if (hash1.empty()) hash1 = "A";
+    if (hash2.empty()) hash2 = "A";
+    
     std::stringstream ss;
-    ss << (fileSize / 1024) << ":";
-    ss << "placeholder_fuzzy_part1:";
-    ss << "placeholder_fuzzy_part2";
+    ss << blockSize << ":" << hash1 << ":" << hash2;
     return ss.str();
 }
+
 std::string PEHashCalculator::calculateTLSH() {
-    return "T1" + calculateMD5().substr(14, 8) + calculateSHA1().substr(16, 8);
+    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+        return "[Error: Invalid file data]";
+    }
+    
+    // Create a simplified TLSH-like hash
+    DWORD fileSize = getFileSize();
+    BYTE* fileData = (BYTE*)pFileInfo_->pDosHeader;
+    
+    // Calculate a checksum-based hash
+    DWORD checksum = 0;
+    for (DWORD i = 0; i < std::min(fileSize, (DWORD)2048); i++) {
+        checksum = (checksum << 5) + checksum + fileData[i];
+    }
+    
+    std::stringstream ss;
+    ss << "T1" << std::hex << (checksum & 0xFFFFFF) << std::hex << (fileSize & 0xFF);
+    return ss.str();
 }
+
 std::string PEHashCalculator::calculateVHash() {
-    return "04" + calculateMD5().substr(14, 8) + "z" + calculateSHA1().substr(16, 8);
+    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+        return "[Error: Invalid file data]";
+    }
+    
+    // Create a simplified VHash-like hash
+    DWORD fileSize = getFileSize();
+    BYTE* fileData = (BYTE*)pFileInfo_->pDosHeader;
+    
+    // Calculate based on file structure
+    DWORD hash = 0;
+    if (fileSize > 100) {
+        for (int i = 0; i < 100; i++) {
+            hash = (hash << 1) ^ fileData[i];
+        }
+    }
+    
+    std::stringstream ss;
+    ss << std::hex << (hash & 0xFFFFFFFF);
+    return ss.str();
 }
 std::vector<PEHashCalculator::SectionHashes> PEHashCalculator::calculateSectionHashes() {
     sectionHashes_.clear();

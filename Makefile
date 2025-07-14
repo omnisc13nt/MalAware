@@ -34,7 +34,7 @@ install-deps:
 
 help:
 	@echo "Available targets:"
-	@echo "  all          - Build Linux version (default)"
+	@echo "  all          - Build Linux version (default)"  
 	@echo "  linux        - Build Linux version"
 	@echo "  windows      - Build Windows version"
 	@echo "  cross        - Build both versions"

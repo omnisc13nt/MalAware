@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdarg>
+#include <cmath>
 #ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
@@ -60,15 +61,6 @@ int main(int argc, char* argv[])
     
     // Parse command line options
     outputManager.parseCommandLineOptions(argc, argv);
-    
-    Logger::init("Logs.txt", "ParseOutput.txt");
-    g_output_file = fopen("ParseResults.txt", "w");
-    if (g_output_file) {
-        auto now = std::time(nullptr);
-        auto localTime = std::localtime(&now);
-        fprintf(g_output_file, "=== PE Parser Results - %s===\n\n", std::asctime(localTime));
-        fflush(g_output_file);
-    }
     // Find the input file (first non-flag argument)
     std::string inputFile = "";
     std::string outputFile = "";
@@ -95,11 +87,6 @@ int main(int argc, char* argv[])
     
     if (inputFile.empty()) {
         outputManager.printUsage();
-        if (g_output_file) {
-            fclose(g_output_file);
-            g_output_file = nullptr;
-        }
-        Logger::close();
         return PE_ERROR_INVALID_PE;
     }
     
@@ -114,14 +101,11 @@ int main(int argc, char* argv[])
         }
         // Skip other options as they're handled by OutputManager
     }
-    
-    if (g_output_file) {
-        fclose(g_output_file);
-        g_output_file = nullptr;
-    }
-    
-    // Only create output file if -o flag was specified
+
+    // Initialize logging system only if output file is specified
     if (outputToFile) {
+        // Initialize Logger system without separate log files to avoid duplication
+        // All output goes to the user-specified file via g_output_file
         g_output_file = fopen(outputFile.c_str(), "w");
         if (g_output_file) {
             auto now = std::time(nullptr);
@@ -132,44 +116,74 @@ int main(int argc, char* argv[])
         LOGF("[INFO] Starting PE file analysis for: %s\n", inputFile.c_str());
         LOGF("[INFO] Output will be saved to: %s\n", outputFile.c_str());
     } else {
-        // Terminal output only
+        // Console output only - no file logging needed
+        // g_output_file remains nullptr, all output goes to console
         printf("[INFO] Starting PE file analysis for: %s\n", inputFile.c_str());
         printf("[INFO] Results will be displayed in terminal\n");
     }
+    // Load and validate PE file structure
     PE_FILE_INFO fileInfo;
     int loadResult = LoadPEFile(inputFile.c_str(), &fileInfo);
     if (loadResult != PE_SUCCESS)
     {
-        LOGF("[-] ERROR: Failed to load PE file: %s (Error code: %d)\n", inputFile.c_str(), loadResult);
-        Logger::close();
+        if (outputToFile) {
+            LOGF("[-] ERROR: Failed to load PE file: %s (Error code: %d)\n", inputFile.c_str(), loadResult);
+            Logger::close();
+        } else {
+            printf("[-] ERROR: Failed to load PE file: %s (Error code: %d)\n", inputFile.c_str(), loadResult);
+        }
         return loadResult;
     }
-    LOGF("[+] Successfully loaded PE file: %s\n", inputFile.c_str());
-    LOGF("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
+    
+    // Successfully loaded PE file - log basic information
+    if (outputToFile) {
+        LOGF("[+] Successfully loaded PE file: %s\n", inputFile.c_str());
+        LOGF("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
+    } else {
+        printf("[+] Successfully loaded PE file: %s\n", inputFile.c_str());
+        printf("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
+    }
+    // Extract section information for analysis modules
+    // This is critical for entropy, security, and malware analysis
     if (fileInfo.bIs64Bit)
     {
         auto pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
         g_NumberOfSections = pNtHeader64->FileHeader.NumberOfSections;
+        // Calculate section header location: NT headers + fixed header size + optional header size
         g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
     }
     else
     {
         auto pNtHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.pNtHeader;
         g_NumberOfSections = pNtHeader32->FileHeader.NumberOfSections;
+        // Calculate section header location: NT headers + fixed header size + optional header size
         g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
+    
+    // Initialize performance tracking for analysis modules
     PerformanceMetrics perfMetrics;
     perfMetrics.setFileSize(fileInfo.dwFileSize);
     perfMetrics.startAnalysis();
+    
+    // Parse core PE structures (headers, sections, imports/exports)
     int parseResult = ParsePEFile(&fileInfo);
     if (parseResult != PE_SUCCESS)
     {
-        LOGF("[-] ERROR: Failed to parse PE file! (Error code: %d)\n", parseResult);
+        if (outputToFile) {
+            LOGF("[-] ERROR: Failed to parse PE file! (Error code: %d)\n", parseResult);
+            Logger::close();
+        } else {
+            printf("[-] ERROR: Failed to parse PE file! (Error code: %d)\n", parseResult);
+        }
         CleanupPEFile(&fileInfo);
-        Logger::close();
         return parseResult;
     }
-    LOG("\n[+] PE file parsing completed successfully!\n");
+    
+    if (outputToFile) {
+        LOG("\n[+] PE file parsing completed successfully!\n");
+    } else {
+        printf("\n[+] PE file parsing completed successfully!\n");
+    }
     
     // Generate analysis summary
     generateAnalysisSummary(fileInfo, inputFile);
@@ -362,12 +376,29 @@ int main(int argc, char* argv[])
             imageBase = static_cast<DWORD>(pNtHeader64->OptionalHeader.ImageBase);
             sizeOfCode = pNtHeader64->OptionalHeader.SizeOfCode;
             
-            // Collect section information
+            // Collect section information and calculate real entropy
             auto pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
             for (int i = 0; i < pNtHeader64->FileHeader.NumberOfSections; i++) {
                 sections.push_back(pSectionHeader[i]);
-                // Calculate entropy for each section (simplified)
-                double entropy = 6.0; // Default entropy, would need actual calculation
+                
+                // Calculate real entropy for each section
+                double entropy = 0.0;
+                if (pSectionHeader[i].SizeOfRawData > 0 && pSectionHeader[i].PointerToRawData > 0) {
+                    BYTE* sectionData = (BYTE*)((DWORD_PTR)fileInfo.pDosHeader + pSectionHeader[i].PointerToRawData);
+                    
+                    // Calculate Shannon entropy
+                    unsigned int frequency[256] = {0};
+                    for (DWORD j = 0; j < pSectionHeader[i].SizeOfRawData; j++) {
+                        frequency[sectionData[j]]++;
+                    }
+                    
+                    for (int k = 0; k < 256; k++) {
+                        if (frequency[k] > 0) {
+                            double probability = (double)frequency[k] / pSectionHeader[i].SizeOfRawData;
+                            entropy -= probability * log2(probability);
+                        }
+                    }
+                }
                 sectionEntropies.push_back(entropy);
             }
             
@@ -393,12 +424,29 @@ int main(int argc, char* argv[])
             imageBase = pNtHeader32->OptionalHeader.ImageBase;
             sizeOfCode = pNtHeader32->OptionalHeader.SizeOfCode;
             
-            // Collect section information
+            // Collect section information and calculate real entropy
             auto pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
             for (int i = 0; i < pNtHeader32->FileHeader.NumberOfSections; i++) {
                 sections.push_back(pSectionHeader[i]);
-                // Calculate entropy for each section (simplified)
-                double entropy = 6.0; // Default entropy, would need actual calculation
+                
+                // Calculate real entropy for each section
+                double entropy = 0.0;
+                if (pSectionHeader[i].SizeOfRawData > 0 && pSectionHeader[i].PointerToRawData > 0) {
+                    BYTE* sectionData = (BYTE*)((DWORD_PTR)fileInfo.pDosHeader + pSectionHeader[i].PointerToRawData);
+                    
+                    // Calculate Shannon entropy
+                    unsigned int frequency[256] = {0};
+                    for (DWORD j = 0; j < pSectionHeader[i].SizeOfRawData; j++) {
+                        frequency[sectionData[j]]++;
+                    }
+                    
+                    for (int k = 0; k < 256; k++) {
+                        if (frequency[k] > 0) {
+                            double probability = (double)frequency[k] / pSectionHeader[i].SizeOfRawData;
+                            entropy -= probability * log2(probability);
+                        }
+                    }
+                }
                 sectionEntropies.push_back(entropy);
             }
             
@@ -656,31 +704,41 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during enhanced output generation\n");
         }
     }
+    
+    // Cleanup resources and finalize analysis
     CleanupPEFile(&fileInfo);
-    LOG("[+] PE file analysis completed successfully!\n");
-    if (g_output_file) {
-        fprintf(g_output_file, "\n=== Analysis Complete ===\n");
-        fclose(g_output_file);
-        g_output_file = nullptr;
+    
+    if (outputToFile) {
+        LOG("[+] PE file analysis completed successfully!\n");
+        if (g_output_file) {
+            fprintf(g_output_file, "\n=== Analysis Complete ===\n");
+            fclose(g_output_file);
+            g_output_file = nullptr;
+        }
+    } else {
+        printf("[+] PE file analysis completed successfully!\n");
     }
-    Logger::close();
+    
     return PE_SUCCESS;
 }
 
 // Function to generate analysis summary
 void generateAnalysisSummary(const PE_FILE_INFO& fileInfo, const std::string& inputFile) {
+    // Display comprehensive analysis summary with key file information
+    // This provides immediate insight into the PE file's basic characteristics
     LOG("\n===============================\n");
     LOG("    ANALYSIS SUMMARY\n");
     LOG("===============================\n");
     
-    // Basic file information
+    // Basic file information - essential for initial assessment
     LOGF("File: %s\n", inputFile.c_str());
     LOGF("Size: %.2f MB (%u bytes)\n", 
          fileInfo.dwFileSize / (1024.0 * 1024.0), 
          static_cast<DWORD>(fileInfo.dwFileSize));
     LOGF("Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
     
-    // File type
+    // Determine file type from PE characteristics flags
+    // IMAGE_FILE_DLL = 0x2000, IMAGE_FILE_EXECUTABLE_IMAGE = 0x0002, IMAGE_FILE_SYSTEM = 0x1000
     WORD characteristics = fileInfo.pNtHeader->FileHeader.Characteristics;
     std::string fileType = "Unknown";
     if (characteristics & IMAGE_FILE_DLL) {
@@ -692,10 +750,12 @@ void generateAnalysisSummary(const PE_FILE_INFO& fileInfo, const std::string& in
     }
     LOGF("File Type: %s\n", fileType.c_str());
     
-    // Quick security indicators
+    // Quick security indicators overview
+    // These will be analyzed in detail by subsequent analysis modules
     LOG("\nQuick Security Assessment:\n");
     
-    // Check if digitally signed (placeholder - will be determined during actual analysis)
+    // Note: Digital signature, entropy, packing, and suspicious pattern analysis
+    // will be performed by dedicated analysis modules below
     LOG("🔍 Digital Signature: Will be analyzed below\n");
     LOG("🔍 Entropy Analysis: Will be analyzed below\n");
     LOG("🔍 Packing Detection: Will be analyzed below\n");

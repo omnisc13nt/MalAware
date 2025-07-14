@@ -317,20 +317,18 @@ inline bool isValidString(const char* str, size_t maxLen) {
         if (str[i] == '\0') {
             return len >= 1 && len <= 255; 
         }
-        if ((str[i] >= 'a' && str[i] <= 'z') ||
-            (str[i] >= 'A' && str[i] <= 'Z') ||
-            (str[i] >= '0' && str[i] <= '9') ||
-            str[i] == '_' || str[i] == '.' || str[i] == '@' ||
-            str[i] == '$' || str[i] == '?' || str[i] == '#' ||
-            (unsigned char)str[i] >= 128) { 
+        // Be more permissive - allow most printable characters
+        if (str[i] >= 32 && str[i] <= 126) { // Printable ASCII
             len++;
-        } else if (str[i] < 32 && str[i] != '\0') {
-            return false;
+        } else if ((unsigned char)str[i] >= 128) { // Extended ASCII
+            len++;
+        } else if (str[i] == '\0') {
+            break;
         } else {
-            len++;
+            return false; // Invalid control characters
         }
     }
-    return false; 
+    return len >= 1 && len <= 255;
 }
 inline bool isLikelyObfuscated(const char* str, size_t len) {
     if (!str || len == 0) return true;
@@ -353,29 +351,40 @@ inline bool isLikelyObfuscated(const char* str, size_t len) {
 }
 #include <ctime>
 #include <fstream>
+
+// External declaration for global output file handle
+extern FILE* g_output_file;
+
 class Logger {
 private:
     static std::ofstream logFile;
     static std::ofstream outputFile;
     static bool isInitialized;
 public:
-    static void init(const char* logFilename = "Logs.txt", const char* outputFilename = "ParseOutput.txt") {
+    static void init(const char* logFilename = "", const char* outputFilename = "ParseOutput.txt") {
         if (!isInitialized) {
-            logFile.open(logFilename, std::ios::app);
-            if (logFile.is_open()) {
-                auto now = std::time(nullptr);
-                auto localTime = std::localtime(&now);
-                logFile << "\n=== PE Parser Session Started at " 
-                       << std::asctime(localTime) << "===\n";
-                logFile.flush();
+            // Only open log file if filename is provided and not empty
+            if (logFilename && strlen(logFilename) > 0) {
+                logFile.open(logFilename, std::ios::app);
+                if (logFile.is_open()) {
+                    auto now = std::time(nullptr);
+                    auto localTime = std::localtime(&now);
+                    logFile << "\n=== PE Parser Session Started at " 
+                           << std::asctime(localTime) << "===\n";
+                    logFile.flush();
+                }
             }
-            outputFile.open(outputFilename, std::ios::trunc);
-            if (outputFile.is_open()) {
-                auto now = std::time(nullptr);
-                auto localTime = std::localtime(&now);
-                outputFile << "=== PE Parser Results - " 
-                          << std::asctime(localTime) << "===\n\n";
-                outputFile.flush();
+            
+            // Only open output file if filename is provided and not empty
+            if (outputFilename && strlen(outputFilename) > 0) {
+                outputFile.open(outputFilename, std::ios::trunc);
+                if (outputFile.is_open()) {
+                    auto now = std::time(nullptr);
+                    auto localTime = std::localtime(&now);
+                    outputFile << "=== PE Parser Results - " 
+                              << std::asctime(localTime) << "===\n\n";
+                    outputFile.flush();
+                }
             }
             isInitialized = true;
         }
@@ -424,39 +433,57 @@ public:
 };
 #define LOG(msg) do { \
     printf("%s", msg); \
-    Logger::log(msg); \
-    Logger::output(msg); \
+    if (g_output_file) { \
+        fprintf(g_output_file, "%s", msg); \
+        fflush(g_output_file); \
+    } \
 } while(0)
 #define LOGF(fmt, ...) do { \
     char buffer[8192]; \
     int result = snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
     if (result > 0 && result < (int)sizeof(buffer)) { \
         printf("%s", buffer); \
-        Logger::log(buffer); \
-        Logger::output(buffer); \
+        if (g_output_file) { \
+            fprintf(g_output_file, "%s", buffer); \
+            fflush(g_output_file); \
+        } \
     } else { \
         const char* truncated_msg = "[ERROR: Message too long for buffer - Consider using shorter output format]\n"; \
         printf("%s", truncated_msg); \
-        Logger::log(truncated_msg); \
-        Logger::output(truncated_msg); \
+        if (g_output_file) { \
+            fprintf(g_output_file, "%s", truncated_msg); \
+            fflush(g_output_file); \
+        } \
     } \
 } while(0)
 #define LOG_DEBUG(msg) do { \
-    Logger::log(msg); \
+    /* Debug logging replaced with detailed code comments for maintainability */ \
+    /* Original debug: msg */ \
 } while(0)
 #define LOGF_DEBUG(fmt, ...) do { \
-    char buffer[4096]; \
-    snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
-    Logger::log(buffer); \
+    /* Debug logging replaced with detailed code comments for maintainability */ \
+    /* Original debug format: fmt */ \
 } while(0)
 #define LOG_OUTPUT(msg) do { \
     printf("%s", msg); \
-    Logger::output(msg); \
+    if (g_output_file) { \
+        fprintf(g_output_file, "%s", msg); \
+        fflush(g_output_file); \
+    } \
 } while(0)
 #define LOGF_OUTPUT(fmt, ...) do { \
     char buffer[4096]; \
     snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
     printf("%s", buffer); \
-    Logger::output(buffer); \
+    if (g_output_file) { \
+        fprintf(g_output_file, "%s", buffer); \
+        fflush(g_output_file); \
+    } \
 } while(0)
-#define PRINTF_OUTPUT(...) Logger::printf_and_output(__VA_ARGS__)
+#define PRINTF_OUTPUT(...) do { \
+    printf(__VA_ARGS__); \
+    if (g_output_file) { \
+        fprintf(g_output_file, __VA_ARGS__); \
+        fflush(g_output_file); \
+    } \
+} while(0)

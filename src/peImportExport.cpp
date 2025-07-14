@@ -22,7 +22,7 @@ DWORD_PTR RvaToFileOffset(DWORD_PTR rva, PIMAGE_SECTION_HEADER pSectionHeader, i
 #include "../include/peImportExport.h"
 #include "../include/peSectionParser.h"
 void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor, 
-                  [[maybe_unused]] DWORD_PTR dRawOffset, 
+                  DWORD_PTR dRawOffset, 
                   PIMAGE_SECTION_HEADER pImageImportSection)
 {
     LOG("\n[+] IMPORTED DLL\n");
@@ -49,7 +49,9 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         LOG("[-] ERROR: g_SectionHeader is null\n");
         return;
     }
-    DWORD_PTR fileBase = (DWORD_PTR)pImageImportDescriptor - (DWORD_PTR)pImageImportSection->PointerToRawData;
+    
+    // Calculate the correct file base using the raw offset method
+    DWORD_PTR fileBase = dRawOffset - pImageImportSection->PointerToRawData;
     LOGF_DEBUG("[DEBUG] fileBase calculated as: %p\n", (void*)fileBase);
     int dllCount = 0;
     int maxDlls = 100; 
@@ -59,17 +61,20 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         LOGF_DEBUG("[DEBUG] Processing DLL #%d, Name RVA: 0x%X\n", dllCount + 1, (unsigned int)pImageImportDescriptor->Name);
         DWORD_PTR dllNameOffset = RvaToFileOffset(pImageImportDescriptor->Name, g_SectionHeader, g_NumberOfSections);
         LOGF_DEBUG("[DEBUG] DLL name offset: 0x%lX\n", (unsigned long)dllNameOffset);
+        
         const char* dllName = "[Invalid]";
         if (dllNameOffset > 0)
         {
-            dllName = (const char*)(fileBase + dllNameOffset);
-            LOGF_DEBUG("[DEBUG] DLL name pointer: %p\n", (void*)dllName);
-            if (dllName == nullptr || !isValidString(dllName, 256)) {
-                LOGF_DEBUG("[DEBUG] DLL name validation failed\n");
-                dllName = "[Invalid]";
-                g_InvalidDLLNames++;
-            } else {
+            const char* dllNamePtr = (const char*)(fileBase + dllNameOffset);
+            LOGF_DEBUG("[DEBUG] DLL name pointer: %p\n", (void*)dllNamePtr);
+            
+            // Verify the pointer is within reasonable bounds and validate the string
+            if (dllNamePtr && isValidString(dllNamePtr, 256)) {
+                dllName = dllNamePtr;
                 LOGF_DEBUG("[DEBUG] DLL name validated successfully: %s\n", dllName);
+            } else {
+                LOGF_DEBUG("[DEBUG] DLL name validation failed\n");
+                g_InvalidDLLNames++;
             }
         } else {
             g_InvalidDLLNames++;
@@ -229,6 +234,8 @@ void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         LOGF("[-] ERROR: g_SectionHeader is null\n");
         return;
     }
+    
+    // Calculate the correct file base using the raw offset method
     DWORD_PTR fileBase = dRawOffset - pImageImportSection->PointerToRawData;
     LOGF_DEBUG("[DEBUG] fileBase calculated as: %p\n", (void*)fileBase);
     int dllCount = 0;
@@ -239,50 +246,22 @@ void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         LOGF_DEBUG("[DEBUG] Processing DLL at iteration %d", dllCount);
         DWORD_PTR dllNameOffset = RvaToFileOffset(pImageImportDescriptor->Name, g_SectionHeader, g_NumberOfSections);
         LOGF_DEBUG("[DEBUG] DLL name offset: 0x%llX", (unsigned long long)dllNameOffset);
-        static char safeDllName[256];
-        strcpy(safeDllName, "[Invalid]");
+        
+        const char* dllName = "[Invalid]";
         if (dllNameOffset > 0)
         {
             const char* dllNamePtr = (const char*)(fileBase + dllNameOffset);
             LOGF_DEBUG("[DEBUG] DLL name pointer: %p", dllNamePtr);
-            if (dllNamePtr != nullptr) {
-                LOGF_DEBUG("[DEBUG] Attempting to read DLL name...");
-                bool hasValidData = false;
-                if (dllNameOffset + 4 < 0x100000) { 
-                    char temp[256];
-                    temp[0] = '\0';
-                    for (int i = 0; i < 50; ++i) {
-                        char c = dllNamePtr[i];
-                        if (c == '\0') {
-                            temp[i] = '\0';
-                            hasValidData = (i > 0);
-                            break;
-                        }
-                        if (c >= 32 && c <= 126) { 
-                            temp[i] = c;
-                        } else {
-                            temp[i] = '?';
-                        }
-                    }
-                    temp[49] = '\0'; 
-                    if (hasValidData && strlen(temp) > 0) {
-                        strcpy(safeDllName, temp);
-                        LOGF_DEBUG("[DEBUG] Successfully read DLL name: %s", safeDllName);
-                    } else {
-                        LOGF_DEBUG("[DEBUG] No valid DLL name found, using [Invalid]");
-                        strcpy(safeDllName, "[Invalid]");
-                    }
-                } else {
-                    LOGF_DEBUG("[DEBUG] DLL name offset out of bounds, using [Invalid]");
-                    strcpy(safeDllName, "[Invalid]");
-                }
+            
+            if (dllNamePtr && isValidString(dllNamePtr, 256)) {
+                dllName = dllNamePtr;
+                LOGF_DEBUG("[DEBUG] Successfully read DLL name: %s", dllName);
             } else {
-                LOGF_DEBUG("[DEBUG] DLL name pointer is NULL, using [Invalid]");
+                LOGF_DEBUG("[DEBUG] DLL name validation failed, using [Invalid]");
             }
         } else {
             LOGF_DEBUG("[DEBUG] dllNameOffset is 0, using [Invalid]");
         }
-        const char* dllName = safeDllName;
         printf("\n\tDLL NAME : %s\n", dllName);
         printf("\tCharacteristics : 0x%X\n", (unsigned int)pImageImportDescriptor->Characteristics);
         printf("\tOriginalFirstThunk : 0x%llX\n", (unsigned long long)pImageImportDescriptor->OriginalFirstThunk);
