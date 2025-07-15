@@ -101,4 +101,6 @@ MIT License — Free for professional security research & cybersecurity operatio
 ---
 
 **Attribution:**  
-This project was inspired by [@adamhlt/PE-Explorer](https://github.com/adamhlt/PE-Explorer). Expanded and enhanced by yours truly.
+This project was inspired by [@adamhlt/PE-Explorer](https://github.com/adamhlt/PE-Explorer). 
+Expanded and enhanced on personal endeavors by yours truly.
+-0
