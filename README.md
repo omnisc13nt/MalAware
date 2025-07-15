@@ -1,66 +1,83 @@
 # PE File Parser
 
-A static analysis tool for Windows PE files. Analyzes file structure, computes hashes, and detects suspicious characteristics.
+A C++ tool for analyzing Portable Executable (PE) files, designed to help security researchers and malware analysts perform offline malware detection and threat analysis.
 
-## Build
+> **Inspired by [@adamhlt/PE-Explorer](https://github.com/adamhlt/PE-Explorer): This project expands on Adam’s original idea and implementation.**
 
-Requirements:
-- Linux with GCC (C++17)
-- libfuzzy-dev
-
-```bash
-make
-```
-
-## Usage
-
-```bash
-./peFileParser [options] <file.exe>
-```
-
-Options:
-- `-v` : Verbose output
-- `-h` : Help
+---
 
 ## Features
 
-- PE structure parsing (headers, sections, imports/exports)
-- Hash computation (MD5, SHA-1, SHA-256, SSDeep, imphash)
-- Packer detection (UPX, ASPack, Themida)
-- Suspicious pattern analysis
-- Entropy analysis
+- **PE Header Parsing:** DOS, NT, and Optional headers
+- **Section Analysis:** Entropy calculations, RWX detection, packer identification
+- **Import/Export Analysis:** Lists imported/exported functions, flags suspicious APIs
+- **Resource & Signature Analysis:** Checks for embedded resources and digital signatures
+- **Malware Detection Algorithms:** Timestamp analysis, overlay anomaly detection, section anomalies, suspicious strings, anti-analysis techniques
+- **Cryptographic Analysis:** Generates MD5, SHA-1, SHA-256, and fuzzy hashes (ssdeep)
+- **Reporting:** Risk scoring, detailed analysis reports, performance metrics, multiple output formats
 
-## Example Output
-
-```
-File: sample.exe
-Size: 122880 bytes
-Architecture: x86
-
-Hashes:
-MD5:    250b77dfbb1b666e95b3bcda082de287
-SHA-1:  5a699a8f64046d3d7fb5014d0242c159a04b8eed
-
-Sections:
-.text   : executable, entropy 6.2
-.rdata  : read-only, entropy 4.8  
-.data   : writable, entropy 2.1
-
-Imports: kernel32.dll, user32.dll
-```
+---
 
 ## Installation
 
-Ubuntu/Debian:
+**Ubuntu/Debian**
 ```bash
+sudo apt-get update
 sudo apt-get install build-essential libfuzzy-dev
 ```
-
-CentOS/RHEL:
+**CentOS/RHEL**
 ```bash
 sudo yum install gcc-c++ libfuzzy-devel
 ```
 
-## Note
+**Build**
+```bash
+git clone <repository>
+cd peFileParser
+make clean && make
+```
 
-This tool performs static analysis only. Use in isolated environments when analyzing suspicious files.
+---
+
+## Usage
+
+**Basic Analysis**
+```bash
+./peFileParser /path/to/file.exe
+```
+
+**Verbose Output**
+```bash
+./peFileParser -v /path/to/file.exe
+```
+
+**Options**
+- `-h`, `--help`: Show help
+- `-v`, `--verbose`: Detailed analysis
+
+---
+
+---
+
+## Supported File Types
+
+- .exe, .dll, .sys, .scr, .com, .ocx (PE format files)
+
+---
+
+## Project Status
+
+- **Still in Development**
+
+---
+
+## License
+
+MIT License — Free for professional security research & cybersecurity operations.
+
+---
+
+**Attribution:**  
+This project was inspired by [@adamhlt/PE-Explorer](https://github.com/adamhlt/PE-Explorer). 
+Expanded and enhanced on personal endeavors by yours truly.
+-0
