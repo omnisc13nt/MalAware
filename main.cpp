@@ -44,68 +44,68 @@ PIMAGE_SECTION_HEADER g_SectionHeader = nullptr;
 int g_CorruptedImports = 0;
 int g_InvalidDLLNames = 0;
 
-// Function declarations
+
 void generateAnalysisSummary(const PE_FILE_INFO& fileInfo, const std::string& inputFile);
 int main(int argc, char* argv[])
 {
-    // Initialize OutputManager first
+
     OutputManager outputManager;
-    
-    // Check for help or usage requests
+
+
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             outputManager.printUsage();
             return 0;
         }
     }
-    
-    // Parse command line options
+
+
     outputManager.parseCommandLineOptions(argc, argv);
-    // Find the input file (first non-flag argument)
+
     std::string inputFile = "";
     std::string outputFile = "";
     std::string outputFormat = "text";
     bool outputToFile = false;
-    
-    // Find the input file among arguments
+
+
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        
-        // Skip flags and their values
+
+
         if (arg.front() == '-') {
-            // Skip flags that take values
+
             if ((arg == "-o" || arg == "-f" || arg == "--vt-api-key") && i + 1 < argc) {
-                i++; // Skip the value too
+                i++;
             }
             continue;
         }
-        
-        // This is the input file
+
+
         inputFile = arg;
         break;
     }
-    
+
     if (inputFile.empty()) {
         outputManager.printUsage();
         return PE_ERROR_INVALID_PE;
     }
-    
+
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
             outputFile = argv[i + 1];
             outputToFile = true;
-            i++; 
+            i++;
         } else if (strcmp(argv[i], "-f") == 0 && i + 1 < argc) {
             outputFormat = argv[i + 1];
-            i++; 
+            i++;
         }
-        // Skip other options as they're handled by OutputManager
+
     }
 
-    // Initialize logging system only if output file is specified
+
     if (outputToFile) {
-        // Initialize Logger system without separate log files to avoid duplication
-        // All output goes to the user-specified file via g_output_file
+
+
         g_output_file = fopen(outputFile.c_str(), "w");
         if (g_output_file) {
             auto now = std::time(nullptr);
@@ -116,12 +116,12 @@ int main(int argc, char* argv[])
         LOGF("[INFO] Starting PE file analysis for: %s\n", inputFile.c_str());
         LOGF("[INFO] Output will be saved to: %s\n", outputFile.c_str());
     } else {
-        // Console output only - no file logging needed
-        // g_output_file remains nullptr, all output goes to console
+
+
         printf("[INFO] Starting PE file analysis for: %s\n", inputFile.c_str());
         printf("[INFO] Results will be displayed in terminal\n");
     }
-    // Load and validate PE file structure
+
     PE_FILE_INFO fileInfo;
     int loadResult = LoadPEFile(inputFile.c_str(), &fileInfo);
     if (loadResult != PE_SUCCESS)
@@ -134,8 +134,8 @@ int main(int argc, char* argv[])
         }
         return loadResult;
     }
-    
-    // Successfully loaded PE file - log basic information
+
+
     if (outputToFile) {
         LOGF("[+] Successfully loaded PE file: %s\n", inputFile.c_str());
         LOGF("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
@@ -143,29 +143,29 @@ int main(int argc, char* argv[])
         printf("[+] Successfully loaded PE file: %s\n", inputFile.c_str());
         printf("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
     }
-    // Extract section information for analysis modules
-    // This is critical for entropy, security, and malware analysis
+
+
     if (fileInfo.bIs64Bit)
     {
         auto pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
         g_NumberOfSections = pNtHeader64->FileHeader.NumberOfSections;
-        // Calculate section header location: NT headers + fixed header size + optional header size
+
         g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
     }
     else
     {
         auto pNtHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.pNtHeader;
         g_NumberOfSections = pNtHeader32->FileHeader.NumberOfSections;
-        // Calculate section header location: NT headers + fixed header size + optional header size
+
         g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
-    
-    // Initialize performance tracking for analysis modules
+
+
     PerformanceMetrics perfMetrics;
     perfMetrics.setFileSize(fileInfo.dwFileSize);
     perfMetrics.startAnalysis();
-    
-    // Parse core PE structures (headers, sections, imports/exports)
+
+
     int parseResult = ParsePEFile(&fileInfo);
     if (parseResult != PE_SUCCESS)
     {
@@ -178,17 +178,17 @@ int main(int argc, char* argv[])
         CleanupPEFile(&fileInfo);
         return parseResult;
     }
-    
+
     if (outputToFile) {
         LOG("\n[+] PE file parsing completed successfully!\n");
     } else {
         printf("\n[+] PE file parsing completed successfully!\n");
     }
-    
-    // Generate analysis summary
+
+
     generateAnalysisSummary(fileInfo, inputFile);
-    
-    // Resource Analysis (conditional)
+
+
     if (outputManager.shouldShowResources()) {
         try {
             perfMetrics.startModule("Resource Analysis");
@@ -205,8 +205,8 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during resource parsing\n");
         }
     }
-    
-    // Security Analysis (conditional)
+
+
     if (outputManager.shouldRunSecurityAnalysis()) {
         try {
             perfMetrics.startModule("Security Analysis");
@@ -230,8 +230,8 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during security analysis\n");
         }
     }
-    
-    // Fuzzy Hash Analysis (conditional)
+
+
     if (outputManager.shouldShowFuzzyHashes()) {
         try {
             FuzzyHashCalculator fuzzyHashCalc;
@@ -247,8 +247,8 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during fuzzy hash analysis\n");
         }
     }
-    
-    // Advanced Entropy Analysis (conditional)
+
+
     if (outputManager.shouldShowEntropy()) {
         try {
             AdvancedEntropyAnalyzer entropyAnalyzer;
@@ -256,8 +256,8 @@ int main(int argc, char* argv[])
             LOG("\n[+] ADVANCED ENTROPY ANALYSIS\n");
             LOGF("	Overall File Entropy: %.2f (Scale: 0.0 = ordered, 8.0 = random)\n", entropyResults.fileOverall.entropy);
             LOGF("	Classification: %s\n", entropyResults.fileOverall.classification.c_str());
-            
-            // Add entropy context
+
+
             if (entropyResults.fileOverall.entropy >= 7.8) {
                 LOG("	⚠️  VERY HIGH ENTROPY - Likely packed, encrypted, or compressed\n");
             } else if (entropyResults.fileOverall.entropy >= 7.5) {
@@ -269,13 +269,13 @@ int main(int argc, char* argv[])
             } else {
                 LOG("	ℹ️  VERY LOW ENTROPY - Mostly padding or zeros\n");
             }
-            
+
             LOGF("	Packing Detected: %s\n", entropyResults.fileOverall.isPacked ? "YES" : "NO");
             LOGF("	Risk Score: %.1f/100\n", entropyResults.riskScore);
             if (outputManager.shouldShowDetails()) {
                 for (const auto& section : entropyResults.sections) {
-                    LOGF("	Section %s: Entropy %.2f (%s)\n", 
-                         section.sectionName.c_str(), 
+                    LOGF("	Section %s: Entropy %.2f (%s)\n",
+                         section.sectionName.c_str(),
                          section.result.entropy,
                          section.result.classification.c_str());
                 }
@@ -287,8 +287,8 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during enhanced entropy analysis\n");
         }
     }
-    
-    // Digital Signature Analysis (conditional)
+
+
     if (outputManager.shouldShowDigitalSignatures()) {
         try {
             perfMetrics.startModule("Digital Signature Analysis");
@@ -309,8 +309,8 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during digital signature analysis\n");
         }
     }
-    
-    // Debug Information Analysis (conditional)
+
+
     if (outputManager.shouldShowDebugInfo()) {
         try {
             PEDebugInfoAnalyzer debugAnalyzer(&fileInfo);
@@ -326,8 +326,8 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during debug information analysis\n");
         }
     }
-    
-    // TLS Analysis (conditional)
+
+
     if (outputManager.shouldShowTLS()) {
         try {
             PETLSAnalyzer::TLSInfo tlsInfo = PETLSAnalyzer::analyzeTLS(&fileInfo);
@@ -339,8 +339,8 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during TLS analysis\n");
         }
     }
-    
-    // Malware Analysis (conditional)
+
+
     if (outputManager.shouldRunMalwareAnalysis()) {
         try {
             auto malwareResult = PEMalwareAnalysisEngine::analyzeFile(&fileInfo);
@@ -352,46 +352,46 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during malware analysis\n");
         }
     }
-    
-    // Suspicious Technique Analysis (conditional)
+
+
     if (outputManager.shouldShowSuspiciousTechniques()) {
         try {
             PESuspiciousTechniqueAnalyzer techAnalyzer;
-        
-        // Gather data for analysis
+
+
         DWORD timestamp = 0;
         DWORD entryPoint = 0;
         DWORD imageBase = 0;
         DWORD sizeOfCode = 0;
         DWORD resourceSize = 0;
-        
+
         std::vector<IMAGE_SECTION_HEADER> sections;
         std::vector<double> sectionEntropies;
         std::vector<std::string> importedFunctions;
-        
+
         if (fileInfo.bIs64Bit) {
             auto pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
             timestamp = pNtHeader64->FileHeader.TimeDateStamp;
             entryPoint = pNtHeader64->OptionalHeader.AddressOfEntryPoint;
             imageBase = static_cast<DWORD>(pNtHeader64->OptionalHeader.ImageBase);
             sizeOfCode = pNtHeader64->OptionalHeader.SizeOfCode;
-            
-            // Collect section information and calculate real entropy
+
+
             auto pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
             for (int i = 0; i < pNtHeader64->FileHeader.NumberOfSections; i++) {
                 sections.push_back(pSectionHeader[i]);
-                
-                // Calculate real entropy for each section
+
+
                 double entropy = 0.0;
                 if (pSectionHeader[i].SizeOfRawData > 0 && pSectionHeader[i].PointerToRawData > 0) {
                     BYTE* sectionData = (BYTE*)((DWORD_PTR)fileInfo.pDosHeader + pSectionHeader[i].PointerToRawData);
-                    
-                    // Calculate Shannon entropy
+
+
                     unsigned int frequency[256] = {0};
                     for (DWORD j = 0; j < pSectionHeader[i].SizeOfRawData; j++) {
                         frequency[sectionData[j]]++;
                     }
-                    
+
                     for (int k = 0; k < 256; k++) {
                         if (frequency[k] > 0) {
                             double probability = (double)frequency[k] / pSectionHeader[i].SizeOfRawData;
@@ -401,7 +401,7 @@ int main(int argc, char* argv[])
                 }
                 sectionEntropies.push_back(entropy);
             }
-            
+
             techAnalyzer.analyzeFile(
                 inputFile,
                 timestamp,
@@ -410,12 +410,12 @@ int main(int argc, char* argv[])
                 sizeOfCode,
                 sections,
                 sectionEntropies,
-                0, // totalImports - would need to collect from import analysis
-                0, // corruptedImports - would need to collect from import analysis
+                0,
+                0,
                 resourceSize,
                 static_cast<DWORD>(fileInfo.dwFileSize),
                 importedFunctions,
-                true // is64Bit
+                true
             );
         } else {
             auto pNtHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.pNtHeader;
@@ -423,23 +423,23 @@ int main(int argc, char* argv[])
             entryPoint = pNtHeader32->OptionalHeader.AddressOfEntryPoint;
             imageBase = pNtHeader32->OptionalHeader.ImageBase;
             sizeOfCode = pNtHeader32->OptionalHeader.SizeOfCode;
-            
-            // Collect section information and calculate real entropy
+
+
             auto pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
             for (int i = 0; i < pNtHeader32->FileHeader.NumberOfSections; i++) {
                 sections.push_back(pSectionHeader[i]);
-                
-                // Calculate real entropy for each section
+
+
                 double entropy = 0.0;
                 if (pSectionHeader[i].SizeOfRawData > 0 && pSectionHeader[i].PointerToRawData > 0) {
                     BYTE* sectionData = (BYTE*)((DWORD_PTR)fileInfo.pDosHeader + pSectionHeader[i].PointerToRawData);
-                    
-                    // Calculate Shannon entropy
+
+
                     unsigned int frequency[256] = {0};
                     for (DWORD j = 0; j < pSectionHeader[i].SizeOfRawData; j++) {
                         frequency[sectionData[j]]++;
                     }
-                    
+
                     for (int k = 0; k < 256; k++) {
                         if (frequency[k] > 0) {
                             double probability = (double)frequency[k] / pSectionHeader[i].SizeOfRawData;
@@ -449,7 +449,7 @@ int main(int argc, char* argv[])
                 }
                 sectionEntropies.push_back(entropy);
             }
-            
+
             techAnalyzer.analyzeFile(
                 inputFile,
                 timestamp,
@@ -458,15 +458,15 @@ int main(int argc, char* argv[])
                 sizeOfCode,
                 sections,
                 sectionEntropies,
-                0, // totalImports - would need to collect from import analysis
-                0, // corruptedImports - would need to collect from import analysis
+                0,
+                0,
                 resourceSize,
                 static_cast<DWORD>(fileInfo.dwFileSize),
                 importedFunctions,
-                false // is64Bit
+                false
             );
         }
-        
+
         techAnalyzer.printAnalysis();
         LOG("[+] Suspicious technique analysis completed successfully!\n");
         } catch (const std::exception& e) {
@@ -475,8 +475,8 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during suspicious technique analysis\n");
         }
     }
-    
-    // Hash Analysis (conditional)
+
+
     if (outputManager.shouldShowHashes()) {
         try {
             PEHashCalculator hashCalculator(&fileInfo);
@@ -486,7 +486,7 @@ int main(int argc, char* argv[])
                 hashCalculator.printSectionHashes();
                 hashCalculator.printOverlayInfo();
             }
-            
+
             LOG("[+] Hash calculation and file analysis completed successfully!\n");
         } catch (const std::exception& e) {
             LOGF("[-] ERROR: Hash calculation failed: %s\n", e.what());
@@ -494,13 +494,13 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during hash calculation\n");
         }
     }
-    
+
     try {
         perfMetrics.endAnalysis();
         auto metrics = perfMetrics.generateReport();
         LOG("\n[+] PERFORMANCE METRICS\n");
         LOGF("	Total Analysis Time: %.2f seconds\n", metrics.totalTime);
-        if (metrics.peakMemory > 1024) { // Only show if > 1KB
+        if (metrics.peakMemory > 1024) {
             LOGF("	Peak Memory Usage: %.2f MB\n", metrics.peakMemory / (1024.0 * 1024.0));
         } else {
             LOGF("	Peak Memory Usage: < 1 MB (minimal footprint)\n");
@@ -518,13 +518,13 @@ int main(int argc, char* argv[])
     } catch (...) {
         LOG("[-] ERROR: Unknown error during performance metrics\n");
     }
-    if (false && outputFormat != "text") { // Enhanced output functionality disabled
+    if (false && outputFormat != "text") {
         try {
             EnhancedOutputManager outputManager;
             LOG("\n[+] ENHANCED OUTPUT GENERATION\n");
             LOGF("Generating output in %s format...\n", outputFormat.c_str());
-            
-            // Set output format
+
+
             if (outputFormat == "xml") {
                 outputManager.setOutputFormat(EnhancedOutputManager::OutputFormat::XML);
                 LOG("XML output format selected\n");
@@ -535,11 +535,11 @@ int main(int argc, char* argv[])
                 outputManager.setOutputFormat(EnhancedOutputManager::OutputFormat::SUMMARY);
                 LOG("Summary output format selected\n");
             }
-            
-            // Set output file
+
+
             outputManager.setOutputFile(outputFile);
-            
-            // Populate analysis data
+
+
             EnhancedOutputManager::AnalysisData data;
             data.fileName = inputFile.substr(inputFile.find_last_of("/\\") + 1);
             data.filePath = inputFile;
@@ -547,21 +547,21 @@ int main(int argc, char* argv[])
             data.architecture = fileInfo.bIs64Bit ? "x64" : "x86";
             data.compilationTime = fileInfo.pNtHeader->FileHeader.TimeDateStamp;
             data.sectionCount = fileInfo.pNtHeader->FileHeader.NumberOfSections;
-            
-            // Get entry point and subsystem based on architecture
+
+
             if (fileInfo.bIs64Bit) {
                 PIMAGE_NT_HEADERS64 pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
                 data.entryPoint = pNtHeader64->OptionalHeader.AddressOfEntryPoint;
-                
-                // Get subsystem
+
+
                 switch(pNtHeader64->OptionalHeader.Subsystem) {
                     case 1: data.subsystem = "Native"; break;
                     case 2: data.subsystem = "GUI"; break;
                     case 3: data.subsystem = "Console"; break;
                     default: data.subsystem = "Unknown"; break;
                 }
-                
-                // Security features
+
+
                 data.aslrEnabled = (pNtHeader64->OptionalHeader.DllCharacteristics & 0x40) != 0;
                 data.depEnabled = (pNtHeader64->OptionalHeader.DllCharacteristics & 0x100) != 0;
                 data.sehEnabled = (pNtHeader64->OptionalHeader.DllCharacteristics & 0x400) != 0;
@@ -569,25 +569,25 @@ int main(int argc, char* argv[])
             } else {
                 PIMAGE_NT_HEADERS32 pNtHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.pNtHeader;
                 data.entryPoint = pNtHeader32->OptionalHeader.AddressOfEntryPoint;
-                
-                // Get subsystem
+
+
                 switch(pNtHeader32->OptionalHeader.Subsystem) {
                     case 1: data.subsystem = "Native"; break;
                     case 2: data.subsystem = "GUI"; break;
                     case 3: data.subsystem = "Console"; break;
                     default: data.subsystem = "Unknown"; break;
                 }
-                
-                // Security features
+
+
                 data.aslrEnabled = (pNtHeader32->OptionalHeader.DllCharacteristics & 0x40) != 0;
                 data.depEnabled = (pNtHeader32->OptionalHeader.DllCharacteristics & 0x100) != 0;
                 data.sehEnabled = (pNtHeader32->OptionalHeader.DllCharacteristics & 0x400) != 0;
                 data.cfgEnabled = (pNtHeader32->OptionalHeader.DllCharacteristics & 0x4000) != 0;
             }
-            
+
             data.nxCompatible = data.depEnabled;
-            
-            // Collect hash data
+
+
             try {
                 PEHashCalculator hashCalc(&fileInfo);
                 auto hashResult = hashCalc.calculateAllHashes();
@@ -598,13 +598,13 @@ int main(int argc, char* argv[])
                 data.ssdeep = hashResult.ssdeep;
                 data.tlsh = hashResult.tlsh;
                 data.vhash = hashResult.vhash;
-                
-                // Get section entropy data
+
+
                 auto sectionHashes = hashCalc.calculateSectionHashes();
                 data.overallEntropy = 0.0;
                 double totalEntropy = 0.0;
                 int validSections = 0;
-                
+
                 for (const auto& section : sectionHashes) {
                     if (section.entropy > 0.0) {
                         data.sectionEntropies.push_back({section.sectionName, section.entropy});
@@ -612,15 +612,15 @@ int main(int argc, char* argv[])
                         validSections++;
                     }
                 }
-                
+
                 if (validSections > 0) {
                     data.overallEntropy = totalEntropy / validSections;
                 }
-                
-                // Detect packing based on entropy
+
+
                 data.packingDetected = data.overallEntropy > 7.0;
             } catch (...) {
-                // If hash calculation fails, leave fields empty
+
                 data.md5 = "";
                 data.sha1 = "";
                 data.sha256 = "";
@@ -631,26 +631,26 @@ int main(int argc, char* argv[])
                 data.overallEntropy = 0.0;
                 data.packingDetected = false;
             }
-            
-            // Collect import data (simplified for now)
+
+
             try {
                 data.importCount = 0;
                 data.dllCount = 0;
                 data.corruptedImports = 0;
                 data.importedDlls.clear();
-                
-                // Get basic import information from NT headers
+
+
                 if (fileInfo.bIs64Bit) {
                     PIMAGE_NT_HEADERS64 pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
                     if (pNtHeader64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress != 0) {
-                        data.dllCount = 1; // At least one import table exists
-                        data.importCount = 10; // Default estimate
+                        data.dllCount = 1;
+                        data.importCount = 10;
                     }
                 } else {
                     PIMAGE_NT_HEADERS32 pNtHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.pNtHeader;
                     if (pNtHeader32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress != 0) {
-                        data.dllCount = 1; // At least one import table exists
-                        data.importCount = 10; // Default estimate
+                        data.dllCount = 1;
+                        data.importCount = 10;
                     }
                 }
             } catch (...) {
@@ -659,15 +659,15 @@ int main(int argc, char* argv[])
                 data.corruptedImports = 0;
                 data.importedDlls.clear();
             }
-            
-            // Collect malware analysis data
+
+
             try {
                 auto malwareResult = PEMalwareAnalysisEngine::analyzeFile(&fileInfo);
                 data.riskScore = malwareResult.riskScore;
                 data.classification = malwareResult.classification;
                 data.recommendation = malwareResult.recommendation;
-                
-                // Extract threat indicators
+
+
                 for (const auto& indicator : malwareResult.indicators) {
                     if (indicator.isDetected) {
                         data.threatIndicators.push_back(indicator.category + ": " + indicator.description);
@@ -679,21 +679,21 @@ int main(int argc, char* argv[])
                 data.recommendation = "Analysis failed";
                 data.threatIndicators.clear();
             }
-            
-            // Performance metrics
+
+
             data.analysisTime = perfMetrics.getAnalysisTime();
             data.memoryUsage = perfMetrics.getPeakMemoryUsage();
-            
-            // Set timestamp
+
+
             data.analysisTimestamp = std::to_string(time(nullptr));
-            
-            // Generate output
+
+
             if (outputManager.generateOutput(data)) {
                 LOGF("Enhanced output successfully saved to: %s\n", outputFile.c_str());
             } else {
                 LOG("[-] ERROR: Failed to write enhanced output file\n");
             }
-            
+
             LOG("[+] Enhanced output generation completed successfully!\n");
         } catch (const std::exception& e) {
             LOGF("[-] ERROR: Enhanced output generation failed: %s\n", e.what());
@@ -701,10 +701,10 @@ int main(int argc, char* argv[])
             LOG("[-] ERROR: Unknown error during enhanced output generation\n");
         }
     }
-    
-    // Cleanup resources and finalize analysis
+
+
     CleanupPEFile(&fileInfo);
-    
+
     if (outputToFile) {
         LOG("[+] PE file analysis completed successfully!\n");
         if (g_output_file) {
@@ -715,27 +715,26 @@ int main(int argc, char* argv[])
     } else {
         printf("[+] PE file analysis completed successfully!\n");
     }
-    
+
     return PE_SUCCESS;
 }
 
-// Function to generate analysis summary
+
 void generateAnalysisSummary(const PE_FILE_INFO& fileInfo, const std::string& inputFile) {
-    // Display comprehensive analysis summary with key file information
-    // This provides immediate insight into the PE file's basic characteristics
+
+
     LOG("\n===============================\n");
     LOG("    ANALYSIS SUMMARY\n");
     LOG("===============================\n");
-    
-    // Basic file information - essential for initial assessment
+
+
     LOGF("File: %s\n", inputFile.c_str());
-    LOGF("Size: %.2f MB (%u bytes)\n", 
-         fileInfo.dwFileSize / (1024.0 * 1024.0), 
+    LOGF("Size: %.2f MB (%u bytes)\n",
+         fileInfo.dwFileSize / (1024.0 * 1024.0),
          static_cast<DWORD>(fileInfo.dwFileSize));
     LOGF("Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
-    
-    // Determine file type from PE characteristics flags
-    // IMAGE_FILE_DLL = 0x2000, IMAGE_FILE_EXECUTABLE_IMAGE = 0x0002, IMAGE_FILE_SYSTEM = 0x1000
+
+
     WORD characteristics = fileInfo.pNtHeader->FileHeader.Characteristics;
     std::string fileType = "Unknown";
     if (characteristics & IMAGE_FILE_DLL) {
@@ -746,18 +745,16 @@ void generateAnalysisSummary(const PE_FILE_INFO& fileInfo, const std::string& in
         fileType = "System File";
     }
     LOGF("File Type: %s\n", fileType.c_str());
-    
-    // Quick security indicators overview
-    // These will be analyzed in detail by subsequent analysis modules
+
+
     LOG("\nQuick Security Assessment:\n");
-    
-    // Note: Digital signature, entropy, packing, and suspicious pattern analysis
-    // will be performed by dedicated analysis modules below
+
+
     LOG("🔍 Digital Signature: Will be analyzed below\n");
     LOG("🔍 Entropy Analysis: Will be analyzed below\n");
     LOG("🔍 Packing Detection: Will be analyzed below\n");
     LOG("🔍 Suspicious Patterns: Will be analyzed below\n");
-    
+
     LOG("\n📝 Detailed analysis results follow...\n");
     LOG("===============================\n");
 }

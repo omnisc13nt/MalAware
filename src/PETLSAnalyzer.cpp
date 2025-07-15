@@ -1,6 +1,6 @@
 #include "../include/PETLSAnalyzer.h"
 #include "../include/peSectionParser.h"
-#include "../include/peImportExport.h"  
+#include "../include/peImportExport.h"
 #include <vector>
 #include <sstream>
 int AnalyzeTLS(PPE_FILE_INFO pFileInfo) {
@@ -151,27 +151,27 @@ bool PETLSAnalyzer::isCallbackSuspicious(DWORD_PTR callbackAddress, PPE_FILE_INF
     if (!pFileInfo) return false;
     extern int g_NumberOfSections;
     extern PIMAGE_SECTION_HEADER g_SectionHeader;
-    if (!g_SectionHeader) return true; 
-    DWORD imageBase = pFileInfo->bIs64Bit ? 
+    if (!g_SectionHeader) return true;
+    DWORD imageBase = pFileInfo->bIs64Bit ?
         (DWORD)pFileInfo->pNtHeader->OptionalHeader.OptionalHeader64.ImageBase :
         pFileInfo->pNtHeader->OptionalHeader.OptionalHeader32.ImageBase;
     DWORD rva = (DWORD)(callbackAddress - imageBase);
     for (int i = 0; i < g_NumberOfSections; i++) {
         auto section = &g_SectionHeader[i];
-        if (rva >= section->VirtualAddress && 
+        if (rva >= section->VirtualAddress &&
             rva < section->VirtualAddress + section->Misc.VirtualSize) {
             if (!(section->Characteristics & IMAGE_SCN_MEM_EXECUTE)) {
-                return true; 
+                return true;
             }
             char sectionName[9] = {0};
             strncpy(sectionName, (char*)section->Name, 8);
             if (strcmp(sectionName, ".text") == 0) {
-                return false; 
+                return false;
             }
             return true;
         }
     }
-    return true; 
+    return true;
 }
 std::string PETLSAnalyzer::generateTLSReport(const TLSInfo& tlsInfo) {
     std::ostringstream report;
@@ -181,7 +181,7 @@ std::string PETLSAnalyzer::generateTLSReport(const TLSInfo& tlsInfo) {
     }
     report << "TLS Directory Analysis:\n";
     report << "  Callbacks Found: " << tlsInfo.callbacks.size() << "\n";
-    report << "  Raw Data Range: 0x" << std::hex << tlsInfo.startAddressOfRawData 
+    report << "  Raw Data Range: 0x" << std::hex << tlsInfo.startAddressOfRawData
            << " - 0x" << tlsInfo.endAddressOfRawData << "\n";
     report << "  Zero Fill Size: " << std::dec << tlsInfo.sizeOfZeroFill << " bytes\n";
     if (tlsInfo.isSuspicious) {
@@ -201,7 +201,7 @@ void PETLSAnalyzer::logTLSAnalysis(const TLSInfo& tlsInfo) {
         return;
     }
     LOGF("\tTLS Directory: Present\n");
-    LOGF("\tRaw Data Range: 0x%llX - 0x%llX\n", 
+    LOGF("\tRaw Data Range: 0x%llX - 0x%llX\n",
          (unsigned long long)tlsInfo.startAddressOfRawData,
          (unsigned long long)tlsInfo.endAddressOfRawData);
     LOGF("\tZero Fill Size: %u bytes\n", tlsInfo.sizeOfZeroFill);
@@ -211,7 +211,7 @@ void PETLSAnalyzer::logTLSAnalysis(const TLSInfo& tlsInfo) {
     } else {
         LOGF("\tTLS Callbacks: %zu found\n", tlsInfo.callbacks.size());
         for (size_t i = 0; i < tlsInfo.callbacks.size(); i++) {
-            LOGF("\t\tCallback %zu: 0x%llX\n", i + 1, 
+            LOGF("\t\tCallback %zu: 0x%llX\n", i + 1,
                  (unsigned long long)tlsInfo.callbacks[i]);
         }
         if (tlsInfo.isSuspicious) {

@@ -9,7 +9,7 @@
 struct SuspiciousTechnique {
     std::string name;
     std::string description;
-    int severity; // 1-10 scale
+    int severity;
     std::string evidence;
     std::string mitigation;
 };
@@ -17,8 +17,8 @@ struct SuspiciousTechnique {
 class PESuspiciousTechniqueAnalyzer {
 private:
     std::vector<SuspiciousTechnique> detectedTechniques;
-    
-    // Analysis methods
+
+
     bool analyzeTimestampManipulation(DWORD timestamp, const std::string& filename);
     bool analyzeEntryPointObfuscation(DWORD entryPoint, DWORD imageBase, DWORD sizeOfCode);
     bool analyzeSectionCharacteristics(const std::vector<IMAGE_SECTION_HEADER>& sections);
@@ -27,19 +27,19 @@ private:
     bool analyzePackingIndicators(const std::vector<double>& sectionEntropies);
     bool analyzeAntiAnalysisTechniques(const std::vector<std::string>& importedFunctions);
     bool analyzePEStructureAnomalies(const IMAGE_NT_HEADERS& ntHeaders);
-    
-    // Helper methods
+
+
     std::string timestampToString(DWORD timestamp);
     bool isKnownMalwareTimestamp(DWORD timestamp);
     bool isCommonPackerEntryPoint(DWORD entryPoint);
     double calculateAverageEntropy(const std::vector<double>& entropies);
     std::string getSeverityDescription(int severity) const;
-    
+
 public:
     PESuspiciousTechniqueAnalyzer();
     ~PESuspiciousTechniqueAnalyzer();
-    
-    // Main analysis function
+
+
     void analyzeFile(
         const std::string& filename,
         DWORD timestamp,
@@ -55,16 +55,16 @@ public:
         const std::vector<std::string>& importedFunctions,
         bool is64Bit
     );
-    
-    // Output methods
+
+
     void printAnalysis() const;
     void saveAnalysisToFile(const std::string& filename) const;
-    
-    // Getters
+
+
     const std::vector<SuspiciousTechnique>& getDetectedTechniques() const;
     int getTotalSeverityScore() const;
     bool isSuspicious() const;
     std::string getThreatLevel() const;
 };
 
-#endif // PE_SUSPICIOUS_TECHNIQUE_ANALYZER_H
+#endif

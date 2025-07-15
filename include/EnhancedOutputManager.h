@@ -73,4 +73,4 @@ private:
     std::string formatFileSize(size_t size);
     std::string getCurrentTimestamp();
 };
-#endif 
+#endif

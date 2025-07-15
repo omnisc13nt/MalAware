@@ -41,7 +41,7 @@ PEDigitalSignatureAnalyzer::SignatureInfo PEDigitalSignatureAnalyzer::analyzeSig
     }
     signatureInfo_.isSigned = true;
     if (!parseWinCertificate(signatureData, signatureSize)) {
-        // Error message already set by parseWinCertificate
+
         return signatureInfo_;
     }
     signatureInfo_.isValid = verifySignatureIntegrity(signatureData, signatureSize);
@@ -71,31 +71,31 @@ bool PEDigitalSignatureAnalyzer::parseWinCertificate(const BYTE* certData, size_
         signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Certificate data too small (minimum 8 bytes required for WIN_CERTIFICATE header)";
         return false;
     }
-    
+
     DWORD dwLength = *(DWORD*)certData;
     WORD wRevision = *(WORD*)(certData + 4);
-    (void)wRevision; // Suppress unused variable warning
+    (void)wRevision;
     WORD wCertificateType = *(WORD*)(certData + 6);
-    
+
     if (dwLength > certSize) {
         signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Certificate length field exceeds available data. This may indicate a corrupted or malformed certificate.";
         return false;
     }
-    
+
     if (dwLength < 8) {
         signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Invalid certificate length (too small). Minimum size is 8 bytes for header.";
         return false;
     }
-    
-    if (wCertificateType == 0x0002) { 
+
+    if (wCertificateType == 0x0002) {
         const BYTE* pkcs7Data = certData + 8;
         size_t pkcs7Size = dwLength - 8;
-        
+
         if (pkcs7Size == 0) {
             signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Empty PKCS#7 data in certificate. The certificate contains no signature data.";
             return false;
         }
-        
+
         return parsePKCS7Signature(pkcs7Data, pkcs7Size);
     } else {
         signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Unsupported certificate type. Only PKCS#7 (type 0x0002) certificates are supported.";
@@ -132,7 +132,7 @@ bool PEDigitalSignatureAnalyzer::parsePKCS7Signature(const BYTE* pkcs7Data, size
                 if (PKCS7Parser::isCertificateExpired(cert)) {
                     signatureInfo_.isExpired = true;
                 }
-                pos += cert.tbsCertificate.size() + cert.signatureAlgorithm.size() + cert.signatureValue.size() + 20; 
+                pos += cert.tbsCertificate.size() + cert.signatureAlgorithm.size() + cert.signatureValue.size() + 20;
             } else {
                 break;
             }

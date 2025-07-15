@@ -87,7 +87,7 @@ AdvancedEntropyAnalyzer::OverallEntropyReport AdvancedEntropyAnalyzer::analyzeFi
     report.fileOverall.confidence = std::min(1.0, report.fileOverall.entropy / 8.0);
     if (fileSize > 1024 && fileData[0] == 'M' && fileData[1] == 'Z') {
         uint32_t peOffset = *reinterpret_cast<uint32_t*>(fileData.data() + 0x3C);
-        if (peOffset < fileSize - 4 && 
+        if (peOffset < fileSize - 4 &&
             fileData[peOffset] == 'P' && fileData[peOffset + 1] == 'E') {
             std::vector<std::pair<std::string, std::pair<size_t, size_t>>> sections = {
                 {".text", {0x1000, std::min(size_t(0x10000), fileSize)}},
@@ -159,7 +159,7 @@ std::vector<std::string> AdvancedEntropyAnalyzer::detectSuspiciousPatterns(const
     for (size_t i = 0; i < entropyValues.size(); ++i) {
         if (entropyValues[i] > PACKING_ENTROPY_THRESHOLD) {
             std::stringstream ss;
-            ss << "High entropy region at offset " << std::hex << (i * 512) 
+            ss << "High entropy region at offset " << std::hex << (i * 512)
                << " (entropy: " << std::fixed << std::setprecision(2) << entropyValues[i] << ")";
             suspiciousRegions.push_back(ss.str());
         }
@@ -170,7 +170,7 @@ std::vector<std::string> AdvancedEntropyAnalyzer::detectSuspiciousPatterns(const
         double next = entropyValues[i + 1];
         if (current > prev + 2.0 && current > next + 2.0 && current > 6.0) {
             std::stringstream ss;
-            ss << "Entropy spike at offset " << std::hex << (i * 512) 
+            ss << "Entropy spike at offset " << std::hex << (i * 512)
                << " (spike: " << std::fixed << std::setprecision(2) << current << ")";
             suspiciousRegions.push_back(ss.str());
         }

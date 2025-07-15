@@ -94,7 +94,7 @@ std::string EnhancedOutputManager::generateXML(const AnalysisData& data) {
     xml << "    " << xmlElement("packingDetected", data.packingDetected) << "\n";
     xml << "    <sectionEntropies>\n";
     for (const auto& section : data.sectionEntropies) {
-        xml << "      <section name=\"" << xmlEscape(section.first) << "\">" 
+        xml << "      <section name=\"" << xmlEscape(section.first) << "\">"
             << std::fixed << std::setprecision(2) << section.second << "</section>\n";
     }
     xml << "    </sectionEntropies>\n";
@@ -220,9 +220,9 @@ std::string EnhancedOutputManager::getCSVHeader() {
     return "FileName,FileSize,Architecture,MD5,SHA1,SHA256,RiskScore,Classification,ASLR,DEP,ImportCount,CorruptedImports,Entropy,PackingDetected,AnalysisTime,Timestamp";
 }
 bool EnhancedOutputManager::isFormatSupported(OutputFormat format) {
-    return format == OutputFormat::TEXT || 
-           format == OutputFormat::XML || 
-           format == OutputFormat::CSV || 
+    return format == OutputFormat::TEXT ||
+           format == OutputFormat::XML ||
+           format == OutputFormat::CSV ||
            format == OutputFormat::SUMMARY;
 }
 std::string EnhancedOutputManager::xmlEscape(const std::string& str) {

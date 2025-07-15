@@ -21,8 +21,8 @@ DWORD_PTR RvaToFileOffset(DWORD_PTR rva, PIMAGE_SECTION_HEADER pSectionHeader, i
 }
 #include "../include/peImportExport.h"
 #include "../include/peSectionParser.h"
-void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor, 
-                  DWORD_PTR dRawOffset, 
+void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
+                  DWORD_PTR dRawOffset,
                   PIMAGE_SECTION_HEADER pImageImportSection)
 {
     LOG("\n[+] IMPORTED DLL\n");
@@ -49,26 +49,26 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         LOG("[-] ERROR: g_SectionHeader is null\n");
         return;
     }
-    
-    // Calculate the correct file base using the raw offset method
+
+
     DWORD_PTR fileBase = dRawOffset - pImageImportSection->PointerToRawData;
     LOGF_DEBUG("[DEBUG] fileBase calculated as: %p\n", (void*)fileBase);
     int dllCount = 0;
-    int maxDlls = 100; 
+    int maxDlls = 100;
     LOGF_DEBUG("[DEBUG] Starting import descriptor loop\n");
     while (pImageImportDescriptor->Name != 0 && maxDlls-- > 0)
     {
         LOGF_DEBUG("[DEBUG] Processing DLL #%d, Name RVA: 0x%X\n", dllCount + 1, (unsigned int)pImageImportDescriptor->Name);
         DWORD_PTR dllNameOffset = RvaToFileOffset(pImageImportDescriptor->Name, g_SectionHeader, g_NumberOfSections);
         LOGF_DEBUG("[DEBUG] DLL name offset: 0x%lX\n", (unsigned long)dllNameOffset);
-        
+
         const char* dllName = "[Invalid]";
         if (dllNameOffset > 0)
         {
             const char* dllNamePtr = (const char*)(fileBase + dllNameOffset);
             LOGF_DEBUG("[DEBUG] DLL name pointer: %p\n", (void*)dllNamePtr);
-            
-            // Verify the pointer is within reasonable bounds and validate the string
+
+
             if (dllNamePtr && isValidString(dllNamePtr, 256)) {
                 dllName = dllNamePtr;
                 LOGF_DEBUG("[DEBUG] DLL name validated successfully: %s\n", dllName);
@@ -108,7 +108,7 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         LOGF("\n\tImported Functions : \n\n");
         int funcCount = 0;
         int invalidCount = 0;
-        int maxFuncs = 1000; 
+        int maxFuncs = 1000;
         bool possibleObfuscation = false;
         LOGF_DEBUG("[DEBUG] Starting function enumeration loop\n");
         while (pOriginalFirstThunk && pOriginalFirstThunk->u1.AddressOfData != 0 && maxFuncs-- > 0)
@@ -196,7 +196,7 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         }
         if (strcmp(dllName, "[Invalid]") != 0) {
             size_t nameLen = strlen(dllName);
-            if (nameLen < 3 || 
+            if (nameLen < 3 ||
                 (nameLen < 6 && strstr(dllName, ".dll") == nullptr) ||
                 isLikelyObfuscated(dllName, nameLen)) {
                 LOGF("\t\t[MALWARE ANALYSIS] Suspicious DLL name detected.\n");
@@ -209,8 +209,8 @@ void GetImports32(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
     LOGF("\n[+] Total imported DLLs: %d\n", dllCount);
     LOGF_DEBUG("[DEBUG] GetImports32 completed successfully\n");
 }
-void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor, 
-                  DWORD_PTR dRawOffset, 
+void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
+                  DWORD_PTR dRawOffset,
                   PIMAGE_SECTION_HEADER pImageImportSection)
 {
     LOGF("\n[+] IMPORTED DLL\n");
@@ -234,25 +234,25 @@ void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         LOGF("[-] ERROR: g_SectionHeader is null\n");
         return;
     }
-    
-    // Calculate the correct file base using the raw offset method
+
+
     DWORD_PTR fileBase = dRawOffset - pImageImportSection->PointerToRawData;
     LOGF_DEBUG("[DEBUG] fileBase calculated as: %p\n", (void*)fileBase);
     int dllCount = 0;
-    int maxDlls = 100; 
+    int maxDlls = 100;
     LOGF_DEBUG("[DEBUG] Starting while loop, checking pImageImportDescriptor->Name: 0x%X", (unsigned int)pImageImportDescriptor->Name);
     while (pImageImportDescriptor->Name != 0 && maxDlls-- > 0)
     {
         LOGF_DEBUG("[DEBUG] Processing DLL at iteration %d", dllCount);
         DWORD_PTR dllNameOffset = RvaToFileOffset(pImageImportDescriptor->Name, g_SectionHeader, g_NumberOfSections);
         LOGF_DEBUG("[DEBUG] DLL name offset: 0x%llX", (unsigned long long)dllNameOffset);
-        
+
         const char* dllName = "[Invalid]";
         if (dllNameOffset > 0)
         {
             const char* dllNamePtr = (const char*)(fileBase + dllNameOffset);
             LOGF_DEBUG("[DEBUG] DLL name pointer: %p", dllNamePtr);
-            
+
             if (dllNamePtr && isValidString(dllNamePtr, 256)) {
                 dllName = dllNamePtr;
                 LOGF_DEBUG("[DEBUG] Successfully read DLL name: %s", dllName);
@@ -285,7 +285,7 @@ void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
         auto pOriginalFirstThunk = (PIMAGE_THUNK_DATA64)(fileBase + thunkOffset);
         printf("\n\tImported Functions : \n\n");
         int funcCount = 0;
-        int maxFuncs = 1000; 
+        int maxFuncs = 1000;
         while (pOriginalFirstThunk && pOriginalFirstThunk->u1.AddressOfData != 0 && maxFuncs-- > 0)
         {
             if (pOriginalFirstThunk->u1.Ordinal & IMAGE_ORDINAL_FLAG64)
@@ -319,8 +319,8 @@ void GetImports64(PIMAGE_IMPORT_DESCRIPTOR pImageImportDescriptor,
     }
     printf("\n[+] Total imported DLLs: %d\n", dllCount);
 }
-void GetExports(PIMAGE_EXPORT_DIRECTORY pImageExportDirectory, 
-                DWORD_PTR dRawOffset, 
+void GetExports(PIMAGE_EXPORT_DIRECTORY pImageExportDirectory,
+                DWORD_PTR dRawOffset,
                 PIMAGE_SECTION_HEADER pImageExportSection)
 {
     printf("\n[+] EXPORTED FUNCTIONS\n\n");
@@ -338,7 +338,7 @@ int ParseImports(PPE_FILE_INFO pFileInfo)
         LOG("[-] ERROR: Invalid pFileInfo or pNtHeader in ParseImports\n");
         return PE_ERROR_INVALID_PE;
     }
-    LOGF_DEBUG("[DEBUG] pFileInfo: %p, pNtHeader: %p, bIs64Bit: %s\n", 
+    LOGF_DEBUG("[DEBUG] pFileInfo: %p, pNtHeader: %p, bIs64Bit: %s\n",
          (void*)pFileInfo, (void*)pFileInfo->pNtHeader, pFileInfo->bIs64Bit ? "true" : "false");
     PIMAGE_DATA_DIRECTORY pDataDirectory;
     PIMAGE_SECTION_HEADER pSectionHeader;
@@ -366,8 +366,8 @@ int ParseImports(PPE_FILE_INFO pFileInfo)
         return PE_SUCCESS;
     }
     LOGF_DEBUG("[DEBUG] Looking for import section containing RVA 0x%lX\n", (unsigned long)dImportAddress);
-    const PIMAGE_SECTION_HEADER pImageImportSection = GetSections(pSectionHeader, 
-                                                                  pFileInfo->pNtHeader->FileHeader.NumberOfSections, 
+    const PIMAGE_SECTION_HEADER pImageImportSection = GetSections(pSectionHeader,
+                                                                  pFileInfo->pNtHeader->FileHeader.NumberOfSections,
                                                                   dImportAddress);
     if (pImageImportSection == nullptr)
     {
@@ -441,8 +441,8 @@ int ParseExports(PPE_FILE_INFO pFileInfo)
         printf("\n[-] No export table found!\n");
         return PE_SUCCESS;
     }
-    const PIMAGE_SECTION_HEADER pImageExportSection = GetExportSection(pSectionHeader, 
-                                                                       pFileInfo->pNtHeader->FileHeader.NumberOfSections, 
+    const PIMAGE_SECTION_HEADER pImageExportSection = GetExportSection(pSectionHeader,
+                                                                       pFileInfo->pNtHeader->FileHeader.NumberOfSections,
                                                                        dExportAddress);
     if (pImageExportSection == nullptr)
     {

@@ -36,10 +36,10 @@ void PerformanceMetrics::endModule(const std::string& moduleName, bool success) 
     if (it != moduleStartTimes.end()) {
         auto endTime = std::chrono::high_resolution_clock::now();
         double elapsed = calculateElapsedTime(it->second, endTime);
-        
+
         size_t currentMemory = getProcessMemoryUsage();
         peakMemoryUsage = std::max(peakMemoryUsage, currentMemory);
-        
+
         moduleResults[moduleName].executionTime = elapsed;
         moduleResults[moduleName].success = success;
         moduleResults[moduleName].memoryUsed = currentMemory - baslineMemory;
@@ -82,10 +82,10 @@ double PerformanceMetrics::getAnalysisTime() {
     if (analysisStartTime.time_since_epoch().count() == 0) {
         return 0.0;
     }
-    
-    auto endTime = (analysisEndTime.time_since_epoch().count() != 0) ? 
+
+    auto endTime = (analysisEndTime.time_since_epoch().count() != 0) ?
                    analysisEndTime : std::chrono::high_resolution_clock::now();
-    
+
     return calculateElapsedTime(analysisStartTime, endTime);
 }
 size_t PerformanceMetrics::getPeakMemoryUsage() {
@@ -117,10 +117,10 @@ std::string PerformanceMetrics::calculatePerformanceGrade(const OverallMetrics& 
         memoryScore = 50.0;
     }
     double sizeMultiplier = 1.0;
-    if (metrics.fileSize > 100 * 1024 * 1024) {  
-        sizeMultiplier = 1.2;  
-    } else if (metrics.fileSize < 1024 * 1024) {  
-        sizeMultiplier = 0.8;  
+    if (metrics.fileSize > 100 * 1024 * 1024) {
+        sizeMultiplier = 1.2;
+    } else if (metrics.fileSize < 1024 * 1024) {
+        sizeMultiplier = 0.8;
     }
     double overallScore = (timeScore + memoryScore) / 2.0 * sizeMultiplier;
     if (overallScore >= 90) return "A (Excellent)";
@@ -132,25 +132,25 @@ std::string PerformanceMetrics::calculatePerformanceGrade(const OverallMetrics& 
 std::vector<std::string> PerformanceMetrics::identifyBottlenecks(const OverallMetrics& metrics) {
     std::vector<std::string> bottlenecks;
     if (metrics.totalTime > POOR_TIME_THRESHOLD) {
-        bottlenecks.push_back("Overall analysis time exceeds acceptable threshold (" + 
+        bottlenecks.push_back("Overall analysis time exceeds acceptable threshold (" +
                             formatTime(metrics.totalTime) + ")");
     }
     if (metrics.peakMemory > POOR_MEMORY_THRESHOLD) {
-        bottlenecks.push_back("Peak memory usage exceeds threshold (" + 
+        bottlenecks.push_back("Peak memory usage exceeds threshold (" +
                             formatMemory(metrics.peakMemory) + ")");
     }
     for (const auto& module : metrics.moduleMetrics) {
         double modulePercentage = (module.executionTime / metrics.totalTime) * 100.0;
         if (modulePercentage > 50.0) {
             std::stringstream ss;
-            ss << "Module '" << module.moduleName << "' consumes " 
-               << std::fixed << std::setprecision(1) << modulePercentage 
+            ss << "Module '" << module.moduleName << "' consumes "
+               << std::fixed << std::setprecision(1) << modulePercentage
                << "% of total execution time";
             bottlenecks.push_back(ss.str());
         }
         if (module.peakMemory > metrics.peakMemory * 0.7) {
             std::stringstream ss;
-            ss << "Module '" << module.moduleName << "' uses " 
+            ss << "Module '" << module.moduleName << "' uses "
                << formatMemory(module.peakMemory) << " of peak memory";
             bottlenecks.push_back(ss.str());
         }
@@ -167,18 +167,18 @@ std::vector<std::string> PerformanceMetrics::generateRecommendations(const Overa
         recommendations.push_back("Implement streaming analysis to reduce memory footprint");
         recommendations.push_back("Consider using memory-mapped files for large PE files");
     }
-    if (metrics.fileSize > 100 * 1024 * 1024) {  
+    if (metrics.fileSize > 100 * 1024 * 1024) {
         recommendations.push_back("For files >100MB, consider implementing progressive analysis");
         recommendations.push_back("Add option to skip detailed analysis for very large files");
     }
-    auto slowestModule = std::max_element(metrics.moduleMetrics.begin(), 
+    auto slowestModule = std::max_element(metrics.moduleMetrics.begin(),
                                         metrics.moduleMetrics.end(),
                                         [](const ModuleMetrics& a, const ModuleMetrics& b) {
                                             return a.executionTime < b.executionTime;
                                         });
-    if (slowestModule != metrics.moduleMetrics.end() && 
+    if (slowestModule != metrics.moduleMetrics.end() &&
         slowestModule->executionTime > metrics.totalTime * 0.4) {
-        recommendations.push_back("Optimize '" + slowestModule->moduleName + 
+        recommendations.push_back("Optimize '" + slowestModule->moduleName +
                                 "' module - it's the primary performance bottleneck");
     }
     if (metrics.moduleMetrics.size() > 5) {
@@ -197,7 +197,7 @@ double PerformanceMetrics::calculateElapsedTime(
     const std::chrono::high_resolution_clock::time_point& start,
     const std::chrono::high_resolution_clock::time_point& end) {
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    return static_cast<double>(duration.count()) / 1000000.0;  
+    return static_cast<double>(duration.count()) / 1000000.0;
 }
 size_t PerformanceMetrics::getProcessMemoryUsage() {
 #ifdef __linux__
@@ -211,7 +211,7 @@ size_t PerformanceMetrics::getProcessMemoryUsage() {
             iss >> label >> value >> unit;
             vmSize = std::stoull(value);
             if (unit == "kB") {
-                vmSize *= 1024;  
+                vmSize *= 1024;
             }
             break;
         }

@@ -22,15 +22,15 @@ std::string GetSectionProtection(DWORD_PTR dCharacteristics)
     protection += ")";
     return protection;
 }
-PIMAGE_SECTION_HEADER GetSections(PIMAGE_SECTION_HEADER pImageSectionHeader, 
-                                  int nNumberOfSections, 
+PIMAGE_SECTION_HEADER GetSections(PIMAGE_SECTION_HEADER pImageSectionHeader,
+                                  int nNumberOfSections,
                                   DWORD_PTR dImportAddress)
 {
     PIMAGE_SECTION_HEADER pImageImportHeader = nullptr;
     for (int i = 0; i < nNumberOfSections; ++i)
     {
         const auto pCurrentSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pImageSectionHeader + i * sizeof(IMAGE_SECTION_HEADER));
-        if (dImportAddress >= pCurrentSectionHeader->VirtualAddress && 
+        if (dImportAddress >= pCurrentSectionHeader->VirtualAddress &&
             dImportAddress < pCurrentSectionHeader->VirtualAddress + pCurrentSectionHeader->Misc.VirtualSize)
         {
             pImageImportHeader = pCurrentSectionHeader;
@@ -38,15 +38,15 @@ PIMAGE_SECTION_HEADER GetSections(PIMAGE_SECTION_HEADER pImageSectionHeader,
     }
     return pImageImportHeader;
 }
-PIMAGE_SECTION_HEADER GetExportSection(PIMAGE_SECTION_HEADER pImageSectionHeader, 
-                                       int nNumberOfSections, 
+PIMAGE_SECTION_HEADER GetExportSection(PIMAGE_SECTION_HEADER pImageSectionHeader,
+                                       int nNumberOfSections,
                                        DWORD_PTR dExportAddress)
 {
     PIMAGE_SECTION_HEADER pImageExportHeader = nullptr;
     for (int i = 0; i < nNumberOfSections; ++i)
     {
         const auto pCurrentSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pImageSectionHeader + i * sizeof(IMAGE_SECTION_HEADER));
-        if (dExportAddress >= pCurrentSectionHeader->VirtualAddress && 
+        if (dExportAddress >= pCurrentSectionHeader->VirtualAddress &&
             dExportAddress < pCurrentSectionHeader->VirtualAddress + pCurrentSectionHeader->Misc.VirtualSize)
         {
             pImageExportHeader = pCurrentSectionHeader;

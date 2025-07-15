@@ -13,19 +13,19 @@ public:
         DWORD size;
     };
     struct SecurityFeatures {
-        bool aslr;                      
-        bool dep;                       
-        bool seh;                       
-        bool cfg;                       
-        bool isolationAware;            
-        bool nxCompat;                  
-        bool dynamicBase;               
-        bool forceIntegrity;            
-        bool terminalServer;            
-        bool largeAddress;              
-        bool hasReturnFlowGuard;        
-        bool hasIntelCET;               
-        bool hasKernelCFI;              
+        bool aslr;
+        bool dep;
+        bool seh;
+        bool cfg;
+        bool isolationAware;
+        bool nxCompat;
+        bool dynamicBase;
+        bool forceIntegrity;
+        bool terminalServer;
+        bool largeAddress;
+        bool hasReturnFlowGuard;
+        bool hasIntelCET;
+        bool hasKernelCFI;
     };
     struct PackerInfo {
         bool isPacked;

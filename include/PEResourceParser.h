@@ -69,9 +69,9 @@ private:
     IconInfo parseIconEntry(const uint8_t* data, size_t size);
     StringTableInfo parseStringTable(const std::vector<uint8_t>& data);
     bool isStringObfuscated(const std::string& str);
-    bool isResourceSuspicious(const ResourceEntry& resource);
-    bool hasHighEntropy(const std::vector<uint8_t>& data);
-    bool containsExecutableCode(const std::vector<uint8_t>& data);
+    bool isResourceSuspicious(const ResourceEntry& resource) const;
+    bool hasHighEntropy(const std::vector<uint8_t>& data) const;
+    bool containsExecutableCode(const std::vector<uint8_t>& data) const;
     DWORD rvaToFileOffset(DWORD rva);
     bool isValidRVA(DWORD rva, DWORD size = 0);
 };

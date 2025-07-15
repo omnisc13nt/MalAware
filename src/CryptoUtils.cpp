@@ -161,13 +161,13 @@ std::string CryptoUtils::md5(const uint8_t* data, size_t length) {
     }
     delete[] paddedData;
     std::stringstream ss;
-    ss << std::hex << std::setw(8) << std::setfill('0') << 
+    ss << std::hex << std::setw(8) << std::setfill('0') <<
           ((h0 & 0xFF) << 24 | ((h0 >> 8) & 0xFF) << 16 | ((h0 >> 16) & 0xFF) << 8 | (h0 >> 24));
-    ss << std::hex << std::setw(8) << std::setfill('0') << 
+    ss << std::hex << std::setw(8) << std::setfill('0') <<
           ((h1 & 0xFF) << 24 | ((h1 >> 8) & 0xFF) << 16 | ((h1 >> 16) & 0xFF) << 8 | (h1 >> 24));
-    ss << std::hex << std::setw(8) << std::setfill('0') << 
+    ss << std::hex << std::setw(8) << std::setfill('0') <<
           ((h2 & 0xFF) << 24 | ((h2 >> 8) & 0xFF) << 16 | ((h2 >> 16) & 0xFF) << 8 | (h2 >> 24));
-    ss << std::hex << std::setw(8) << std::setfill('0') << 
+    ss << std::hex << std::setw(8) << std::setfill('0') <<
           ((h3 & 0xFF) << 24 | ((h3 >> 8) & 0xFF) << 16 | ((h3 >> 16) & 0xFF) << 8 | (h3 >> 24));
     return ss.str();
 }

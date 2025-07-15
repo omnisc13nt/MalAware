@@ -16,8 +16,8 @@ typedef void* HANDLE;
 #define TRUE 1
 #define FALSE 0
 #define INVALID_HANDLE_VALUE ((HANDLE)-1)
-#define IMAGE_DOS_SIGNATURE 0x5A4D     
-#define IMAGE_NT_SIGNATURE 0x00004550  
+#define IMAGE_DOS_SIGNATURE 0x5A4D
+#define IMAGE_NT_SIGNATURE 0x00004550
 #define IMAGE_NT_OPTIONAL_HDR32_MAGIC 0x10b
 #define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
 #define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
@@ -315,17 +315,17 @@ inline bool isValidString(const char* str, size_t maxLen) {
     size_t len = 0;
     for (size_t i = 0; i < maxLen; ++i) {
         if (str[i] == '\0') {
-            return len >= 1 && len <= 255; 
+            return len >= 1 && len <= 255;
         }
-        // Be more permissive - allow most printable characters
-        if (str[i] >= 32 && str[i] <= 126) { // Printable ASCII
+
+        if (str[i] >= 32 && str[i] <= 126) {
             len++;
-        } else if ((unsigned char)str[i] >= 128) { // Extended ASCII
+        } else if ((unsigned char)str[i] >= 128) {
             len++;
         } else if (str[i] == '\0') {
             break;
         } else {
-            return false; // Invalid control characters
+            return false;
         }
     }
     return len >= 1 && len <= 255;
@@ -344,15 +344,15 @@ inline bool isLikelyObfuscated(const char* str, size_t len) {
         else if (str[i] >= '0' && str[i] <= '9') digits++;
         else symbols++;
     }
-    if (nonPrintable > len / 4) return true;  
-    if (len > 3 && uppercase == 0 && lowercase == 0) return true; 
+    if (nonPrintable > len / 4) return true;
+    if (len > 3 && uppercase == 0 && lowercase == 0) return true;
     if (len > 10 && symbols > len / 2) return true;
     return false;
 }
 #include <ctime>
 #include <fstream>
 
-// External declaration for global output file handle
+
 extern FILE* g_output_file;
 
 class Logger {
@@ -363,25 +363,25 @@ private:
 public:
     static void init(const char* logFilename = "", const char* outputFilename = "ParseOutput.txt") {
         if (!isInitialized) {
-            // Only open log file if filename is provided and not empty
+
             if (logFilename && strlen(logFilename) > 0) {
                 logFile.open(logFilename, std::ios::app);
                 if (logFile.is_open()) {
                     auto now = std::time(nullptr);
                     auto localTime = std::localtime(&now);
-                    logFile << "\n=== PE Parser Session Started at " 
+                    logFile << "\n=== PE Parser Session Started at "
                            << std::asctime(localTime) << "===\n";
                     logFile.flush();
                 }
             }
-            
-            // Only open output file if filename is provided and not empty
+
+
             if (outputFilename && strlen(outputFilename) > 0) {
                 outputFile.open(outputFilename, std::ios::trunc);
                 if (outputFile.is_open()) {
                     auto now = std::time(nullptr);
                     auto localTime = std::localtime(&now);
-                    outputFile << "=== PE Parser Results - " 
+                    outputFile << "=== PE Parser Results - "
                               << std::asctime(localTime) << "===\n\n";
                     outputFile.flush();
                 }
@@ -457,12 +457,12 @@ public:
     } \
 } while(0)
 #define LOG_DEBUG(msg) do { \
-    /* Debug logging replaced with detailed code comments for maintainability */ \
-    /* Original debug: msg */ \
+     \
+     \
 } while(0)
 #define LOGF_DEBUG(fmt, ...) do { \
-    /* Debug logging replaced with detailed code comments for maintainability */ \
-    /* Original debug format: fmt */ \
+     \
+     \
 } while(0)
 #define LOG_OUTPUT(msg) do { \
     printf("%s", msg); \

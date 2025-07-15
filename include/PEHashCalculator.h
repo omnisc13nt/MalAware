@@ -9,11 +9,11 @@ public:
         std::string md5;
         std::string sha1;
         std::string sha256;
-        std::string imphash;      
-        std::string authentihash; 
-        std::string ssdeep;       
-        std::string tlsh;         
-        std::string vhash;        
+        std::string imphash;
+        std::string authentihash;
+        std::string ssdeep;
+        std::string tlsh;
+        std::string vhash;
     };
     struct SectionHashes {
         std::string sectionName;

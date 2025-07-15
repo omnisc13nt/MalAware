@@ -48,14 +48,14 @@ private:
     size_t fileSize;
     size_t baslineMemory;
     size_t peakMemoryUsage;
-    static constexpr double EXCELLENT_TIME_THRESHOLD = 1.0;  
+    static constexpr double EXCELLENT_TIME_THRESHOLD = 1.0;
     static constexpr double GOOD_TIME_THRESHOLD = 5.0;
     static constexpr double FAIR_TIME_THRESHOLD = 15.0;
     static constexpr double POOR_TIME_THRESHOLD = 30.0;
-    static constexpr size_t EXCELLENT_MEMORY_THRESHOLD = 50 * 1024 * 1024;  
-    static constexpr size_t GOOD_MEMORY_THRESHOLD = 100 * 1024 * 1024;      
-    static constexpr size_t FAIR_MEMORY_THRESHOLD = 200 * 1024 * 1024;      
-    static constexpr size_t POOR_MEMORY_THRESHOLD = 500 * 1024 * 1024;      
+    static constexpr size_t EXCELLENT_MEMORY_THRESHOLD = 50 * 1024 * 1024;
+    static constexpr size_t GOOD_MEMORY_THRESHOLD = 100 * 1024 * 1024;
+    static constexpr size_t FAIR_MEMORY_THRESHOLD = 200 * 1024 * 1024;
+    static constexpr size_t POOR_MEMORY_THRESHOLD = 500 * 1024 * 1024;
     double calculateElapsedTime(
         const std::chrono::high_resolution_clock::time_point& start,
         const std::chrono::high_resolution_clock::time_point& end
@@ -64,4 +64,4 @@ private:
     std::string formatTime(double seconds);
     std::string formatMemory(size_t bytes);
 };
-#endif 
+#endif

@@ -75,7 +75,7 @@ bool PKCS7Parser::parseASN1UTCTime(const uint8_t* data, size_t& pos, size_t data
     pos += length;
     struct tm timeinfo = {};
     if (timeStr.length() >= 10) {
-        timeinfo.tm_year = std::stoi(timeStr.substr(0, 2)) + 100; 
+        timeinfo.tm_year = std::stoi(timeStr.substr(0, 2)) + 100;
         timeinfo.tm_mon = std::stoi(timeStr.substr(2, 2)) - 1;
         timeinfo.tm_mday = std::stoi(timeStr.substr(4, 2));
         timeinfo.tm_hour = std::stoi(timeStr.substr(6, 2));
@@ -118,7 +118,7 @@ bool PKCS7Parser::parseContentInfo(const uint8_t* data, size_t size, PKCS7::Cont
         return false;
     }
     if (pos < size && data[pos] == ASN1_CONTEXT_SPECIFIC) {
-        pos++; 
+        pos++;
         size_t contentLength;
         if (!parseASN1Length(data, pos, size, contentLength)) return false;
         contentInfo.content.assign(data + pos, data + pos + contentLength);
@@ -143,17 +143,17 @@ bool PKCS7Parser::parseSignedData(const uint8_t* data, size_t size, PKCS7::Signe
     if (!parseASN1Sequence(data, pos, size, contentInfoBytes)) return false;
     parseContentInfo(contentInfoBytes.data(), contentInfoBytes.size(), signedData.contentInfo);
     if (pos < size && (data[pos] & 0xDF) == 0xA0) {
-        pos++; 
+        pos++;
         size_t certLength;
         if (!parseASN1Length(data, pos, size, certLength)) return false;
         signedData.certificates.assign(data + pos, data + pos + certLength);
         pos += certLength;
     }
     if (pos < size && (data[pos] & 0xDF) == 0xA1) {
-        pos++; 
+        pos++;
         size_t crlLength;
         if (!parseASN1Length(data, pos, size, crlLength)) return false;
-        pos += crlLength; 
+        pos += crlLength;
     }
     if (!parseASN1Tag(data, pos, size, ASN1_SET)) return false;
     size_t signerInfoLength;
@@ -173,7 +173,7 @@ bool PKCS7Parser::parseCertificate(const uint8_t* data, size_t size, PKCS7::Cert
     cert.tbsCertificate.assign(data + tbsStart, data + pos + tbsLength);
     size_t tbsPos = pos;
     if (tbsPos < size && (data[tbsPos] & 0xDF) == 0xA0) {
-        tbsPos++; 
+        tbsPos++;
         size_t versionLength;
         if (!parseASN1Length(data, tbsPos, size, versionLength)) return false;
         tbsPos += versionLength;
@@ -189,7 +189,7 @@ bool PKCS7Parser::parseCertificate(const uint8_t* data, size_t size, PKCS7::Cert
     if (!parseASN1Sequence(data, tbsPos, size, sigAlg)) return false;
     std::vector<uint8_t> issuerBytes;
     if (!parseASN1Sequence(data, tbsPos, size, issuerBytes)) return false;
-    cert.issuer = "Issuer DN"; 
+    cert.issuer = "Issuer DN";
     if (!parseASN1Tag(data, tbsPos, size, ASN1_SEQUENCE)) return false;
     size_t validityLength;
     if (!parseASN1Length(data, tbsPos, size, validityLength)) return false;
@@ -205,10 +205,10 @@ bool PKCS7Parser::parseCertificate(const uint8_t* data, size_t size, PKCS7::Cert
     }
     std::vector<uint8_t> subjectBytes;
     if (!parseASN1Sequence(data, tbsPos, size, subjectBytes)) return false;
-    cert.subject = "Subject DN"; 
+    cert.subject = "Subject DN";
     pos += tbsLength;
     if (!parseASN1Sequence(data, pos, size, cert.signatureAlgorithm)) return false;
-    if (!parseASN1Tag(data, pos, size, 0x03)) return false; 
+    if (!parseASN1Tag(data, pos, size, 0x03)) return false;
     size_t sigValueLength;
     if (!parseASN1Length(data, pos, size, sigValueLength)) return false;
     cert.signatureValue.assign(data + pos, data + pos + sigValueLength);
@@ -227,7 +227,7 @@ bool PKCS7Parser::parseSignerInfo(const uint8_t* data, size_t size, PKCS7::Signe
     if (!parseASN1Sequence(data, pos, size, signerInfo.issuerAndSerialNumber)) return false;
     if (!parseASN1Sequence(data, pos, size, signerInfo.digestAlgorithm)) return false;
     if (pos < size && (data[pos] & 0xDF) == 0xA0) {
-        pos++; 
+        pos++;
         size_t attrLength;
         if (!parseASN1Length(data, pos, size, attrLength)) return false;
         signerInfo.authenticatedAttributes.assign(data + pos, data + pos + attrLength);
@@ -240,7 +240,7 @@ bool PKCS7Parser::parseSignerInfo(const uint8_t* data, size_t size, PKCS7::Signe
     signerInfo.encryptedDigest.assign(data + pos, data + pos + encDigestLength);
     pos += encDigestLength;
     if (pos < size && (data[pos] & 0xDF) == 0xA1) {
-        pos++; 
+        pos++;
         size_t unattrLength;
         if (!parseASN1Length(data, pos, size, unattrLength)) return false;
         signerInfo.unauthenticatedAttributes.assign(data + pos, data + pos + unattrLength);
@@ -257,48 +257,37 @@ bool PKCS7Parser::validateCertificateChain(const std::vector<PKCS7::Certificate>
     return true;
 }
 bool PKCS7Parser::verifyCertificateSignature(const PKCS7::Certificate& cert, const PKCS7::Certificate& issuer) {
-    // Basic validation checks before attempting cryptographic verification
-    
-    // Check if both certificates are valid
+
+
     if (!cert.isValid || !issuer.isValid) {
         return false;
     }
-    
-    // Check if the issuer name matches the subject name (for self-signed) or is different (for CA-signed)
+
+
     if (cert.issuer.empty() || cert.subject.empty()) {
         return false;
     }
-    
-    // Verify the certificate is not expired
+
+
     if (isCertificateExpired(cert)) {
         return false;
     }
-    
-    // Check if we have the required signature data
+
+
     if (cert.signatureValue.empty() || cert.signatureAlgorithm.empty()) {
         return false;
     }
-    
-    // Check if the signature algorithm is supported
+
+
     if (!isSignatureAlgorithmOID(cert.signatureAlgorithm)) {
         return false;
     }
-    
-    // For now, we perform basic structural validation
-    // Real cryptographic verification would require:
-    // 1. Extracting the public key from the issuer certificate
-    // 2. Verifying the signature using RSA/ECDSA cryptography
-    // 3. Checking the certificate hash matches the signed data
-    
-    // This is a simplified check - in a production system, you would use
-    // a proper cryptographic library like OpenSSL to verify the signature
-    
-    // Basic heuristic: if all structural elements are present and valid,
-    // we assume the certificate might be legitimate
-    bool hasValidStructure = (!cert.serialNumber.empty() && 
+
+
+    bool hasValidStructure = (!cert.serialNumber.empty() &&
                              !cert.tbsCertificate.empty() &&
-                             cert.signatureValue.size() >= 128); // RSA signatures are typically 128+ bytes
-    
+                             cert.signatureValue.size() >= 128);
+
     return hasValidStructure;
 }
 bool PKCS7Parser::isCertificateExpired(const PKCS7::Certificate& cert) {

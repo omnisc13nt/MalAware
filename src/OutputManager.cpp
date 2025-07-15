@@ -5,7 +5,7 @@
 #include <cstring>
 
 OutputManager::OutputManager() {
-    // Default settings
+
     outputLevel = OutputLevel::STANDARD;
     analysisMode = AnalysisMode::SECURITY;
     showTimestamps = false;
@@ -24,8 +24,8 @@ OutputManager::OutputManager() {
 
 void OutputManager::setOutputLevel(OutputLevel level) {
     outputLevel = level;
-    
-    // Adjust settings based on level
+
+
     switch (level) {
         case OutputLevel::MINIMAL:
             includeHashes = false;
@@ -38,7 +38,7 @@ void OutputManager::setOutputLevel(OutputLevel level) {
             includeFuzzyHashes = false;
             includeDebugInfo = false;
             break;
-            
+
         case OutputLevel::SUMMARY:
             includeHashes = true;
             includeEntropy = false;
@@ -50,7 +50,7 @@ void OutputManager::setOutputLevel(OutputLevel level) {
             includeFuzzyHashes = false;
             includeDebugInfo = false;
             break;
-            
+
         case OutputLevel::STANDARD:
             includeHashes = true;
             includeEntropy = true;
@@ -62,7 +62,7 @@ void OutputManager::setOutputLevel(OutputLevel level) {
             includeFuzzyHashes = true;
             includeDebugInfo = false;
             break;
-            
+
         case OutputLevel::DETAILED:
             includeHashes = true;
             includeEntropy = true;
@@ -74,7 +74,7 @@ void OutputManager::setOutputLevel(OutputLevel level) {
             includeFuzzyHashes = true;
             includeDebugInfo = false;
             break;
-            
+
         case OutputLevel::FULL:
             includeHashes = true;
             includeEntropy = true;
@@ -91,8 +91,8 @@ void OutputManager::setOutputLevel(OutputLevel level) {
 
 void OutputManager::setAnalysisMode(AnalysisMode mode) {
     analysisMode = mode;
-    
-    // Adjust analysis focus
+
+
     switch (mode) {
         case AnalysisMode::QUICK:
             includeSuspiciousTechniques = false;
@@ -100,22 +100,22 @@ void OutputManager::setAnalysisMode(AnalysisMode mode) {
             includeTLS = false;
             includeFuzzyHashes = false;
             break;
-            
+
         case AnalysisMode::SECURITY:
             includeSuspiciousTechniques = true;
             includeDigitalSignatures = true;
             includeFuzzyHashes = true;
             break;
-            
+
         case AnalysisMode::MALWARE:
             includeSuspiciousTechniques = true;
             includeEntropy = true;
             includeFuzzyHashes = true;
             includeDigitalSignatures = true;
             break;
-            
+
         case AnalysisMode::FORENSIC:
-            // Enable everything for forensic analysis
+
             includeHashes = true;
             includeEntropy = true;
             includeSuspiciousTechniques = true;
@@ -127,9 +127,9 @@ void OutputManager::setAnalysisMode(AnalysisMode mode) {
             includeFuzzyHashes = true;
             includeDebugInfo = true;
             break;
-            
+
         case AnalysisMode::ALL:
-            // Enable everything
+
             setOutputLevel(OutputLevel::FULL);
             break;
     }
@@ -138,8 +138,8 @@ void OutputManager::setAnalysisMode(AnalysisMode mode) {
 void OutputManager::parseCommandLineOptions(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        
-        // Output level options
+
+
         if (arg == "-q" || arg == "--quiet") {
             setOutputLevel(OutputLevel::MINIMAL);
         } else if (arg == "-s" || arg == "--summary") {
@@ -149,8 +149,8 @@ void OutputManager::parseCommandLineOptions(int argc, char* argv[]) {
         } else if (arg == "-A" || arg == "--all") {
             setOutputLevel(OutputLevel::FULL);
         }
-        
-        // Analysis mode options
+
+
         else if (arg == "--quick") {
             setAnalysisMode(AnalysisMode::QUICK);
         } else if (arg == "--security") {
@@ -160,8 +160,8 @@ void OutputManager::parseCommandLineOptions(int argc, char* argv[]) {
         } else if (arg == "--forensic") {
             setAnalysisMode(AnalysisMode::FORENSIC);
         }
-        
-        // Specific feature toggles
+
+
         else if (arg == "--no-hashes") {
             includeHashes = false;
         } else if (arg == "--no-entropy") {
@@ -181,8 +181,8 @@ void OutputManager::parseCommandLineOptions(int argc, char* argv[]) {
         } else if (arg == "--timestamps") {
             showTimestamps = true;
         }
-        
-        // Custom sections
+
+
         else if (arg == "--only-threats") {
             setOutputLevel(OutputLevel::MINIMAL);
             includeSuspiciousTechniques = true;
@@ -278,7 +278,7 @@ std::string OutputManager::formatThreat(const std::string& threat, int severity)
     } else {
         prefix = colorOutput ? "\033[1;32m[INFO]" : "[INFO]";
     }
-    
+
     std::string suffix = colorOutput ? "\033[0m" : "";
     return prefix + " " + threat + suffix;
 }
@@ -306,20 +306,20 @@ std::string OutputManager::formatError(const std::string& error) const {
 
 void OutputManager::printUsage() const {
     std::cout << "\n=== PE File Parser - Output Options ===\n\n";
-    
+
     std::cout << "OUTPUT LEVELS:\n";
     std::cout << "  -q, --quiet      Minimal output (threats only)\n";
     std::cout << "  -s, --summary    Summary output (basic info + threats)\n";
     std::cout << "  (default)        Standard output (security analysis)\n";
     std::cout << "  -v, --verbose    Detailed output (comprehensive analysis)\n";
     std::cout << "  -A, --all        Full output (everything including debug)\n\n";
-    
+
     std::cout << "ANALYSIS MODES:\n";
     std::cout << "  --quick          Basic PE parsing only\n";
     std::cout << "  --security       Security-focused analysis (default)\n";
     std::cout << "  --malware        Comprehensive malware analysis\n";
     std::cout << "  --forensic       Full forensic analysis\n\n";
-    
+
     std::cout << "FEATURE TOGGLES:\n";
     std::cout << "  --no-hashes      Disable hash calculations\n";
     std::cout << "  --no-entropy     Disable entropy analysis\n";
@@ -330,11 +330,11 @@ void OutputManager::printUsage() const {
     std::cout << "  --show-debug     Include debug information\n";
     std::cout << "  --color          Enable colored output\n";
     std::cout << "  --timestamps     Show timestamps in output\n\n";
-    
+
     std::cout << "SPECIALIZED MODES:\n";
     std::cout << "  --only-threats   Show only threat detection results\n";
     std::cout << "  --only-hashes    Show only hash information\n\n";
-    
+
     std::cout << "EXAMPLES:\n";
     std::cout << "  peFileParser malware.exe -s --malware\n";
     std::cout << "  peFileParser sample.exe -A --forensic --color\n";
@@ -353,7 +353,7 @@ void OutputManager::printAvailableOptions() const {
         case OutputLevel::FULL: std::cout << "Full"; break;
     }
     std::cout << "\n";
-    
+
     std::cout << "  Analysis Mode: ";
     switch (analysisMode) {
         case AnalysisMode::QUICK: std::cout << "Quick"; break;
@@ -363,7 +363,7 @@ void OutputManager::printAvailableOptions() const {
         case AnalysisMode::ALL: std::cout << "All"; break;
     }
     std::cout << "\n";
-    
+
     std::cout << "  Enabled Features: ";
     if (includeHashes) std::cout << "Hashes ";
     if (includeEntropy) std::cout << "Entropy ";

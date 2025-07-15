@@ -1,5 +1,5 @@
 #include "../include/FuzzyHashCalculator.h"
-#include <fuzzy.h>  // Real ssdeep library
+#include <fuzzy.h>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -17,30 +17,30 @@ std::string FuzzyHashCalculator::calculateSSDeep(const uint8_t* data, size_t siz
     if (!data || size == 0) {
         return "[Error: Invalid data for SSDeep calculation]";
     }
-    
-    // Use real ssdeep library
+
+
     char result[FUZZY_MAX_RESULT];
     int ret = fuzzy_hash_buf(data, static_cast<uint32_t>(size), result);
-    
+
     if (ret != 0) {
         return "[Error: SSDeep calculation failed]";
     }
-    
+
     return std::string(result);
 }
 
 std::string FuzzyHashCalculator::calculateSSDeep(const std::string& filePath) {
     char result[FUZZY_MAX_RESULT];
     int ret = fuzzy_hash_filename(filePath.c_str(), result);
-    
+
     if (ret != 0) {
         return "[Error: Could not calculate SSDeep for file]";
     }
-    
+
     return std::string(result);
 }
 std::string FuzzyHashCalculator::calculateTLSH(const uint8_t* data, size_t size) {
-    if (!data || size < 50) {  
+    if (!data || size < 50) {
         return "[Error: Insufficient data for TLSH calculation]";
     }
     TLSHState state;
@@ -78,7 +78,7 @@ FuzzyHashCalculator::FuzzyHashes FuzzyHashCalculator::calculateAllHashes(const s
     std::vector<uint8_t> fileData(fileSize);
     file.read(reinterpret_cast<char*>(fileData.data()), fileSize);
     file.close();
-    // For file-based calculation, use direct file API for better performance
+
     result.ssdeep = calculateSSDeep(filePath);
     result.tlsh = calculateTLSH(fileData.data(), fileSize);
     result.vhash = calculateVHash(fileData.data(), fileSize);
@@ -87,7 +87,7 @@ FuzzyHashCalculator::FuzzyHashes FuzzyHashCalculator::calculateAllHashes(const s
 }
 
 int FuzzyHashCalculator::compareSSDeep(const std::string& hash1, const std::string& hash2) {
-    // Use real ssdeep comparison
+
     return fuzzy_compare(hash1.c_str(), hash2.c_str());
 }
 int FuzzyHashCalculator::compareTLSH(const std::string& hash1, const std::string& hash2) {
@@ -103,7 +103,7 @@ int FuzzyHashCalculator::compareTLSH(const std::string& hash1, const std::string
     return distance;
 }
 
-// TLSH implementation (keeping custom implementation)
+
 void FuzzyHashCalculator::initTLSHState(TLSHState& state) {
     state.checksum = 0;
     state.sliding_window = 0;
@@ -114,7 +114,7 @@ void FuzzyHashCalculator::updateTLSHHash(TLSHState& state, const uint8_t* data, 
     for (size_t i = 0; i < len; ++i) {
         state.sliding_window = ((state.sliding_window << 1) & 0xFFFFFF) | (data[i] & 1);
         state.checksum = ((state.checksum << 5) + state.checksum) + data[i];
-        if (i >= 5) {  
+        if (i >= 5) {
             uint8_t bucket = calculatePearsonHash(reinterpret_cast<const uint8_t*>(&state.sliding_window), 3);
             state.bucket_array[bucket]++;
         }
@@ -139,7 +139,7 @@ void FuzzyHashCalculator::extractVHashFeatures(VHashState& state, const uint8_t*
     if (size > 64) {
         if (size > 0x3C && data[0] == 'M' && data[1] == 'Z') {
             uint32_t peOffset = *reinterpret_cast<const uint32_t*>(data + 0x3C);
-            if (peOffset < size - 4 && 
+            if (peOffset < size - 4 &&
                 data[peOffset] == 'P' && data[peOffset + 1] == 'E') {
                 if (peOffset + 6 < size) {
                     state.section_count = *reinterpret_cast<const uint16_t*>(data + peOffset + 6);

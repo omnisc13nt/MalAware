@@ -26,7 +26,7 @@ PEDebugInfoAnalyzer::DebugInfo PEDebugInfoAnalyzer::analyzeDebugInfo() {
     debugInfo_.compiledWith = identifyCompiler();
     debugInfo_.buildEnvironment = extractBuildEnvironment();
     debugInfo_.hasSymbols = hasSymbolTable();
-    debugInfo_.isOptimized = (debugInfo_.debugDirectories.empty() || 
+    debugInfo_.isOptimized = (debugInfo_.debugDirectories.empty() ||
                              debugInfo_.codeViewInfo.pdbPath.empty());
     return debugInfo_;
 }
@@ -64,7 +64,7 @@ std::vector<PEDebugInfoAnalyzer::DebugDirectoryEntry> PEDebugInfoAnalyzer::parse
     for (int i = 0; i < pFileInfo_->pNtHeader->FileHeader.NumberOfSections; i++) {
         if (debugDir->VirtualAddress >= sectionHeader[i].VirtualAddress &&
             debugDir->VirtualAddress < sectionHeader[i].VirtualAddress + sectionHeader[i].SizeOfRawData) {
-            fileOffset = sectionHeader[i].PointerToRawData + 
+            fileOffset = sectionHeader[i].PointerToRawData +
                         (debugDir->VirtualAddress - sectionHeader[i].VirtualAddress);
             found = true;
             break;
@@ -95,13 +95,13 @@ PEDebugInfoAnalyzer::CodeViewInfo PEDebugInfoAnalyzer::parseCodeViewInfo(const B
         return info;
     }
     DWORD signature = *(DWORD*)data;
-    if (signature == 0x53445352) { 
+    if (signature == 0x53445352) {
         info.isValid = parseCodeViewPDB70(data, size);
         info.signature = "RSDS";
-    } else if (signature == 0x3031424E) { 
+    } else if (signature == 0x3031424E) {
         info.isValid = parseCodeViewPDB20(data, size);
         info.signature = "NB10";
-    } else if (signature == 0x3131424E) { 
+    } else if (signature == 0x3131424E) {
         info.isValid = parseCodeViewPDB20(data, size);
         info.signature = "NB11";
     } else {
@@ -111,7 +111,7 @@ PEDebugInfoAnalyzer::CodeViewInfo PEDebugInfoAnalyzer::parseCodeViewInfo(const B
     return info;
 }
 bool PEDebugInfoAnalyzer::parseCodeViewPDB70(const BYTE* data, size_t size) {
-    if (size < 24) { 
+    if (size < 24) {
         return false;
     }
     const BYTE* guidBytes = data + 4;
@@ -128,11 +128,11 @@ bool PEDebugInfoAnalyzer::parseCodeViewPDB70(const BYTE* data, size_t size) {
     return true;
 }
 bool PEDebugInfoAnalyzer::parseCodeViewPDB20(const BYTE* data, size_t size) {
-    if (size < 16) { 
+    if (size < 16) {
         return false;
     }
     DWORD timestamp = *(DWORD*)(data + 8);
-    (void)timestamp; // Suppress unused variable warning
+    (void)timestamp;
     debugInfo_.codeViewInfo.age = *(DWORD*)(data + 12);
     if (size > 16) {
         const char* pdbPath = (const char*)(data + 16);
@@ -148,10 +148,53 @@ std::string PEDebugInfoAnalyzer::identifyCompiler() {
     std::string compiler = "Unknown";
     if (!debugInfo_.codeViewInfo.pdbPath.empty()) {
         const std::string& pdbPath = debugInfo_.codeViewInfo.pdbPath;
-        if (pdbPath.find("vc") != std::string::npos || 
-            pdbPath.find("msvc") != std::string::npos || 
+        if (pdbPath.find("vc") != std::string::npos ||
+            pdbPath.find("msvc") != std::string::npos ||
             pdbPath.find("Visual Studio") != std::string::npos) {
             compiler = "Microsoft Visual C++";
+        } else if (pdbPath.find("mingw") != std::string::npos) {
+            compiler = "MinGW";
+        } else if (pdbPath.find("gcc") != std::string::npos) {
+            compiler = "GNU GCC";
+        } else if (pdbPath.find("clang") != std::string::npos) {
+            compiler = "Clang/LLVM";
+        }
+    }
+
+
+    for (const auto& entry : debugInfo_.debugDirectories) {
+        if (entry.type == IMAGE_DEBUG_TYPE_CODEVIEW) {
+
+            if (entry.majorVersion >= 14) {
+                compiler = "Microsoft Visual C++ 2015+";
+            } else if (entry.majorVersion >= 11) {
+                compiler = "Microsoft Visual C++ 2012-2013";
+            } else if (entry.majorVersion >= 8) {
+                compiler = "Microsoft Visual C++ 2005-2010";
+            } else if (entry.majorVersion >= 7) {
+                compiler = "Microsoft Visual C++ .NET";
+            }
+        }
+    }
+
+
+    if (!debugInfo_.codeViewInfo.pdbPath.empty()) {
+        const std::string& pdbPath = debugInfo_.codeViewInfo.pdbPath;
+
+
+        if (pdbPath.find("vc") != std::string::npos ||
+            pdbPath.find("Visual Studio") != std::string::npos ||
+            pdbPath.find("MSVC") != std::string::npos) {
+            compiler = "Microsoft Visual C++";
+
+
+            if (pdbPath.find("2019") != std::string::npos) {
+                compiler += " 2019";
+            } else if (pdbPath.find("2017") != std::string::npos) {
+                compiler += " 2017";
+            } else if (pdbPath.find("2015") != std::string::npos) {
+                compiler += " 2015";
+            }
         } else if (pdbPath.find("mingw") != std::string::npos) {
             compiler = "MinGW";
         } else if (pdbPath.find("gcc") != std::string::npos) {
@@ -160,30 +203,98 @@ std::string PEDebugInfoAnalyzer::identifyCompiler() {
             compiler = "Clang";
         }
     }
+
+
+    if (pFileInfo_ && pFileInfo_->pNtHeader) {
+        WORD characteristics = pFileInfo_->pNtHeader->FileHeader.Characteristics;
+
+
+        if (!(characteristics & 0x0200)) {
+            if (compiler == "Unknown") {
+                compiler = "Debug build (compiler unknown)";
+            }
+        }
+    }
+
+
     if (hasRichHeader()) {
         std::string richInfo = parseRichHeader();
         if (!richInfo.empty()) {
             compiler += " (Rich Header: " + richInfo + ")";
         }
     }
+
     return compiler;
 }
 std::string PEDebugInfoAnalyzer::extractBuildEnvironment() {
     std::string environment = "Unknown";
+
+
     if (!debugInfo_.codeViewInfo.pdbPath.empty()) {
         const std::string& pdbPath = debugInfo_.codeViewInfo.pdbPath;
+
+
         size_t lastSlash = pdbPath.find_last_of("\\/");
         if (lastSlash != std::string::npos) {
-            environment = pdbPath.substr(0, lastSlash);
+            std::string directory = pdbPath.substr(0, lastSlash);
+
+
+            if (directory.find("Debug") != std::string::npos) {
+                environment = "Debug Build Environment";
+            } else if (directory.find("Release") != std::string::npos) {
+                environment = "Release Build Environment";
+            } else if (directory.find("x64") != std::string::npos) {
+                environment = "x64 Build Environment";
+            } else if (directory.find("x86") != std::string::npos) {
+                environment = "x86 Build Environment";
+            } else if (directory.find("Visual Studio") != std::string::npos) {
+                environment = "Visual Studio Build Environment";
+            } else if (directory.find("Program Files") != std::string::npos) {
+                environment = "Standard Windows SDK Build";
+            } else {
+                environment = "Custom Build Environment: " + directory;
+            }
         }
     }
+
+
+    if (pFileInfo_ && pFileInfo_->pNtHeader) {
+        DWORD timestamp = pFileInfo_->pNtHeader->FileHeader.TimeDateStamp;
+        if (timestamp != 0) {
+            time_t compileTime = timestamp;
+            struct tm* timeInfo = gmtime(&compileTime);
+            if (timeInfo) {
+                char timeStr[100];
+                strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S UTC", timeInfo);
+                environment += " (Compiled: ";
+                environment += timeStr;
+                environment += ")";
+            }
+        }
+    }
+
+
+    if (!debugInfo_.codeViewInfo.pdbPath.empty()) {
+        const std::string& pdbPath = debugInfo_.codeViewInfo.pdbPath;
+
+        if (pdbPath.find("TeamCity") != std::string::npos) {
+            environment += " [TeamCity CI]";
+        } else if (pdbPath.find("Jenkins") != std::string::npos) {
+            environment += " [Jenkins CI]";
+        } else if (pdbPath.find("Azure") != std::string::npos) {
+            environment += " [Azure DevOps]";
+        } else if (pdbPath.find("BuildAgent") != std::string::npos) {
+            environment += " [Automated Build]";
+        }
+    }
+
     return environment;
 }
 bool PEDebugInfoAnalyzer::hasSymbolTable() {
     if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
         return false;
     }
-    return (pFileInfo_->pNtHeader->FileHeader.NumberOfSymbols > 0 && 
+    return (pFileInfo_->pNtHeader->FileHeader.NumberOfSymbols > 0 &&
             pFileInfo_->pNtHeader->FileHeader.PointerToSymbolTable != 0);
 }
 bool PEDebugInfoAnalyzer::hasRichHeader() {
@@ -197,7 +308,7 @@ BYTE* PEDebugInfoAnalyzer::findRichHeader() {
     BYTE* searchStart = (BYTE*)pFileInfo_->pDosHeader + sizeof(IMAGE_DOS_HEADER);
     BYTE* searchEnd = (BYTE*)pFileInfo_->pDosHeader + ntHeaderOffset;
     for (BYTE* ptr = searchStart; ptr < searchEnd - 4; ptr++) {
-        if (*(DWORD*)ptr == 0x68636952) { 
+        if (*(DWORD*)ptr == 0x68636952) {
             return ptr;
         }
     }

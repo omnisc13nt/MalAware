@@ -71,19 +71,19 @@ PESecurityAnalyzer::SecurityFeatures PESecurityAnalyzer::extractSecurityFeatures
         auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
         dllCharacteristics = pNtHeader32->OptionalHeader.DllCharacteristics;
     }
-    securityFeatures_.aslr = (dllCharacteristics & 0x0040) != 0;          
-    securityFeatures_.dep = (dllCharacteristics & 0x0100) != 0;           
-    securityFeatures_.seh = (dllCharacteristics & 0x0400) != 0;           
-    securityFeatures_.cfg = (dllCharacteristics & 0x4000) != 0;           
-    securityFeatures_.isolationAware = (dllCharacteristics & 0x0200) != 0; 
-    securityFeatures_.nxCompat = (dllCharacteristics & 0x0100) != 0;       
-    securityFeatures_.dynamicBase = (dllCharacteristics & 0x0040) != 0;    
-    securityFeatures_.forceIntegrity = (dllCharacteristics & 0x0080) != 0; 
-    securityFeatures_.terminalServer = (dllCharacteristics & 0x8000) != 0; 
-    securityFeatures_.largeAddress = (dllCharacteristics & 0x0020) != 0;   
-    securityFeatures_.hasReturnFlowGuard = false;  
-    securityFeatures_.hasIntelCET = false;         
-    securityFeatures_.hasKernelCFI = false;        
+    securityFeatures_.aslr = (dllCharacteristics & 0x0040) != 0;
+    securityFeatures_.dep = (dllCharacteristics & 0x0100) != 0;
+    securityFeatures_.seh = (dllCharacteristics & 0x0400) != 0;
+    securityFeatures_.cfg = (dllCharacteristics & 0x4000) != 0;
+    securityFeatures_.isolationAware = (dllCharacteristics & 0x0200) != 0;
+    securityFeatures_.nxCompat = (dllCharacteristics & 0x0100) != 0;
+    securityFeatures_.dynamicBase = (dllCharacteristics & 0x0040) != 0;
+    securityFeatures_.forceIntegrity = (dllCharacteristics & 0x0080) != 0;
+    securityFeatures_.terminalServer = (dllCharacteristics & 0x8000) != 0;
+    securityFeatures_.largeAddress = (dllCharacteristics & 0x0020) != 0;
+    securityFeatures_.hasReturnFlowGuard = false;
+    securityFeatures_.hasIntelCET = false;
+    securityFeatures_.hasKernelCFI = false;
     return securityFeatures_;
 }
 PESecurityAnalyzer::PackerInfo PESecurityAnalyzer::detectPacker() {
@@ -101,8 +101,8 @@ PESecurityAnalyzer::PackerInfo PESecurityAnalyzer::detectPacker() {
     bool hasHighEntropyText = false;
     bool hasSmallNumberOfImports = false;
     bool hasSuspiciousEntryPoint = false;
-    (void)hasSmallNumberOfImports; // Suppress unused variable warning
-    (void)hasSuspiciousEntryPoint; // Suppress unused variable warning
+    (void)hasSmallNumberOfImports;
+    (void)hasSuspiciousEntryPoint;
     for (const auto& result : entropyResults_) {
         if (result.sectionName == ".text" && result.entropy > 7.0) {
             hasHighEntropyText = true;
@@ -110,7 +110,7 @@ PESecurityAnalyzer::PackerInfo PESecurityAnalyzer::detectPacker() {
         }
     }
     packerInfo_.isPacked = (highEntropySections > 0) || hasHighEntropyText;
-    packerInfo_.confidence = highEntropySections * 25.0; 
+    packerInfo_.confidence = highEntropySections * 25.0;
     if (packerInfo_.isPacked) {
         packerInfo_.packerName = "Unknown Packer";
         packerInfo_.indicators = "High entropy sections detected";
@@ -146,7 +146,7 @@ std::vector<std::string> PESecurityAnalyzer::detectAnomalies() {
     detectOverlay();
     for (const auto& result : entropyResults_) {
         if (result.entropy > 7.8) {
-            anomalies_.push_back("Section " + result.sectionName + " has extremely high entropy (" + 
+            anomalies_.push_back("Section " + result.sectionName + " has extremely high entropy (" +
                                std::to_string(result.entropy) + ")");
         }
     }
@@ -233,14 +233,14 @@ void PESecurityAnalyzer::printAnomalies() {
     }
 }
 bool PESecurityAnalyzer::isHighEntropy(double entropy) {
-    return entropy > 7.0; 
+    return entropy > 7.0;
 }
 bool PESecurityAnalyzer::isLowEntropy(double entropy) {
-    return entropy < 3.0; 
+    return entropy < 3.0;
 }
 DWORD PESecurityAnalyzer::getFileSize() {
     if (!pFileInfo_ || !pFileInfo_->pDosHeader) return 0;
-    return 0; 
+    return 0;
 }
 DWORD PESecurityAnalyzer::getLastSectionEnd() {
     if (!pFileInfo_ || !pFileInfo_->pNtHeader) return 0;
