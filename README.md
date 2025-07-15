@@ -57,29 +57,6 @@ make clean && make
 
 ---
 
-## Example Output
-
-```
-ANALYSIS SUMMARY
-File: malware_sample.exe
-Size: 0.12 MB
-Architecture: x86
-
-Quick Security Assessment:
-Digital Signature: Not Present
-Entropy Analysis: Normal
-Packing Detection: None Detected
-
-Suspicious Techniques:
-1. Entry Point Outside Code Section
-2. Entropy Variance Anomaly
-
-Risk Assessment: MEDIUM
-
-Fuzzy Hash (ssdeep): 3072:...
-TLSH: T1aae0c69242b438f2b42f...
-```
-
 ---
 
 ## Supported File Types
