@@ -272,29 +272,10 @@ ldconfig -p | grep fuzzy
 # Reinstall if missing
 sudo apt-get install libfuzzy-dev
 ```
-
-## License
-
-MIT License - Free for research and educational use.
-
-```
-Copyright (c) 2025 Michael Angelo
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
-
 ## Acknowledgments
 
 - **[@adamhlt/PE-Explorer](https://github.com/adamhlt/PE-Explorer)** - Original inspiration and foundation
-- **Security research community** - Feedback and contributions
+- **Security research community** - Feedback and contributions on reddit
 
 ---
 
@@ -370,4 +351,3 @@ make clean && make
 **Attribution:**  
 This project was inspired by [@adamhlt/PE-Explorer](https://github.com/adamhlt/PE-Explorer). 
 Expanded and enhanced on personal endeavors by yours truly.
--0
