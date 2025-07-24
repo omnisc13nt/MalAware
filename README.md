@@ -1,7 +1,7 @@
 # MalAware Analysis Tool
 
 [![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.cppreference.com/w/cpp/17)
-[![License: MIT](https://img.shields.io/badge/License-Apache-yellow.svg)](https://opensource.org/licenses/Apache)
+[![License: Apache](https://img.shields.io/badge/License-Apache-yellow.svg)](https://opensource.org/licenses/Apache)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/michaelangelo23/peParse)
 [![Build](https://img.shields.io/badge/Build-Makefile-green.svg)](https://github.com/michaelangelo23/peParse)
 [![Security](https://img.shields.io/badge/Security-Malware%20Analysis-red.svg)](https://github.com/michaelangelo23/peParse)
