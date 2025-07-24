@@ -9,7 +9,7 @@ PEDebugInfoAnalyzer::PEDebugInfoAnalyzer(PPE_FILE_INFO pFileInfo) : pFileInfo_(p
 }
 PEDebugInfoAnalyzer::DebugInfo PEDebugInfoAnalyzer::analyzeDebugInfo() {
     debugInfo_ = {};
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return debugInfo_;
     }
     debugInfo_.debugDirectories = parseDebugDirectories();
@@ -32,17 +32,17 @@ PEDebugInfoAnalyzer::DebugInfo PEDebugInfoAnalyzer::analyzeDebugInfo() {
 }
 std::vector<PEDebugInfoAnalyzer::DebugDirectoryEntry> PEDebugInfoAnalyzer::parseDebugDirectories() {
     std::vector<DebugDirectoryEntry> entries;
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return entries;
     }
     PIMAGE_DATA_DIRECTORY debugDir = nullptr;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
+    if (pFileInfo_->is64Bit) {
+        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->ntHeader;
         if (pNtHeader64->OptionalHeader.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_DEBUG) {
             debugDir = &pNtHeader64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
         }
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
+        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->ntHeader;
         if (pNtHeader32->OptionalHeader.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_DEBUG) {
             debugDir = &pNtHeader32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
         }
@@ -54,14 +54,14 @@ std::vector<PEDebugInfoAnalyzer::DebugDirectoryEntry> PEDebugInfoAnalyzer::parse
     DWORD fileOffset = 0;
     bool found = false;
     PIMAGE_SECTION_HEADER sectionHeader;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
+    if (pFileInfo_->is64Bit) {
+        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->ntHeader;
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
+        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->ntHeader;
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
-    for (int i = 0; i < pFileInfo_->pNtHeader->FileHeader.NumberOfSections; i++) {
+    for (int i = 0; i < pFileInfo_->ntHeader->FileHeader.NumberOfSections; i++) {
         if (debugDir->VirtualAddress >= sectionHeader[i].VirtualAddress &&
             debugDir->VirtualAddress < sectionHeader[i].VirtualAddress + sectionHeader[i].SizeOfRawData) {
             fileOffset = sectionHeader[i].PointerToRawData +
@@ -73,7 +73,7 @@ std::vector<PEDebugInfoAnalyzer::DebugDirectoryEntry> PEDebugInfoAnalyzer::parse
     if (!found) {
         return entries;
     }
-    PIMAGE_DEBUG_DIRECTORY debugEntries = (PIMAGE_DEBUG_DIRECTORY)((DWORD_PTR)pFileInfo_->pDosHeader + fileOffset);
+    PIMAGE_DEBUG_DIRECTORY debugEntries = (PIMAGE_DEBUG_DIRECTORY)((DWORD_PTR)pFileInfo_->dosHeader + fileOffset);
     for (DWORD i = 0; i < entryCount; i++) {
         DebugDirectoryEntry entry;
         entry.characteristics = debugEntries[i].Characteristics;
@@ -205,8 +205,8 @@ std::string PEDebugInfoAnalyzer::identifyCompiler() {
     }
 
 
-    if (pFileInfo_ && pFileInfo_->pNtHeader) {
-        WORD characteristics = pFileInfo_->pNtHeader->FileHeader.Characteristics;
+    if (pFileInfo_ && pFileInfo_->ntHeader) {
+        WORD characteristics = pFileInfo_->ntHeader->FileHeader.Characteristics;
 
 
         if (!(characteristics & 0x0200)) {
@@ -258,8 +258,8 @@ std::string PEDebugInfoAnalyzer::extractBuildEnvironment() {
     }
 
 
-    if (pFileInfo_ && pFileInfo_->pNtHeader) {
-        DWORD timestamp = pFileInfo_->pNtHeader->FileHeader.TimeDateStamp;
+    if (pFileInfo_ && pFileInfo_->ntHeader) {
+        DWORD timestamp = pFileInfo_->ntHeader->FileHeader.TimeDateStamp;
         if (timestamp != 0) {
             time_t compileTime = timestamp;
             struct tm* timeInfo = gmtime(&compileTime);
@@ -291,22 +291,22 @@ std::string PEDebugInfoAnalyzer::extractBuildEnvironment() {
     return environment;
 }
 bool PEDebugInfoAnalyzer::hasSymbolTable() {
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return false;
     }
-    return (pFileInfo_->pNtHeader->FileHeader.NumberOfSymbols > 0 &&
-            pFileInfo_->pNtHeader->FileHeader.PointerToSymbolTable != 0);
+    return (pFileInfo_->ntHeader->FileHeader.NumberOfSymbols > 0 &&
+            pFileInfo_->ntHeader->FileHeader.PointerToSymbolTable != 0);
 }
 bool PEDebugInfoAnalyzer::hasRichHeader() {
     return (findRichHeader() != nullptr);
 }
 BYTE* PEDebugInfoAnalyzer::findRichHeader() {
-    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+    if (!pFileInfo_ || !pFileInfo_->dosHeader) {
         return nullptr;
     }
-    DWORD ntHeaderOffset = pFileInfo_->pDosHeader->e_lfanew;
-    BYTE* searchStart = (BYTE*)pFileInfo_->pDosHeader + sizeof(IMAGE_DOS_HEADER);
-    BYTE* searchEnd = (BYTE*)pFileInfo_->pDosHeader + ntHeaderOffset;
+    DWORD ntHeaderOffset = pFileInfo_->dosHeader->e_lfanew;
+    BYTE* searchStart = (BYTE*)pFileInfo_->dosHeader + sizeof(IMAGE_DOS_HEADER);
+    BYTE* searchEnd = (BYTE*)pFileInfo_->dosHeader + ntHeaderOffset;
     for (BYTE* ptr = searchStart; ptr < searchEnd - 4; ptr++) {
         if (*(DWORD*)ptr == 0x68636952) {
             return ptr;
@@ -328,7 +328,7 @@ bool PEDebugInfoAnalyzer::extractDebugData(const DebugDirectoryEntry& entry, BYT
     if (entry.sizeOfData == 0 || entry.pointerToRawData == 0) {
         return false;
     }
-    *data = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + entry.pointerToRawData);
+    *data = (BYTE*)((DWORD_PTR)pFileInfo_->dosHeader + entry.pointerToRawData);
     *size = entry.sizeOfData;
     return true;
 }

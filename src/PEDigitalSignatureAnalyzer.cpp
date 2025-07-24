@@ -6,26 +6,26 @@
 #include <iomanip>
 #include <algorithm>
 #include <ctime>
-PEDigitalSignatureAnalyzer::PEDigitalSignatureAnalyzer(PPE_FILE_INFO pFileInfo) : pFileInfo_(pFileInfo) {
+PEDigitalSignatureAnalyzer::PEDigitalSignatureAnalyzer(PPE_FILE_INFO fileInfo) : fileInfo_(fileInfo) {
     signatureInfo_ = {};
     catalogInfo_ = {};
 }
 PEDigitalSignatureAnalyzer::SignatureInfo PEDigitalSignatureAnalyzer::analyzeSignature() {
     signatureInfo_ = {};
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!fileInfo_ || !fileInfo_->ntHeader) {
         signatureInfo_.errorMessage = "Invalid PE file structure";
         return signatureInfo_;
     }
     PIMAGE_DATA_DIRECTORY securityDir = nullptr;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
-        if (pNtHeader64->OptionalHeader.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_SECURITY) {
-            securityDir = &pNtHeader64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY];
+    if (fileInfo_->is64Bit) {
+        auto ntHeader64 = (PIMAGE_NT_HEADERS64)fileInfo_->ntHeader;
+        if (ntHeader64->OptionalHeader.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_SECURITY) {
+            securityDir = &ntHeader64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY];
         }
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
-        if (pNtHeader32->OptionalHeader.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_SECURITY) {
-            securityDir = &pNtHeader32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY];
+        auto ntHeader32 = (PIMAGE_NT_HEADERS32)fileInfo_->ntHeader;
+        if (ntHeader32->OptionalHeader.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_SECURITY) {
+            securityDir = &ntHeader32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY];
         }
     }
     if (!securityDir || securityDir->Size == 0) {
@@ -48,21 +48,21 @@ PEDigitalSignatureAnalyzer::SignatureInfo PEDigitalSignatureAnalyzer::analyzeSig
     return signatureInfo_;
 }
 bool PEDigitalSignatureAnalyzer::extractSignatureData(BYTE** signatureData, DWORD* signatureSize) {
-    if (!pFileInfo_ || !signatureData || !signatureSize) {
+    if (!fileInfo_ || !signatureData || !signatureSize) {
         return false;
     }
     PIMAGE_DATA_DIRECTORY securityDir = nullptr;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
-        securityDir = &pNtHeader64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY];
+    if (fileInfo_->is64Bit) {
+        auto ntHeader64 = (PIMAGE_NT_HEADERS64)fileInfo_->ntHeader;
+        securityDir = &ntHeader64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY];
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
-        securityDir = &pNtHeader32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY];
+        auto ntHeader32 = (PIMAGE_NT_HEADERS32)fileInfo_->ntHeader;
+        securityDir = &ntHeader32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY];
     }
     if (!securityDir || securityDir->Size == 0) {
         return false;
     }
-    *signatureData = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + securityDir->VirtualAddress);
+    *signatureData = (BYTE*)((DWORD_PTR)fileInfo_->dosHeader + securityDir->VirtualAddress);
     *signatureSize = securityDir->Size;
     return true;
 }
@@ -72,24 +72,24 @@ bool PEDigitalSignatureAnalyzer::parseWinCertificate(const BYTE* certData, size_
         return false;
     }
 
-    DWORD dwLength = *(DWORD*)certData;
-    WORD wRevision = *(WORD*)(certData + 4);
-    (void)wRevision;
-    WORD wCertificateType = *(WORD*)(certData + 6);
+    DWORD length = *(DWORD*)certData;
+    WORD revision = *(WORD*)(certData + 4);
+    (void)revision;
+    WORD certificateType = *(WORD*)(certData + 6);
 
-    if (dwLength > certSize) {
+    if (length > certSize) {
         signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Certificate length field exceeds available data. This may indicate a corrupted or malformed certificate.";
         return false;
     }
 
-    if (dwLength < 8) {
+    if (length < 8) {
         signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Invalid certificate length (too small). Minimum size is 8 bytes for header.";
         return false;
     }
 
-    if (wCertificateType == 0x0002) {
+    if (certificateType == 0x0002) {
         const BYTE* pkcs7Data = certData + 8;
-        size_t pkcs7Size = dwLength - 8;
+        size_t pkcs7Size = length - 8;
 
         if (pkcs7Size == 0) {
             signatureInfo_.errorMessage = "Failed to parse WIN_CERTIFICATE structure: Empty PKCS#7 data in certificate. The certificate contains no signature data.";
@@ -209,11 +209,11 @@ bool PEDigitalSignatureAnalyzer::verifySignatureIntegrity(const BYTE* signatureD
     return chainValid;
 }
 std::string PEDigitalSignatureAnalyzer::calculateFileHash(const std::string& algorithm) {
-    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+    if (!fileInfo_ || !fileInfo_->dosHeader) {
         return "";
     }
-    BYTE* fileData = (BYTE*)pFileInfo_->pDosHeader;
-    size_t fileSize = pFileInfo_->dwFileSize;
+    BYTE* fileData = (BYTE*)fileInfo_->dosHeader;
+    size_t fileSize = fileInfo_->fileSize;
     std::vector<uint8_t> hashData;
     if (algorithm == "SHA256") {
         return CryptoUtils::sha256(fileData, fileSize);

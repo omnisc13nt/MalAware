@@ -262,11 +262,11 @@ typedef struct _IMAGE_SYMBOL {
     BYTE NumberOfAuxSymbols;
 } IMAGE_SYMBOL, *PIMAGE_SYMBOL;
 typedef struct _PE_FILE_INFO {
-    HANDLE hFileContent;
-    PIMAGE_DOS_HEADER pDosHeader;
-    PIMAGE_NT_HEADERS pNtHeader;
-    BOOL bIs64Bit;
-    DWORD dwFileSize;
+    HANDLE fileContent;
+    PIMAGE_DOS_HEADER dosHeader;
+    PIMAGE_NT_HEADERS ntHeader;
+    BOOL is64Bit;
+    DWORD fileSize;
 } PE_FILE_INFO, *PPE_FILE_INFO;
 #define PE_SUCCESS 0
 #define PE_ERROR_FILE_OPEN -1

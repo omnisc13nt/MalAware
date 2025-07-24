@@ -11,8 +11,8 @@
 *.bin
 
 # Executables (but keep testFolder examples)
-peFileParser*
-!peFileParser/
+MalAware*
+!MalAware/
 
 # Build directories
 build/

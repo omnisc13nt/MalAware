@@ -78,13 +78,13 @@ make minimal
 #### Basic Usage
 ```bash
 # Analyze a PE file with standard output
-./peFileParser sample.exe
+./MalAware sample.exe
 
 # Quick analysis with minimal output
-./peFileParser malware.exe -q
+./MalAware malware.exe -q
 
 # Comprehensive forensic analysis
-./peFileParser suspicious.exe -A --forensic
+./MalAware suspicious.exe -A --forensic
 ```
 
 #### Command Line Options
@@ -121,36 +121,36 @@ make minimal
 ##### Security Analysis
 ```bash
 # Standard security analysis
-./peFileParser malware.exe
+./MalAware malware.exe
 
 # Malware-focused analysis with import details
-./peFileParser suspicious.exe --malware --show-imports
+./MalAware suspicious.exe --malware --show-imports
 
 # Quick threat assessment
-./peFileParser unknown.exe --only-threats
+./MalAware unknown.exe --only-threats
 ```
 
 ##### Forensic Investigation
 ```bash
 # Comprehensive forensic analysis
-./peFileParser evidence.exe --forensic -A
+./MalAware evidence.exe --forensic -A
 
 # Detailed analysis with all features
-./peFileParser sample.exe -v --show-imports --show-exports --show-resources
+./MalAware sample.exe -v --show-imports --show-exports --show-resources
 
 # Hash-only analysis for file identification
-./peFileParser file.exe --only-hashes
+./MalAware file.exe --only-hashes
 ```
 
 ##### Batch Analysis
 ```bash
 # Analyze multiple files
 for file in *.exe; do
-    ./peFileParser "$file" -s > "analysis_$(basename "$file").txt"
+    ./MalAware "$file" -s > "analysis_$(basename "$file").txt"
 done
 
 # Quick threat scanning
-find /path/to/files -name "*.exe" -exec ./peFileParser {} --only-threats \;
+find /path/to/files -name "*.exe" -exec ./MalAware {} --only-threats \;
 ```
 
 ---
@@ -293,7 +293,7 @@ The tool provides a structured analysis summary including:
 
 #### Help Information
 ```bash
-./peFileParser --help
+./MalAware --help
 ```
 
 #### Sample Output
@@ -328,10 +328,10 @@ SPECIALIZED MODES:
   --only-hashes    Show only hash information
 
 EXAMPLES:
-  peFileParser malware.exe -s --malware
-  peFileParser sample.exe -A --forensic
-  peFileParser file.exe --only-threats
-  peFileParser binary.exe -v --show-imports --no-entropy
+  MalAware malware.exe -s --malware
+  MalAware sample.exe -A --forensic
+  MalAware file.exe --only-threats
+  MalAware binary.exe -v --show-imports --no-entropy
 ```
 
 #### Exit Codes

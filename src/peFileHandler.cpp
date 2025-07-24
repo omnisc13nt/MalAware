@@ -7,71 +7,71 @@ struct FileContentDeleter {
         free(ptr);
     }
 };
-int LoadPEFile(const char* lpFilePath, PPE_FILE_INFO pFileInfo)
+int LoadPEFile(const char* filePath, PPE_FILE_INFO fileInfo)
 {
-    if (!lpFilePath || !pFileInfo) {
+    if (!filePath || !fileInfo) {
         return PE_ERROR_INVALID_PE;
     }
-    memset(pFileInfo, 0, sizeof(PE_FILE_INFO));
-    std::ifstream file(lpFilePath, std::ios::binary | std::ios::ate);
+    memset(fileInfo, 0, sizeof(PE_FILE_INFO));
+    std::ifstream file(filePath, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
-        fprintf(stderr, "[-] Error: Unable to open PE file: %s\n", lpFilePath);
+        fprintf(stderr, "[-] Error: Unable to open PE file: %s\n", filePath);
         return PE_ERROR_FILE_OPEN;
     }
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
     if (size <= 0) {
-        fprintf(stderr, "[-] Error: Invalid PE file size for: %s\n", lpFilePath);
+        fprintf(stderr, "[-] Error: Invalid PE file size for: %s\n", filePath);
         file.close();
         return PE_ERROR_FILE_OPEN;
     }
     std::unique_ptr<void, FileContentDeleter> fileContent(malloc(static_cast<size_t>(size)));
     if (!fileContent) {
-        fprintf(stderr, "[-] Error: Memory allocation failed for PE file: %s\n", lpFilePath);
+        fprintf(stderr, "[-] Error: Memory allocation failed for PE file: %s\n", filePath);
         file.close();
         return PE_ERROR_MEMORY_ALLOCATION;
     }
     if (!file.read(static_cast<char*>(fileContent.get()), size)) {
-        fprintf(stderr, "[-] Error: Failed to read PE file content: %s\n", lpFilePath);
+        fprintf(stderr, "[-] Error: Failed to read PE file content: %s\n", filePath);
         file.close();
         return PE_ERROR_FILE_OPEN;
     }
-    pFileInfo->hFileContent = fileContent.release();
-    pFileInfo->dwFileSize = static_cast<DWORD>(size);
+    fileInfo->fileContent = fileContent.release();
+    fileInfo->fileSize = static_cast<DWORD>(size);
     file.close();
-    return ValidatePEFile(pFileInfo);
+    return ValidatePEFile(fileInfo);
 }
-void CleanupPEFile(PPE_FILE_INFO pFileInfo)
+void CleanupPEFile(PPE_FILE_INFO fileInfo)
 {
-    if (pFileInfo && pFileInfo->hFileContent != nullptr) {
-        free(pFileInfo->hFileContent);
-        pFileInfo->hFileContent = nullptr;
+    if (fileInfo && fileInfo->fileContent != nullptr) {
+        free(fileInfo->fileContent);
+        fileInfo->fileContent = nullptr;
     }
 }
-int ValidatePEFile(PPE_FILE_INFO pFileInfo)
+int ValidatePEFile(PPE_FILE_INFO fileInfo)
 {
-    if (!pFileInfo || !pFileInfo->hFileContent) {
+    if (!fileInfo || !fileInfo->fileContent) {
         return PE_ERROR_INVALID_PE;
     }
-    pFileInfo->pDosHeader = (PIMAGE_DOS_HEADER)pFileInfo->hFileContent;
-    if (pFileInfo->pDosHeader == nullptr || pFileInfo->pDosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+    fileInfo->dosHeader = (PIMAGE_DOS_HEADER)fileInfo->fileContent;
+    if (fileInfo->dosHeader == nullptr || fileInfo->dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
     {
         printf("[-] Invalid DOS header or DOS signature!\n");
         return PE_ERROR_INVALID_PE;
     }
-    pFileInfo->pNtHeader = (PIMAGE_NT_HEADERS)((DWORD_PTR)pFileInfo->hFileContent + pFileInfo->pDosHeader->e_lfanew);
-    if (pFileInfo->pNtHeader == nullptr || pFileInfo->pNtHeader->Signature != IMAGE_NT_SIGNATURE)
+    fileInfo->ntHeader = (PIMAGE_NT_HEADERS)((DWORD_PTR)fileInfo->fileContent + fileInfo->dosHeader->e_lfanew);
+    if (fileInfo->ntHeader == nullptr || fileInfo->ntHeader->Signature != IMAGE_NT_SIGNATURE)
     {
         printf("[-] Invalid NT header or NT signature!\n");
         return PE_ERROR_INVALID_PE;
     }
-    if (pFileInfo->pNtHeader->OptionalHeader.OptionalHeader64.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    if (fileInfo->ntHeader->OptionalHeader.OptionalHeader64.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     {
-        pFileInfo->bIs64Bit = TRUE;
+        fileInfo->is64Bit = TRUE;
     }
-    else if (pFileInfo->pNtHeader->OptionalHeader.OptionalHeader32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+    else if (fileInfo->ntHeader->OptionalHeader.OptionalHeader32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
     {
-        pFileInfo->bIs64Bit = FALSE;
+        fileInfo->is64Bit = FALSE;
     }
     else
     {

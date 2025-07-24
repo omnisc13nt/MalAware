@@ -334,19 +334,19 @@ void GetExports(PIMAGE_EXPORT_DIRECTORY pImageExportDirectory,
 int ParseImports(PPE_FILE_INFO pFileInfo)
 {
     LOGF_DEBUG("[DEBUG] ParseImports called\n");
-    if (!pFileInfo || !pFileInfo->pNtHeader) {
+    if (!pFileInfo || !pFileInfo->ntHeader) {
         LOG("[-] ERROR: Invalid pFileInfo or pNtHeader in ParseImports\n");
         return PE_ERROR_INVALID_PE;
     }
     LOGF_DEBUG("[DEBUG] pFileInfo: %p, pNtHeader: %p, bIs64Bit: %s\n",
-         (void*)pFileInfo, (void*)pFileInfo->pNtHeader, pFileInfo->bIs64Bit ? "true" : "false");
+         (void*)pFileInfo, (void*)pFileInfo->ntHeader, pFileInfo->is64Bit ? "true" : "false");
     PIMAGE_DATA_DIRECTORY pDataDirectory;
     PIMAGE_SECTION_HEADER pSectionHeader;
     DWORD_PTR dImportAddress;
-    if (pFileInfo->bIs64Bit)
+    if (pFileInfo->is64Bit)
     {
         LOGF_DEBUG("[DEBUG] Processing 64-bit PE file\n");
-        const auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo->pNtHeader;
+        const auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo->ntHeader;
         pDataDirectory = pNtHeader64->OptionalHeader.DataDirectory;
         pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
         dImportAddress = pDataDirectory[1].VirtualAddress;
@@ -355,7 +355,7 @@ int ParseImports(PPE_FILE_INFO pFileInfo)
     else
     {
         LOGF_DEBUG("[DEBUG] Processing 32-bit PE file\n");
-        const auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo->pNtHeader;
+        const auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo->ntHeader;
         pDataDirectory = pNtHeader32->OptionalHeader.DataDirectory;
         pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
         dImportAddress = pDataDirectory[1].VirtualAddress;
@@ -367,7 +367,7 @@ int ParseImports(PPE_FILE_INFO pFileInfo)
     }
     LOGF_DEBUG("[DEBUG] Looking for import section containing RVA 0x%lX\n", (unsigned long)dImportAddress);
     const PIMAGE_SECTION_HEADER pImageImportSection = GetSections(pSectionHeader,
-                                                                  pFileInfo->pNtHeader->FileHeader.NumberOfSections,
+                                                                  pFileInfo->ntHeader->FileHeader.NumberOfSections,
                                                                   dImportAddress);
     if (pImageImportSection == nullptr)
     {
@@ -378,7 +378,7 @@ int ParseImports(PPE_FILE_INFO pFileInfo)
     LOGF_DEBUG("[DEBUG] Section name: %.8s\n", pImageImportSection->Name);
     LOGF_DEBUG("[DEBUG] Section VirtualAddress: 0x%lX\n", (unsigned long)pImageImportSection->VirtualAddress);
     LOGF_DEBUG("[DEBUG] Section PointerToRawData: 0x%lX\n", (unsigned long)pImageImportSection->PointerToRawData);
-    DWORD_PTR dRawOffset = (DWORD_PTR)pFileInfo->pDosHeader + pImageImportSection->PointerToRawData;
+    DWORD_PTR dRawOffset = (DWORD_PTR)pFileInfo->dosHeader + pImageImportSection->PointerToRawData;
     const auto pImageImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)(dRawOffset + (dImportAddress - pImageImportSection->VirtualAddress));
     LOGF_DEBUG("[DEBUG] dRawOffset: %p\n", (void*)dRawOffset);
     LOGF_DEBUG("[DEBUG] pImageImportDescriptor: %p\n", (void*)pImageImportDescriptor);
@@ -387,7 +387,7 @@ int ParseImports(PPE_FILE_INFO pFileInfo)
         LOG("\n[-] An error occurred when trying to retrieve PE imports descriptor!\n");
         return PE_ERROR_PARSING;
     }
-    if (pFileInfo->bIs64Bit)
+    if (pFileInfo->is64Bit)
     {
         LOGF_DEBUG("[DEBUG] Calling GetImports64\n");
         GetImports64(pImageImportDescriptor, dRawOffset, pImageImportSection);
@@ -398,7 +398,7 @@ int ParseImports(PPE_FILE_INFO pFileInfo)
         GetImports32(pImageImportDescriptor, dRawOffset, pImageImportSection);
     }
     LOGF("\n[+] IMPORT TABLE ANALYSIS SUMMARY\n");
-    LOGF("\tArchitecture: %s\n", pFileInfo->bIs64Bit ? "x64" : "x86");
+    LOGF("\tArchitecture: %s\n", pFileInfo->is64Bit ? "x64" : "x86");
     LOGF("\tImport table appears to be: ");
     bool hasObfuscatedImports = false;
     if (pImageImportDescriptor->Name == 0) {
@@ -417,22 +417,22 @@ int ParseImports(PPE_FILE_INFO pFileInfo)
 }
 int ParseExports(PPE_FILE_INFO pFileInfo)
 {
-    if (!pFileInfo || !pFileInfo->pNtHeader) {
+    if (!pFileInfo || !pFileInfo->ntHeader) {
         return PE_ERROR_INVALID_PE;
     }
     PIMAGE_DATA_DIRECTORY pDataDirectory;
     PIMAGE_SECTION_HEADER pSectionHeader;
     DWORD_PTR dExportAddress;
-    if (pFileInfo->bIs64Bit)
+    if (pFileInfo->is64Bit)
     {
-        const auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo->pNtHeader;
+        const auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo->ntHeader;
         pDataDirectory = pNtHeader64->OptionalHeader.DataDirectory;
         pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
         dExportAddress = pDataDirectory[0].VirtualAddress;
     }
     else
     {
-        const auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo->pNtHeader;
+        const auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo->ntHeader;
         pDataDirectory = pNtHeader32->OptionalHeader.DataDirectory;
         pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
         dExportAddress = pDataDirectory[0].VirtualAddress;
@@ -442,14 +442,14 @@ int ParseExports(PPE_FILE_INFO pFileInfo)
         return PE_SUCCESS;
     }
     const PIMAGE_SECTION_HEADER pImageExportSection = GetExportSection(pSectionHeader,
-                                                                       pFileInfo->pNtHeader->FileHeader.NumberOfSections,
+                                                                       pFileInfo->ntHeader->FileHeader.NumberOfSections,
                                                                        dExportAddress);
     if (pImageExportSection == nullptr)
     {
         printf("\n[-] An error when trying to retrieve PE exports!\n");
         return PE_ERROR_PARSING;
     }
-    DWORD_PTR dRawOffset = (DWORD_PTR)pFileInfo->pDosHeader + pImageExportSection->PointerToRawData;
+    DWORD_PTR dRawOffset = (DWORD_PTR)pFileInfo->dosHeader + pImageExportSection->PointerToRawData;
     const auto pImageExportDirectory = (PIMAGE_EXPORT_DIRECTORY)(dRawOffset + (dExportAddress - pImageExportSection->VirtualAddress));
     GetExports(pImageExportDirectory, dRawOffset, pImageExportSection);
     return PE_SUCCESS;

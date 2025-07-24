@@ -3,15 +3,15 @@
 #include "../include/peImportExport.h"
 #include <vector>
 #include <sstream>
-int AnalyzeTLS(PPE_FILE_INFO pFileInfo) {
+int AnalyzeTLS(PPE_FILE_INFO fileInfo) {
     LOGF("\n[+] TLS CALLBACK ANALYSIS\n");
     LOGF_DEBUG("[DEBUG] Starting TLS analysis\n");
-    if (!pFileInfo || !pFileInfo->pNtHeader) {
+    if (!fileInfo || !fileInfo->ntHeader) {
         LOGF("[-] ERROR: Invalid PE file info\n");
         return PE_ERROR_INVALID_PE;
     }
     try {
-        PETLSAnalyzer::TLSInfo tlsInfo = PETLSAnalyzer::analyzeTLS(pFileInfo);
+        PETLSAnalyzer::TLSInfo tlsInfo = PETLSAnalyzer::analyzeTLS(fileInfo);
         PETLSAnalyzer::logTLSAnalysis(tlsInfo);
         LOGF("[+] TLS analysis completed successfully!\n");
         return PE_SUCCESS;
@@ -21,24 +21,24 @@ int AnalyzeTLS(PPE_FILE_INFO pFileInfo) {
         return PE_ERROR_PARSING;
     }
 }
-PETLSAnalyzer::TLSInfo PETLSAnalyzer::analyzeTLS(PPE_FILE_INFO pFileInfo) {
+PETLSAnalyzer::TLSInfo PETLSAnalyzer::analyzeTLS(PPE_FILE_INFO fileInfo) {
     TLSInfo tlsInfo = {};
     tlsInfo.hasTLS = false;
     tlsInfo.isSuspicious = false;
-    if (!pFileInfo || !pFileInfo->pNtHeader) {
+    if (!fileInfo || !fileInfo->ntHeader) {
         tlsInfo.analysis = "Invalid PE file";
         return tlsInfo;
     }
     DWORD tlsRVA = 0;
     DWORD tlsSize = 0;
-    if (pFileInfo->bIs64Bit) {
-        auto optHeader64 = &pFileInfo->pNtHeader->OptionalHeader.OptionalHeader64;
+    if (fileInfo->is64Bit) {
+        auto optHeader64 = &fileInfo->ntHeader->OptionalHeader.OptionalHeader64;
         if (optHeader64->NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_TLS) {
             tlsRVA = optHeader64->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress;
             tlsSize = optHeader64->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size;
         }
     } else {
-        auto optHeader32 = &pFileInfo->pNtHeader->OptionalHeader.OptionalHeader32;
+        auto optHeader32 = &fileInfo->ntHeader->OptionalHeader.OptionalHeader32;
         if (optHeader32->NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_TLS) {
             tlsRVA = optHeader32->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress;
             tlsSize = optHeader32->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size;
@@ -49,8 +49,8 @@ PETLSAnalyzer::TLSInfo PETLSAnalyzer::analyzeTLS(PPE_FILE_INFO pFileInfo) {
         return tlsInfo;
     }
     tlsInfo.hasTLS = true;
-    if (pFileInfo->bIs64Bit) {
-        auto tlsDir64 = getTLSDirectory64(pFileInfo);
+    if (fileInfo->is64Bit) {
+        auto tlsDir64 = getTLSDirectory64(fileInfo);
         if (tlsDir64) {
             tlsInfo.startAddressOfRawData = tlsDir64->StartAddressOfRawData;
             tlsInfo.endAddressOfRawData = tlsDir64->EndAddressOfRawData;
@@ -60,7 +60,7 @@ PETLSAnalyzer::TLSInfo PETLSAnalyzer::analyzeTLS(PPE_FILE_INFO pFileInfo) {
             tlsInfo.characteristics = tlsDir64->Characteristics;
         }
     } else {
-        auto tlsDir32 = getTLSDirectory32(pFileInfo);
+        auto tlsDir32 = getTLSDirectory32(fileInfo);
         if (tlsDir32) {
             tlsInfo.startAddressOfRawData = tlsDir32->StartAddressOfRawData;
             tlsInfo.endAddressOfRawData = tlsDir32->EndAddressOfRawData;
@@ -70,10 +70,10 @@ PETLSAnalyzer::TLSInfo PETLSAnalyzer::analyzeTLS(PPE_FILE_INFO pFileInfo) {
             tlsInfo.characteristics = tlsDir32->Characteristics;
         }
     }
-    tlsInfo.callbacks = extractTLSCallbacks(pFileInfo);
+    tlsInfo.callbacks = extractTLSCallbacks(fileInfo);
     if (!tlsInfo.callbacks.empty()) {
         for (auto callback : tlsInfo.callbacks) {
-            if (isCallbackSuspicious(callback, pFileInfo)) {
+            if (isCallbackSuspicious(callback, fileInfo)) {
                 tlsInfo.isSuspicious = true;
                 break;
             }
@@ -84,39 +84,39 @@ PETLSAnalyzer::TLSInfo PETLSAnalyzer::analyzeTLS(PPE_FILE_INFO pFileInfo) {
     }
     return tlsInfo;
 }
-bool PETLSAnalyzer::hasTLSDirectory(PPE_FILE_INFO pFileInfo) {
-    if (!pFileInfo || !pFileInfo->pNtHeader) return false;
+bool PETLSAnalyzer::hasTLSDirectory(PPE_FILE_INFO fileInfo) {
+    if (!fileInfo || !fileInfo->ntHeader) return false;
     DWORD tlsRVA = 0;
-    if (pFileInfo->bIs64Bit) {
-        auto optHeader64 = &pFileInfo->pNtHeader->OptionalHeader.OptionalHeader64;
+    if (fileInfo->is64Bit) {
+        auto optHeader64 = &fileInfo->ntHeader->OptionalHeader.OptionalHeader64;
         if (optHeader64->NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_TLS) {
             tlsRVA = optHeader64->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress;
         }
     } else {
-        auto optHeader32 = &pFileInfo->pNtHeader->OptionalHeader.OptionalHeader32;
+        auto optHeader32 = &fileInfo->ntHeader->OptionalHeader.OptionalHeader32;
         if (optHeader32->NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_TLS) {
             tlsRVA = optHeader32->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress;
         }
     }
     return tlsRVA != 0;
 }
-std::vector<DWORD_PTR> PETLSAnalyzer::extractTLSCallbacks(PPE_FILE_INFO pFileInfo) {
+std::vector<DWORD_PTR> PETLSAnalyzer::extractTLSCallbacks(PPE_FILE_INFO fileInfo) {
     std::vector<DWORD_PTR> callbacks;
-    if (!pFileInfo || !hasTLSDirectory(pFileInfo)) {
+    if (!fileInfo || !hasTLSDirectory(fileInfo)) {
         return callbacks;
     }
     try {
-        if (pFileInfo->bIs64Bit) {
-            auto tlsDir64 = getTLSDirectory64(pFileInfo);
+        if (fileInfo->is64Bit) {
+            auto tlsDir64 = getTLSDirectory64(fileInfo);
             if (tlsDir64 && tlsDir64->AddressOfCallBacks) {
                 extern int g_NumberOfSections;
                 extern PIMAGE_SECTION_HEADER g_SectionHeader;
                 if (g_SectionHeader) {
                     DWORD_PTR callbacksOffset = RvaToFileOffset(
-                        (DWORD)(tlsDir64->AddressOfCallBacks - pFileInfo->pNtHeader->OptionalHeader.OptionalHeader64.ImageBase),
+                        (DWORD)(tlsDir64->AddressOfCallBacks - fileInfo->ntHeader->OptionalHeader.OptionalHeader64.ImageBase),
                         g_SectionHeader, g_NumberOfSections);
                     if (callbacksOffset > 0) {
-                        auto callbackPtr = (QWORD*)((DWORD_PTR)pFileInfo->pDosHeader + callbacksOffset);
+                        auto callbackPtr = (QWORD*)((DWORD_PTR)fileInfo->dosHeader + callbacksOffset);
                         for (int i = 0; i < 16 && callbackPtr[i] != 0; i++) {
                             callbacks.push_back(callbackPtr[i]);
                         }
@@ -124,16 +124,16 @@ std::vector<DWORD_PTR> PETLSAnalyzer::extractTLSCallbacks(PPE_FILE_INFO pFileInf
                 }
             }
         } else {
-            auto tlsDir32 = getTLSDirectory32(pFileInfo);
+            auto tlsDir32 = getTLSDirectory32(fileInfo);
             if (tlsDir32 && tlsDir32->AddressOfCallBacks) {
                 extern int g_NumberOfSections;
                 extern PIMAGE_SECTION_HEADER g_SectionHeader;
                 if (g_SectionHeader) {
                     DWORD_PTR callbacksOffset = RvaToFileOffset(
-                        tlsDir32->AddressOfCallBacks - pFileInfo->pNtHeader->OptionalHeader.OptionalHeader32.ImageBase,
+                        tlsDir32->AddressOfCallBacks - fileInfo->ntHeader->OptionalHeader.OptionalHeader32.ImageBase,
                         g_SectionHeader, g_NumberOfSections);
                     if (callbacksOffset > 0) {
-                        auto callbackPtr = (DWORD*)((DWORD_PTR)pFileInfo->pDosHeader + callbacksOffset);
+                        auto callbackPtr = (DWORD*)((DWORD_PTR)fileInfo->dosHeader + callbacksOffset);
                         for (int i = 0; i < 16 && callbackPtr[i] != 0; i++) {
                             callbacks.push_back(callbackPtr[i]);
                         }
@@ -147,14 +147,14 @@ std::vector<DWORD_PTR> PETLSAnalyzer::extractTLSCallbacks(PPE_FILE_INFO pFileInf
     }
     return callbacks;
 }
-bool PETLSAnalyzer::isCallbackSuspicious(DWORD_PTR callbackAddress, PPE_FILE_INFO pFileInfo) {
-    if (!pFileInfo) return false;
+bool PETLSAnalyzer::isCallbackSuspicious(DWORD_PTR callbackAddress, PPE_FILE_INFO fileInfo) {
+    if (!fileInfo) return false;
     extern int g_NumberOfSections;
     extern PIMAGE_SECTION_HEADER g_SectionHeader;
     if (!g_SectionHeader) return true;
-    DWORD imageBase = pFileInfo->bIs64Bit ?
-        (DWORD)pFileInfo->pNtHeader->OptionalHeader.OptionalHeader64.ImageBase :
-        pFileInfo->pNtHeader->OptionalHeader.OptionalHeader32.ImageBase;
+    DWORD imageBase = fileInfo->is64Bit ?
+        (DWORD)fileInfo->ntHeader->OptionalHeader.OptionalHeader64.ImageBase :
+        fileInfo->ntHeader->OptionalHeader.OptionalHeader32.ImageBase;
     DWORD rva = (DWORD)(callbackAddress - imageBase);
     for (int i = 0; i < g_NumberOfSections; i++) {
         auto section = &g_SectionHeader[i];
@@ -224,9 +224,9 @@ void PETLSAnalyzer::logTLSAnalysis(const TLSInfo& tlsInfo) {
         LOGF("\tAnalysis: %s\n", tlsInfo.analysis.c_str());
     }
 }
-PIMAGE_TLS_DIRECTORY32 PETLSAnalyzer::getTLSDirectory32(PPE_FILE_INFO pFileInfo) {
-    if (!pFileInfo || pFileInfo->bIs64Bit) return nullptr;
-    auto optHeader32 = &pFileInfo->pNtHeader->OptionalHeader.OptionalHeader32;
+PIMAGE_TLS_DIRECTORY32 PETLSAnalyzer::getTLSDirectory32(PPE_FILE_INFO fileInfo) {
+    if (!fileInfo || fileInfo->is64Bit) return nullptr;
+    auto optHeader32 = &fileInfo->ntHeader->OptionalHeader.OptionalHeader32;
     if (optHeader32->NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_TLS) return nullptr;
     DWORD tlsRVA = optHeader32->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress;
     if (tlsRVA == 0) return nullptr;
@@ -235,11 +235,11 @@ PIMAGE_TLS_DIRECTORY32 PETLSAnalyzer::getTLSDirectory32(PPE_FILE_INFO pFileInfo)
     if (!g_SectionHeader) return nullptr;
     DWORD_PTR tlsOffset = RvaToFileOffset(tlsRVA, g_SectionHeader, g_NumberOfSections);
     if (tlsOffset == 0) return nullptr;
-    return (PIMAGE_TLS_DIRECTORY32)((DWORD_PTR)pFileInfo->pDosHeader + tlsOffset);
+    return (PIMAGE_TLS_DIRECTORY32)((DWORD_PTR)fileInfo->dosHeader + tlsOffset);
 }
-PIMAGE_TLS_DIRECTORY64 PETLSAnalyzer::getTLSDirectory64(PPE_FILE_INFO pFileInfo) {
-    if (!pFileInfo || !pFileInfo->bIs64Bit) return nullptr;
-    auto optHeader64 = &pFileInfo->pNtHeader->OptionalHeader.OptionalHeader64;
+PIMAGE_TLS_DIRECTORY64 PETLSAnalyzer::getTLSDirectory64(PPE_FILE_INFO fileInfo) {
+    if (!fileInfo || !fileInfo->is64Bit) return nullptr;
+    auto optHeader64 = &fileInfo->ntHeader->OptionalHeader.OptionalHeader64;
     if (optHeader64->NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_TLS) return nullptr;
     DWORD tlsRVA = optHeader64->DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress;
     if (tlsRVA == 0) return nullptr;
@@ -248,7 +248,7 @@ PIMAGE_TLS_DIRECTORY64 PETLSAnalyzer::getTLSDirectory64(PPE_FILE_INFO pFileInfo)
     if (!g_SectionHeader) return nullptr;
     DWORD_PTR tlsOffset = RvaToFileOffset(tlsRVA, g_SectionHeader, g_NumberOfSections);
     if (tlsOffset == 0) return nullptr;
-    return (PIMAGE_TLS_DIRECTORY64)((DWORD_PTR)pFileInfo->pDosHeader + tlsOffset);
+    return (PIMAGE_TLS_DIRECTORY64)((DWORD_PTR)fileInfo->dosHeader + tlsOffset);
 }
 std::string PETLSAnalyzer::analyzeCallbackPattern(const std::vector<DWORD_PTR>& callbacks) {
     if (callbacks.empty()) {

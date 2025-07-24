@@ -1,6 +1,3 @@
-# Enhanced PE File Parser Makefile
-# Minimal version with only required dependencies
-
 CXX = g++
 CXX_WIN = x86_64-w64-mingw32-g++
 CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -pthread
@@ -22,8 +19,8 @@ CORE_SOURCES = src/peFileHandler.cpp src/peParser.cpp src/peHeaderParser.cpp \
                src/PKCS7Parser.cpp src/peCommon.cpp
 
 # Targets
-TARGET_LINUX = peFileParser
-TARGET_WIN = peFileParserWindows.exe
+TARGET_LINUX = MalAware
+TARGET_WIN = MalAwareWindows.exe
 
 # Default target
 all: $(TARGET_LINUX)
@@ -32,12 +29,12 @@ all: $(TARGET_LINUX)
 linux: $(TARGET_LINUX)
 
 $(TARGET_LINUX):
-	@echo "Building PE File Parser..."
+	@echo "Building MalAware..."
 	$(CXX) $(CXXFLAGS) $(INCLUDES) main.cpp $(CORE_SOURCES) -o $(TARGET_LINUX) $(LIBS)
 
 # Debug version
 debug:
-	@echo "Building PE File Parser (Debug)..."
+	@echo "Building MalAware (Debug)..."
 	$(CXX) $(CXXFLAGS_DEBUG) $(INCLUDES) main.cpp $(CORE_SOURCES) -o $(TARGET_LINUX)_debug $(LIBS)
 
 # Windows cross-compilation
@@ -50,7 +47,7 @@ $(TARGET_WIN):
 # Clean targets
 clean:
 	@echo "Cleaning build files..."
-	rm -f $(TARGET_LINUX) $(TARGET_LINUX)_debug $(TARGET_WIN) peFileParser_test peFileParser_minimal
+	rm -f $(TARGET_LINUX) $(TARGET_LINUX)_debug $(TARGET_WIN) MalAware_test MalAware_minimal
 
 # Install dependencies
 install-deps:

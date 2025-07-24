@@ -13,18 +13,18 @@ PESecurityAnalyzer::PESecurityAnalyzer(PPE_FILE_INFO pFileInfo) : pFileInfo_(pFi
 }
 std::vector<PESecurityAnalyzer::EntropyResult> PESecurityAnalyzer::calculateSectionEntropy() {
     entropyResults_.clear();
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return entropyResults_;
     }
     PIMAGE_SECTION_HEADER sectionHeader;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
+    if (pFileInfo_->is64Bit) {
+        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->ntHeader;
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
+        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->ntHeader;
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
-    for (int i = 0; i < pFileInfo_->pNtHeader->FileHeader.NumberOfSections; i++) {
+    for (int i = 0; i < pFileInfo_->ntHeader->FileHeader.NumberOfSections; i++) {
         EntropyResult result;
         char sectionName[9] = {0};
         memcpy(sectionName, sectionHeader[i].Name, 8);
@@ -32,7 +32,7 @@ std::vector<PESecurityAnalyzer::EntropyResult> PESecurityAnalyzer::calculateSect
         result.virtualAddress = sectionHeader[i].VirtualAddress;
         result.size = sectionHeader[i].SizeOfRawData;
         if (sectionHeader[i].SizeOfRawData > 0 && sectionHeader[i].PointerToRawData > 0) {
-            BYTE* sectionData = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + sectionHeader[i].PointerToRawData);
+            BYTE* sectionData = (BYTE*)((DWORD_PTR)pFileInfo_->dosHeader + sectionHeader[i].PointerToRawData);
             result.entropy = calculateEntropy(sectionData, sectionHeader[i].SizeOfRawData);
             result.isPacked = isHighEntropy(result.entropy);
         } else {
@@ -60,15 +60,15 @@ double PESecurityAnalyzer::calculateEntropy(const BYTE* data, size_t size) {
 }
 PESecurityAnalyzer::SecurityFeatures PESecurityAnalyzer::extractSecurityFeatures() {
     securityFeatures_ = {};
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return securityFeatures_;
     }
     WORD dllCharacteristics;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
+    if (pFileInfo_->is64Bit) {
+        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->ntHeader;
         dllCharacteristics = pNtHeader64->OptionalHeader.DllCharacteristics;
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
+        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->ntHeader;
         dllCharacteristics = pNtHeader32->OptionalHeader.DllCharacteristics;
     }
     securityFeatures_.aslr = (dllCharacteristics & 0x0040) != 0;
@@ -88,7 +88,7 @@ PESecurityAnalyzer::SecurityFeatures PESecurityAnalyzer::extractSecurityFeatures
 }
 PESecurityAnalyzer::PackerInfo PESecurityAnalyzer::detectPacker() {
     packerInfo_ = {};
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return packerInfo_;
     }
     calculateSectionEntropy();
@@ -122,7 +122,7 @@ PESecurityAnalyzer::PackerInfo PESecurityAnalyzer::detectPacker() {
 }
 PESecurityAnalyzer::OverlayInfo PESecurityAnalyzer::detectOverlay() {
     overlayInfo_ = {};
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return overlayInfo_;
     }
     DWORD fileSize = getFileSize();
@@ -131,14 +131,14 @@ PESecurityAnalyzer::OverlayInfo PESecurityAnalyzer::detectOverlay() {
         overlayInfo_.hasOverlay = true;
         overlayInfo_.overlayOffset = lastSectionEnd;
         overlayInfo_.overlaySize = fileSize - lastSectionEnd;
-        BYTE* overlayData = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + lastSectionEnd);
+        BYTE* overlayData = (BYTE*)((DWORD_PTR)pFileInfo_->dosHeader + lastSectionEnd);
         overlayInfo_.overlayEntropy = calculateEntropy(overlayData, overlayInfo_.overlaySize);
     }
     return overlayInfo_;
 }
 std::vector<std::string> PESecurityAnalyzer::detectAnomalies() {
     anomalies_.clear();
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return anomalies_;
     }
     calculateSectionEntropy();
@@ -239,21 +239,21 @@ bool PESecurityAnalyzer::isLowEntropy(double entropy) {
     return entropy < 3.0;
 }
 DWORD PESecurityAnalyzer::getFileSize() {
-    if (!pFileInfo_ || !pFileInfo_->pDosHeader) return 0;
+    if (!pFileInfo_ || !pFileInfo_->dosHeader) return 0;
     return 0;
 }
 DWORD PESecurityAnalyzer::getLastSectionEnd() {
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) return 0;
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) return 0;
     PIMAGE_SECTION_HEADER sectionHeader;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
+    if (pFileInfo_->is64Bit) {
+        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->ntHeader;
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
+        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->ntHeader;
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
     DWORD lastEnd = 0;
-    for (int i = 0; i < pFileInfo_->pNtHeader->FileHeader.NumberOfSections; i++) {
+    for (int i = 0; i < pFileInfo_->ntHeader->FileHeader.NumberOfSections; i++) {
         DWORD sectionEnd = sectionHeader[i].PointerToRawData + sectionHeader[i].SizeOfRawData;
         if (sectionEnd > lastEnd) {
             lastEnd = sectionEnd;

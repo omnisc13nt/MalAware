@@ -43,7 +43,7 @@ public:
         std::string catalogFile;
         std::string catalogHash;
     };
-    explicit PEDigitalSignatureAnalyzer(PPE_FILE_INFO pFileInfo);
+    explicit PEDigitalSignatureAnalyzer(PPE_FILE_INFO fileInfo);
     ~PEDigitalSignatureAnalyzer() = default;
     SignatureInfo analyzeSignature();
     SecurityCatalogInfo checkSecurityCatalog();
@@ -57,7 +57,7 @@ public:
     static std::string formatTime(const std::chrono::system_clock::time_point& timePoint);
     static std::string bytesToHex(const BYTE* data, size_t size);
 private:
-    PPE_FILE_INFO pFileInfo_;
+    PPE_FILE_INFO fileInfo_;
     SignatureInfo signatureInfo_;
     SecurityCatalogInfo catalogInfo_;
     bool extractSignatureData(BYTE** signatureData, DWORD* signatureSize);

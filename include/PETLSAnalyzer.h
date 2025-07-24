@@ -34,16 +34,16 @@ public:
         bool isSuspicious;
         int suspicionLevel;
     };
-    static TLSInfo analyzeTLS(PPE_FILE_INFO pFileInfo);
+    static TLSInfo analyzeTLS(PPE_FILE_INFO fileInfo);
     static std::string generateTLSReport(const TLSInfo& tlsInfo);
-    static bool hasTLSDirectory(PPE_FILE_INFO pFileInfo);
-    static std::vector<DWORD_PTR> extractTLSCallbacks(PPE_FILE_INFO pFileInfo);
-    static bool isCallbackSuspicious(DWORD_PTR callback, PPE_FILE_INFO pFileInfo);
+    static bool hasTLSDirectory(PPE_FILE_INFO fileInfo);
+    static std::vector<DWORD_PTR> extractTLSCallbacks(PPE_FILE_INFO fileInfo);
+    static bool isCallbackSuspicious(DWORD_PTR callback, PPE_FILE_INFO fileInfo);
     static void logTLSAnalysis(const TLSInfo& tlsInfo);
 private:
-    static PIMAGE_TLS_DIRECTORY32 getTLSDirectory32(PPE_FILE_INFO pFileInfo);
-    static PIMAGE_TLS_DIRECTORY64 getTLSDirectory64(PPE_FILE_INFO pFileInfo);
+    static PIMAGE_TLS_DIRECTORY32 getTLSDirectory32(PPE_FILE_INFO fileInfo);
+    static PIMAGE_TLS_DIRECTORY64 getTLSDirectory64(PPE_FILE_INFO fileInfo);
     static std::string analyzeCallbackPattern(const std::vector<DWORD_PTR>& callbacks);
-    static bool isAddressInExecutableSection(DWORD_PTR address, PPE_FILE_INFO pFileInfo);
-    static std::string getCallbackLocationDescription(DWORD_PTR callback, PPE_FILE_INFO pFileInfo);
+    static bool isAddressInExecutableSection(DWORD_PTR address, PPE_FILE_INFO fileInfo);
+    static std::string getCallbackLocationDescription(DWORD_PTR callback, PPE_FILE_INFO fileInfo);
 };

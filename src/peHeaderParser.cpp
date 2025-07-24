@@ -1,17 +1,17 @@
 #include "../include/peHeaderParser.h"
-const char* GetImageCharacteristics(DWORD_PTR dCharacteristics)
+const char* GetImageCharacteristics(DWORD_PTR characteristics)
 {
-    if (dCharacteristics & IMAGE_FILE_DLL)
+    if (characteristics & IMAGE_FILE_DLL)
         return "(DLL)";
-    if (dCharacteristics & IMAGE_FILE_SYSTEM)
+    if (characteristics & IMAGE_FILE_SYSTEM)
         return "(DRIVER)";
-    if (dCharacteristics & IMAGE_FILE_EXECUTABLE_IMAGE)
+    if (characteristics & IMAGE_FILE_EXECUTABLE_IMAGE)
         return "(EXE)";
     return "(UNKNOWN)";
 }
-const char* GetSubsystem(WORD wSubsystem)
+const char* GetSubsystem(WORD subsystem)
 {
-    switch (wSubsystem)
+    switch (subsystem)
     {
         case 1:
             return "(NATIVE / DRIVER)";
@@ -23,9 +23,9 @@ const char* GetSubsystem(WORD wSubsystem)
             return "(UNKNOWN)";
     }
 }
-const char* GetDataDirectoryName(int nDirectoryNumber)
+const char* GetDataDirectoryName(int directoryNumber)
 {
-    switch (nDirectoryNumber)
+    switch (directoryNumber)
     {
         case 0:
             return "Export Table";
@@ -61,120 +61,120 @@ const char* GetDataDirectoryName(int nDirectoryNumber)
             return "Unknown";
     }
 }
-void DisplayDosHeader(PIMAGE_DOS_HEADER pDosHeader)
+void DisplayDosHeader(PIMAGE_DOS_HEADER dosHeader)
 {
     printf("\n[+] DOS HEADER\n");
-    printf("\te_magic : 0x%X\n", (unsigned int)pDosHeader->e_magic);
-    printf("\te_cblp : 0x%X\n", (unsigned int)pDosHeader->e_cblp);
-    printf("\te_cp : 0x%X\n", (unsigned int)pDosHeader->e_cp);
-    printf("\te_crlc : 0x%X\n", (unsigned int)pDosHeader->e_crlc);
-    printf("\te_cparhdr : 0x%X\n", (unsigned int)pDosHeader->e_cparhdr);
-    printf("\te_minalloc : 0x%X\n", (unsigned int)pDosHeader->e_minalloc);
-    printf("\te_maxalloc : 0x%X\n", (unsigned int)pDosHeader->e_maxalloc);
-    printf("\te_ss : 0x%X\n", (unsigned int)pDosHeader->e_ss);
-    printf("\te_sp : 0x%X\n", (unsigned int)pDosHeader->e_sp);
-    printf("\te_csum : 0x%X\n", (unsigned int)pDosHeader->e_csum);
-    printf("\te_ip : 0x%X\n", (unsigned int)pDosHeader->e_ip);
-    printf("\te_cs : 0x%X\n", (unsigned int)pDosHeader->e_cs);
-    printf("\te_lfarlc : 0x%X\n", (unsigned int)pDosHeader->e_lfarlc);
-    printf("\te_ovno : 0x%X\n", (unsigned int)pDosHeader->e_ovno);
-    printf("\te_oemid : 0x%X\n", (unsigned int)pDosHeader->e_oemid);
-    printf("\te_oeminfo : 0x%X\n", (unsigned int)pDosHeader->e_oeminfo);
-    printf("\te_lfanew : 0x%X\n", (unsigned int)pDosHeader->e_lfanew);
+    printf("\te_magic : 0x%X\n", (unsigned int)dosHeader->e_magic);
+    printf("\te_cblp : 0x%X\n", (unsigned int)dosHeader->e_cblp);
+    printf("\te_cp : 0x%X\n", (unsigned int)dosHeader->e_cp);
+    printf("\te_crlc : 0x%X\n", (unsigned int)dosHeader->e_crlc);
+    printf("\te_cparhdr : 0x%X\n", (unsigned int)dosHeader->e_cparhdr);
+    printf("\te_minalloc : 0x%X\n", (unsigned int)dosHeader->e_minalloc);
+    printf("\te_maxalloc : 0x%X\n", (unsigned int)dosHeader->e_maxalloc);
+    printf("\te_ss : 0x%X\n", (unsigned int)dosHeader->e_ss);
+    printf("\te_sp : 0x%X\n", (unsigned int)dosHeader->e_sp);
+    printf("\te_csum : 0x%X\n", (unsigned int)dosHeader->e_csum);
+    printf("\te_ip : 0x%X\n", (unsigned int)dosHeader->e_ip);
+    printf("\te_cs : 0x%X\n", (unsigned int)dosHeader->e_cs);
+    printf("\te_lfarlc : 0x%X\n", (unsigned int)dosHeader->e_lfarlc);
+    printf("\te_ovno : 0x%X\n", (unsigned int)dosHeader->e_ovno);
+    printf("\te_oemid : 0x%X\n", (unsigned int)dosHeader->e_oemid);
+    printf("\te_oeminfo : 0x%X\n", (unsigned int)dosHeader->e_oeminfo);
+    printf("\te_lfanew : 0x%X\n", (unsigned int)dosHeader->e_lfanew);
 }
-void DisplayNTHeader(PPE_FILE_INFO pFileInfo)
+void DisplayNTHeader(PPE_FILE_INFO fileInfo)
 {
     printf("\n[+] NT HEADER\n");
-    printf("\tSignature : 0x%X\n", (unsigned int)pFileInfo->pNtHeader->Signature);
+    printf("\tSignature : 0x%X\n", (unsigned int)fileInfo->ntHeader->Signature);
 }
-void DisplayFileHeader(const IMAGE_FILE_HEADER* pFileHeader)
+void DisplayFileHeader(const IMAGE_FILE_HEADER* fileHeader)
 {
     printf("\n[+] FILE HEADER\n");
-    printf("\tMachine : 0x%X\n", (unsigned int)pFileHeader->Machine);
-    printf("\tNumberOfSections : 0x%X\n", (unsigned int)pFileHeader->NumberOfSections);
-    printf("\tTimeDateStamp : 0x%X\n", (unsigned int)pFileHeader->TimeDateStamp);
-    printf("\tPointerToSymbolTable : 0x%X\n", (unsigned int)pFileHeader->PointerToSymbolTable);
-    printf("\tNumberOfSymbols : 0x%X\n", (unsigned int)pFileHeader->NumberOfSymbols);
-    printf("\tSizeOfOptionalHeader : 0x%X\n", (unsigned int)pFileHeader->SizeOfOptionalHeader);
-    printf("\tCharacteristics : 0x%X %s\n", (unsigned int)pFileHeader->Characteristics, GetImageCharacteristics(pFileHeader->Characteristics));
+    printf("\tMachine : 0x%X\n", (unsigned int)fileHeader->Machine);
+    printf("\tNumberOfSections : 0x%X\n", (unsigned int)fileHeader->NumberOfSections);
+    printf("\tTimeDateStamp : 0x%X\n", (unsigned int)fileHeader->TimeDateStamp);
+    printf("\tPointerToSymbolTable : 0x%X\n", (unsigned int)fileHeader->PointerToSymbolTable);
+    printf("\tNumberOfSymbols : 0x%X\n", (unsigned int)fileHeader->NumberOfSymbols);
+    printf("\tSizeOfOptionalHeader : 0x%X\n", (unsigned int)fileHeader->SizeOfOptionalHeader);
+    printf("\tCharacteristics : 0x%X %s\n", (unsigned int)fileHeader->Characteristics, GetImageCharacteristics(fileHeader->Characteristics));
 }
-void DisplayOptionalHeader32(const IMAGE_OPTIONAL_HEADER32* pOptionalHeader)
+void DisplayOptionalHeader32(const IMAGE_OPTIONAL_HEADER32* optionalHeader)
 {
     printf("\n[+] OPTIONAL HEADER\n");
-    printf("\tMagic : 0x%X\n", (unsigned int)pOptionalHeader->Magic);
-    printf("\tMajorLinkerVersion : 0x%X\n", (unsigned int)pOptionalHeader->MajorLinkerVersion);
-    printf("\tMinorLinkerVersion : 0x%X\n", (unsigned int)pOptionalHeader->MinorLinkerVersion);
-    printf("\tSizeOfCode : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfCode);
-    printf("\tSizeOfInitializedData : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfInitializedData);
-    printf("\tSizeOfUninitializedData : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfUninitializedData);
-    printf("\tAddressOfEntryPoint : 0x%X\n", (unsigned int)pOptionalHeader->AddressOfEntryPoint);
-    printf("\tBaseOfCode : 0x%X\n", (unsigned int)pOptionalHeader->BaseOfCode);
-    printf("\tBaseOfData : 0x%X\n", (unsigned int)pOptionalHeader->BaseOfData);
-    printf("\tImageBase : 0x%X\n", (unsigned int)pOptionalHeader->ImageBase);
-    printf("\tSectionAlignment : 0x%X\n", (unsigned int)pOptionalHeader->SectionAlignment);
-    printf("\tFileAlignment : 0x%X\n", (unsigned int)pOptionalHeader->FileAlignment);
-    printf("\tMajorOperatingSystemVersion : 0x%X\n", (unsigned int)pOptionalHeader->MajorOperatingSystemVersion);
-    printf("\tMinorOperatingSystemVersion : 0x%X\n", (unsigned int)pOptionalHeader->MinorOperatingSystemVersion);
-    printf("\tMajorImageVersion : 0x%X\n", (unsigned int)pOptionalHeader->MajorImageVersion);
-    printf("\tMinorImageVersion : 0x%X\n", (unsigned int)pOptionalHeader->MinorImageVersion);
-    printf("\tMajorSubsystemVersion : 0x%X\n", (unsigned int)pOptionalHeader->MajorSubsystemVersion);
-    printf("\tMinorSubsystemVersion : 0x%X\n", (unsigned int)pOptionalHeader->MinorSubsystemVersion);
-    printf("\tWin32VersionValue : 0x%X\n", (unsigned int)pOptionalHeader->Win32VersionValue);
-    printf("\tSizeOfImage : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfImage);
-    printf("\tSizeOfHeaders : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfHeaders);
-    printf("\tCheckSum : 0x%X\n", (unsigned int)pOptionalHeader->CheckSum);
-    printf("\tSubsystem : 0x%X %s\n", (unsigned int)pOptionalHeader->Subsystem, GetSubsystem(pOptionalHeader->Subsystem));
-    printf("\tDllCharacteristics : 0x%X\n", (unsigned int)pOptionalHeader->DllCharacteristics);
-    printf("\tSizeOfStackReserve : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfStackReserve);
-    printf("\tSizeOfStackCommit : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfStackCommit);
-    printf("\tSizeOfHeapReserve : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfHeapReserve);
-    printf("\tSizeOfHeapCommit : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfHeapCommit);
-    printf("\tLoaderFlags : 0x%X\n", (unsigned int)pOptionalHeader->LoaderFlags);
-    printf("\tNumberOfRvaAndSizes : 0x%X\n", (unsigned int)pOptionalHeader->NumberOfRvaAndSizes);
-    DisplayDataDirectories(pOptionalHeader->DataDirectory);
+    printf("\tMagic : 0x%X\n", (unsigned int)optionalHeader->Magic);
+    printf("\tMajorLinkerVersion : 0x%X\n", (unsigned int)optionalHeader->MajorLinkerVersion);
+    printf("\tMinorLinkerVersion : 0x%X\n", (unsigned int)optionalHeader->MinorLinkerVersion);
+    printf("\tSizeOfCode : 0x%X\n", (unsigned int)optionalHeader->SizeOfCode);
+    printf("\tSizeOfInitializedData : 0x%X\n", (unsigned int)optionalHeader->SizeOfInitializedData);
+    printf("\tSizeOfUninitializedData : 0x%X\n", (unsigned int)optionalHeader->SizeOfUninitializedData);
+    printf("\tAddressOfEntryPoint : 0x%X\n", (unsigned int)optionalHeader->AddressOfEntryPoint);
+    printf("\tBaseOfCode : 0x%X\n", (unsigned int)optionalHeader->BaseOfCode);
+    printf("\tBaseOfData : 0x%X\n", (unsigned int)optionalHeader->BaseOfData);
+    printf("\tImageBase : 0x%X\n", (unsigned int)optionalHeader->ImageBase);
+    printf("\tSectionAlignment : 0x%X\n", (unsigned int)optionalHeader->SectionAlignment);
+    printf("\tFileAlignment : 0x%X\n", (unsigned int)optionalHeader->FileAlignment);
+    printf("\tMajorOperatingSystemVersion : 0x%X\n", (unsigned int)optionalHeader->MajorOperatingSystemVersion);
+    printf("\tMinorOperatingSystemVersion : 0x%X\n", (unsigned int)optionalHeader->MinorOperatingSystemVersion);
+    printf("\tMajorImageVersion : 0x%X\n", (unsigned int)optionalHeader->MajorImageVersion);
+    printf("\tMinorImageVersion : 0x%X\n", (unsigned int)optionalHeader->MinorImageVersion);
+    printf("\tMajorSubsystemVersion : 0x%X\n", (unsigned int)optionalHeader->MajorSubsystemVersion);
+    printf("\tMinorSubsystemVersion : 0x%X\n", (unsigned int)optionalHeader->MinorSubsystemVersion);
+    printf("\tWin32VersionValue : 0x%X\n", (unsigned int)optionalHeader->Win32VersionValue);
+    printf("\tSizeOfImage : 0x%X\n", (unsigned int)optionalHeader->SizeOfImage);
+    printf("\tSizeOfHeaders : 0x%X\n", (unsigned int)optionalHeader->SizeOfHeaders);
+    printf("\tCheckSum : 0x%X\n", (unsigned int)optionalHeader->CheckSum);
+    printf("\tSubsystem : 0x%X %s\n", (unsigned int)optionalHeader->Subsystem, GetSubsystem(optionalHeader->Subsystem));
+    printf("\tDllCharacteristics : 0x%X\n", (unsigned int)optionalHeader->DllCharacteristics);
+    printf("\tSizeOfStackReserve : 0x%X\n", (unsigned int)optionalHeader->SizeOfStackReserve);
+    printf("\tSizeOfStackCommit : 0x%X\n", (unsigned int)optionalHeader->SizeOfStackCommit);
+    printf("\tSizeOfHeapReserve : 0x%X\n", (unsigned int)optionalHeader->SizeOfHeapReserve);
+    printf("\tSizeOfHeapCommit : 0x%X\n", (unsigned int)optionalHeader->SizeOfHeapCommit);
+    printf("\tLoaderFlags : 0x%X\n", (unsigned int)optionalHeader->LoaderFlags);
+    printf("\tNumberOfRvaAndSizes : 0x%X\n", (unsigned int)optionalHeader->NumberOfRvaAndSizes);
+    DisplayDataDirectories(optionalHeader->DataDirectory);
 }
-void DisplayOptionalHeader64(const IMAGE_OPTIONAL_HEADER64* pOptionalHeader)
+void DisplayOptionalHeader64(const IMAGE_OPTIONAL_HEADER64* optionalHeader)
 {
     printf("\n[+] OPTIONAL HEADER\n");
-    printf("\tMagic : 0x%X\n", (unsigned int)pOptionalHeader->Magic);
-    printf("\tMajorLinkerVersion : 0x%X\n", (unsigned int)pOptionalHeader->MajorLinkerVersion);
-    printf("\tMinorLinkerVersion : 0x%X\n", (unsigned int)pOptionalHeader->MinorLinkerVersion);
-    printf("\tSizeOfCode : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfCode);
-    printf("\tSizeOfInitializedData : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfInitializedData);
-    printf("\tSizeOfUninitializedData : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfUninitializedData);
-    printf("\tAddressOfEntryPoint : 0x%X\n", (unsigned int)pOptionalHeader->AddressOfEntryPoint);
-    printf("\tBaseOfCode : 0x%X\n", (unsigned int)pOptionalHeader->BaseOfCode);
-    printf("\tImageBase : 0x%llX\n", (unsigned long long)pOptionalHeader->ImageBase);
-    printf("\tSectionAlignment : 0x%X\n", (unsigned int)pOptionalHeader->SectionAlignment);
-    printf("\tFileAlignment : 0x%X\n", (unsigned int)pOptionalHeader->FileAlignment);
-    printf("\tMajorOperatingSystemVersion : 0x%X\n", (unsigned int)pOptionalHeader->MajorOperatingSystemVersion);
-    printf("\tMinorOperatingSystemVersion : 0x%X\n", (unsigned int)pOptionalHeader->MinorOperatingSystemVersion);
-    printf("\tMajorImageVersion : 0x%X\n", (unsigned int)pOptionalHeader->MajorImageVersion);
-    printf("\tMinorImageVersion : 0x%X\n", (unsigned int)pOptionalHeader->MinorImageVersion);
-    printf("\tMajorSubsystemVersion : 0x%X\n", (unsigned int)pOptionalHeader->MajorSubsystemVersion);
-    printf("\tMinorSubsystemVersion : 0x%X\n", (unsigned int)pOptionalHeader->MinorSubsystemVersion);
-    printf("\tWin32VersionValue : 0x%X\n", (unsigned int)pOptionalHeader->Win32VersionValue);
-    printf("\tSizeOfImage : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfImage);
-    printf("\tSizeOfHeaders : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfHeaders);
-    printf("\tCheckSum : 0x%X\n", (unsigned int)pOptionalHeader->CheckSum);
-    printf("\tSubsystem : 0x%X %s\n", (unsigned int)pOptionalHeader->Subsystem, GetSubsystem(pOptionalHeader->Subsystem));
-    printf("\tDllCharacteristics : 0x%X\n", (unsigned int)pOptionalHeader->DllCharacteristics);
-    printf("\tSizeOfStackReserve : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfStackReserve);
-    printf("\tSizeOfStackCommit : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfStackCommit);
-    printf("\tSizeOfHeapReserve : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfHeapReserve);
-    printf("\tSizeOfHeapCommit : 0x%X\n", (unsigned int)pOptionalHeader->SizeOfHeapCommit);
-    printf("\tLoaderFlags : 0x%X\n", (unsigned int)pOptionalHeader->LoaderFlags);
-    printf("\tNumberOfRvaAndSizes : 0x%X\n", (unsigned int)pOptionalHeader->NumberOfRvaAndSizes);
-    DisplayDataDirectories(pOptionalHeader->DataDirectory);
+    printf("\tMagic : 0x%X\n", (unsigned int)optionalHeader->Magic);
+    printf("\tMajorLinkerVersion : 0x%X\n", (unsigned int)optionalHeader->MajorLinkerVersion);
+    printf("\tMinorLinkerVersion : 0x%X\n", (unsigned int)optionalHeader->MinorLinkerVersion);
+    printf("\tSizeOfCode : 0x%X\n", (unsigned int)optionalHeader->SizeOfCode);
+    printf("\tSizeOfInitializedData : 0x%X\n", (unsigned int)optionalHeader->SizeOfInitializedData);
+    printf("\tSizeOfUninitializedData : 0x%X\n", (unsigned int)optionalHeader->SizeOfUninitializedData);
+    printf("\tAddressOfEntryPoint : 0x%X\n", (unsigned int)optionalHeader->AddressOfEntryPoint);
+    printf("\tBaseOfCode : 0x%X\n", (unsigned int)optionalHeader->BaseOfCode);
+    printf("\tImageBase : 0x%llX\n", (unsigned long long)optionalHeader->ImageBase);
+    printf("\tSectionAlignment : 0x%X\n", (unsigned int)optionalHeader->SectionAlignment);
+    printf("\tFileAlignment : 0x%X\n", (unsigned int)optionalHeader->FileAlignment);
+    printf("\tMajorOperatingSystemVersion : 0x%X\n", (unsigned int)optionalHeader->MajorOperatingSystemVersion);
+    printf("\tMinorOperatingSystemVersion : 0x%X\n", (unsigned int)optionalHeader->MinorOperatingSystemVersion);
+    printf("\tMajorImageVersion : 0x%X\n", (unsigned int)optionalHeader->MajorImageVersion);
+    printf("\tMinorImageVersion : 0x%X\n", (unsigned int)optionalHeader->MinorImageVersion);
+    printf("\tMajorSubsystemVersion : 0x%X\n", (unsigned int)optionalHeader->MajorSubsystemVersion);
+    printf("\tMinorSubsystemVersion : 0x%X\n", (unsigned int)optionalHeader->MinorSubsystemVersion);
+    printf("\tWin32VersionValue : 0x%X\n", (unsigned int)optionalHeader->Win32VersionValue);
+    printf("\tSizeOfImage : 0x%X\n", (unsigned int)optionalHeader->SizeOfImage);
+    printf("\tSizeOfHeaders : 0x%X\n", (unsigned int)optionalHeader->SizeOfHeaders);
+    printf("\tCheckSum : 0x%X\n", (unsigned int)optionalHeader->CheckSum);
+    printf("\tSubsystem : 0x%X %s\n", (unsigned int)optionalHeader->Subsystem, GetSubsystem(optionalHeader->Subsystem));
+    printf("\tDllCharacteristics : 0x%X\n", (unsigned int)optionalHeader->DllCharacteristics);
+    printf("\tSizeOfStackReserve : 0x%X\n", (unsigned int)optionalHeader->SizeOfStackReserve);
+    printf("\tSizeOfStackCommit : 0x%X\n", (unsigned int)optionalHeader->SizeOfStackCommit);
+    printf("\tSizeOfHeapReserve : 0x%X\n", (unsigned int)optionalHeader->SizeOfHeapReserve);
+    printf("\tSizeOfHeapCommit : 0x%X\n", (unsigned int)optionalHeader->SizeOfHeapCommit);
+    printf("\tLoaderFlags : 0x%X\n", (unsigned int)optionalHeader->LoaderFlags);
+    printf("\tNumberOfRvaAndSizes : 0x%X\n", (unsigned int)optionalHeader->NumberOfRvaAndSizes);
+    DisplayDataDirectories(optionalHeader->DataDirectory);
 }
-void DisplayDataDirectories(const IMAGE_DATA_DIRECTORY* pImageDataDirectory)
+void DisplayDataDirectories(const IMAGE_DATA_DIRECTORY* imageDataDirectory)
 {
     printf("\n[+] DATA DIRECTORIES\n");
-    for (int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; ++i, ++pImageDataDirectory)
+    for (int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; ++i, ++imageDataDirectory)
     {
-        if (pImageDataDirectory->VirtualAddress == 0)
+        if (imageDataDirectory->VirtualAddress == 0)
             continue;
-        printf("\tDataDirectory (%s) VirtualAddress : 0x%X\n", GetDataDirectoryName(i), (unsigned int)pImageDataDirectory->VirtualAddress);
-        printf("\tDataDirectory (%s) Size : 0x%X\n\n", GetDataDirectoryName(i), (unsigned int)pImageDataDirectory->Size);
+        printf("\tDataDirectory (%s) VirtualAddress : 0x%X\n", GetDataDirectoryName(i), (unsigned int)imageDataDirectory->VirtualAddress);
+        printf("\tDataDirectory (%s) Size : 0x%X\n\n", GetDataDirectoryName(i), (unsigned int)imageDataDirectory->Size);
     }
 }

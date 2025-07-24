@@ -138,27 +138,27 @@ int main(int argc, char* argv[])
 
     if (outputToFile) {
         LOGF("[+] Successfully loaded PE file: %s\n", inputFile.c_str());
-        LOGF("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
+        LOGF("[+] Architecture: %s\n", fileInfo.is64Bit ? "x64" : "x86");
     } else {
         printf("[+] Successfully loaded PE file: %s\n", inputFile.c_str());
-        printf("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
+        printf("[+] Architecture: %s\n", fileInfo.is64Bit ? "x64" : "x86");
     }
 
-    if (fileInfo.bIs64Bit)
+    if (fileInfo.is64Bit)
     {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
-        g_NumberOfSections = pNtHeader64->FileHeader.NumberOfSections;
-        g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
+        auto ntHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.ntHeader;
+        g_NumberOfSections = ntHeader64->FileHeader.NumberOfSections;
+        g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)ntHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + ntHeader64->FileHeader.SizeOfOptionalHeader);
     }
     else
     {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.pNtHeader;
-        g_NumberOfSections = pNtHeader32->FileHeader.NumberOfSections;
-        g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
+        auto ntHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.ntHeader;
+        g_NumberOfSections = ntHeader32->FileHeader.NumberOfSections;
+        g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)ntHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + ntHeader32->FileHeader.SizeOfOptionalHeader);
     }
 
     PerformanceMetrics perfMetrics;
-    perfMetrics.setFileSize(fileInfo.dwFileSize);
+    perfMetrics.setFileSize(fileInfo.fileSize);
     perfMetrics.startAnalysis();
 
     if (outputManager.shouldShowBasicPEInfo()) {
@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
             printf("\n[+] PE file parsing completed successfully!\n");
         }
     } else {
-        if (fileInfo.pNtHeader == nullptr) {
+        if (fileInfo.ntHeader == nullptr) {
             if (outputToFile) {
                 LOGF("[-] ERROR: Invalid PE file structure!\n");
                 Logger::close();
@@ -201,7 +201,7 @@ int main(int argc, char* argv[])
     if (outputManager.shouldShowResources()) {
         try {
             perfMetrics.startModule("Resource Analysis");
-            PEResourceParser resourceParser(fileInfo.hFileContent, fileInfo.pNtHeader);
+            PEResourceParser resourceParser(fileInfo.fileContent, fileInfo.ntHeader);
             resourceParser.parseResources();
             resourceParser.printResources();
             perfMetrics.endModule("Resource Analysis", true);
@@ -378,32 +378,32 @@ int main(int argc, char* argv[])
         std::vector<double> sectionEntropies;
         std::vector<std::string> importedFunctions;
 
-        if (fileInfo.bIs64Bit) {
-            auto pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
-            timestamp = pNtHeader64->FileHeader.TimeDateStamp;
-            entryPoint = pNtHeader64->OptionalHeader.AddressOfEntryPoint;
-            imageBase = static_cast<DWORD>(pNtHeader64->OptionalHeader.ImageBase);
-            sizeOfCode = pNtHeader64->OptionalHeader.SizeOfCode;
+        if (fileInfo.is64Bit) {
+            auto ntHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.ntHeader;
+            timestamp = ntHeader64->FileHeader.TimeDateStamp;
+            entryPoint = ntHeader64->OptionalHeader.AddressOfEntryPoint;
+            imageBase = static_cast<DWORD>(ntHeader64->OptionalHeader.ImageBase);
+            sizeOfCode = ntHeader64->OptionalHeader.SizeOfCode;
 
 
-            auto pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
-            for (int i = 0; i < pNtHeader64->FileHeader.NumberOfSections; i++) {
-                sections.push_back(pSectionHeader[i]);
+            auto sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)ntHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + ntHeader64->FileHeader.SizeOfOptionalHeader);
+            for (int i = 0; i < ntHeader64->FileHeader.NumberOfSections; i++) {
+                sections.push_back(sectionHeader[i]);
 
 
                 double entropy = 0.0;
-                if (pSectionHeader[i].SizeOfRawData > 0 && pSectionHeader[i].PointerToRawData > 0) {
-                    BYTE* sectionData = (BYTE*)((DWORD_PTR)fileInfo.pDosHeader + pSectionHeader[i].PointerToRawData);
+                if (sectionHeader[i].SizeOfRawData > 0 && sectionHeader[i].PointerToRawData > 0) {
+                    BYTE* sectionData = (BYTE*)((DWORD_PTR)fileInfo.dosHeader + sectionHeader[i].PointerToRawData);
 
 
                     unsigned int frequency[256] = {0};
-                    for (DWORD j = 0; j < pSectionHeader[i].SizeOfRawData; j++) {
+                    for (DWORD j = 0; j < sectionHeader[i].SizeOfRawData; j++) {
                         frequency[sectionData[j]]++;
                     }
 
                     for (int k = 0; k < 256; k++) {
                         if (frequency[k] > 0) {
-                            double probability = (double)frequency[k] / pSectionHeader[i].SizeOfRawData;
+                            double probability = (double)frequency[k] / sectionHeader[i].SizeOfRawData;
                             entropy -= probability * log2(probability);
                         }
                     }
@@ -422,36 +422,36 @@ int main(int argc, char* argv[])
                 0,
                 0,
                 resourceSize,
-                static_cast<DWORD>(fileInfo.dwFileSize),
+                static_cast<DWORD>(fileInfo.fileSize),
                 importedFunctions,
                 true
             );
         } else {
-            auto pNtHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.pNtHeader;
-            timestamp = pNtHeader32->FileHeader.TimeDateStamp;
-            entryPoint = pNtHeader32->OptionalHeader.AddressOfEntryPoint;
-            imageBase = pNtHeader32->OptionalHeader.ImageBase;
-            sizeOfCode = pNtHeader32->OptionalHeader.SizeOfCode;
+            auto ntHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.ntHeader;
+            timestamp = ntHeader32->FileHeader.TimeDateStamp;
+            entryPoint = ntHeader32->OptionalHeader.AddressOfEntryPoint;
+            imageBase = ntHeader32->OptionalHeader.ImageBase;
+            sizeOfCode = ntHeader32->OptionalHeader.SizeOfCode;
 
 
-            auto pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
-            for (int i = 0; i < pNtHeader32->FileHeader.NumberOfSections; i++) {
-                sections.push_back(pSectionHeader[i]);
+            auto sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)ntHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + ntHeader32->FileHeader.SizeOfOptionalHeader);
+            for (int i = 0; i < ntHeader32->FileHeader.NumberOfSections; i++) {
+                sections.push_back(sectionHeader[i]);
 
 
                 double entropy = 0.0;
-                if (pSectionHeader[i].SizeOfRawData > 0 && pSectionHeader[i].PointerToRawData > 0) {
-                    BYTE* sectionData = (BYTE*)((DWORD_PTR)fileInfo.pDosHeader + pSectionHeader[i].PointerToRawData);
+                if (sectionHeader[i].SizeOfRawData > 0 && sectionHeader[i].PointerToRawData > 0) {
+                    BYTE* sectionData = (BYTE*)((DWORD_PTR)fileInfo.dosHeader + sectionHeader[i].PointerToRawData);
 
 
                     unsigned int frequency[256] = {0};
-                    for (DWORD j = 0; j < pSectionHeader[i].SizeOfRawData; j++) {
+                    for (DWORD j = 0; j < sectionHeader[i].SizeOfRawData; j++) {
                         frequency[sectionData[j]]++;
                     }
 
                     for (int k = 0; k < 256; k++) {
                         if (frequency[k] > 0) {
-                            double probability = (double)frequency[k] / pSectionHeader[i].SizeOfRawData;
+                            double probability = (double)frequency[k] / sectionHeader[i].SizeOfRawData;
                             entropy -= probability * log2(probability);
                         }
                     }
@@ -470,7 +470,7 @@ int main(int argc, char* argv[])
                 0,
                 0,
                 resourceSize,
-                static_cast<DWORD>(fileInfo.dwFileSize),
+                static_cast<DWORD>(fileInfo.fileSize),
                 importedFunctions,
                 false
             );
@@ -554,18 +554,18 @@ int main(int argc, char* argv[])
             EnhancedOutputManager::AnalysisData data;
             data.fileName = inputFile.substr(inputFile.find_last_of("/\\") + 1);
             data.filePath = inputFile;
-            data.fileSize = fileInfo.dwFileSize;
-            data.architecture = fileInfo.bIs64Bit ? "x64" : "x86";
-            data.compilationTime = fileInfo.pNtHeader->FileHeader.TimeDateStamp;
-            data.sectionCount = fileInfo.pNtHeader->FileHeader.NumberOfSections;
+            data.fileSize = fileInfo.fileSize;
+            data.architecture = fileInfo.is64Bit ? "x64" : "x86";
+            data.compilationTime = fileInfo.ntHeader->FileHeader.TimeDateStamp;
+            data.sectionCount = fileInfo.ntHeader->FileHeader.NumberOfSections;
 
 
-            if (fileInfo.bIs64Bit) {
-                PIMAGE_NT_HEADERS64 pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
-                data.entryPoint = pNtHeader64->OptionalHeader.AddressOfEntryPoint;
+            if (fileInfo.is64Bit) {
+                PIMAGE_NT_HEADERS64 ntHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.ntHeader;
+                data.entryPoint = ntHeader64->OptionalHeader.AddressOfEntryPoint;
 
 
-                switch(pNtHeader64->OptionalHeader.Subsystem) {
+                switch(ntHeader64->OptionalHeader.Subsystem) {
                     case 1: data.subsystem = "Native"; break;
                     case 2: data.subsystem = "GUI"; break;
                     case 3: data.subsystem = "Console"; break;
@@ -573,16 +573,16 @@ int main(int argc, char* argv[])
                 }
 
 
-                data.aslrEnabled = (pNtHeader64->OptionalHeader.DllCharacteristics & 0x40) != 0;
-                data.depEnabled = (pNtHeader64->OptionalHeader.DllCharacteristics & 0x100) != 0;
-                data.sehEnabled = (pNtHeader64->OptionalHeader.DllCharacteristics & 0x400) != 0;
-                data.cfgEnabled = (pNtHeader64->OptionalHeader.DllCharacteristics & 0x4000) != 0;
+                data.aslrEnabled = (ntHeader64->OptionalHeader.DllCharacteristics & 0x40) != 0;
+                data.depEnabled = (ntHeader64->OptionalHeader.DllCharacteristics & 0x100) != 0;
+                data.sehEnabled = (ntHeader64->OptionalHeader.DllCharacteristics & 0x400) != 0;
+                data.cfgEnabled = (ntHeader64->OptionalHeader.DllCharacteristics & 0x4000) != 0;
             } else {
-                PIMAGE_NT_HEADERS32 pNtHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.pNtHeader;
-                data.entryPoint = pNtHeader32->OptionalHeader.AddressOfEntryPoint;
+                PIMAGE_NT_HEADERS32 ntHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.ntHeader;
+                data.entryPoint = ntHeader32->OptionalHeader.AddressOfEntryPoint;
 
 
-                switch(pNtHeader32->OptionalHeader.Subsystem) {
+                switch(ntHeader32->OptionalHeader.Subsystem) {
                     case 1: data.subsystem = "Native"; break;
                     case 2: data.subsystem = "GUI"; break;
                     case 3: data.subsystem = "Console"; break;
@@ -590,10 +590,10 @@ int main(int argc, char* argv[])
                 }
 
 
-                data.aslrEnabled = (pNtHeader32->OptionalHeader.DllCharacteristics & 0x40) != 0;
-                data.depEnabled = (pNtHeader32->OptionalHeader.DllCharacteristics & 0x100) != 0;
-                data.sehEnabled = (pNtHeader32->OptionalHeader.DllCharacteristics & 0x400) != 0;
-                data.cfgEnabled = (pNtHeader32->OptionalHeader.DllCharacteristics & 0x4000) != 0;
+                data.aslrEnabled = (ntHeader32->OptionalHeader.DllCharacteristics & 0x40) != 0;
+                data.depEnabled = (ntHeader32->OptionalHeader.DllCharacteristics & 0x100) != 0;
+                data.sehEnabled = (ntHeader32->OptionalHeader.DllCharacteristics & 0x400) != 0;
+                data.cfgEnabled = (ntHeader32->OptionalHeader.DllCharacteristics & 0x4000) != 0;
             }
 
             data.nxCompatible = data.depEnabled;
@@ -651,15 +651,15 @@ int main(int argc, char* argv[])
                 data.importedDlls.clear();
 
 
-                if (fileInfo.bIs64Bit) {
-                    PIMAGE_NT_HEADERS64 pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
-                    if (pNtHeader64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress != 0) {
+                if (fileInfo.is64Bit) {
+                    PIMAGE_NT_HEADERS64 ntHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.ntHeader;
+                    if (ntHeader64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress != 0) {
                         data.dllCount = 1;
                         data.importCount = 10;
                     }
                 } else {
-                    PIMAGE_NT_HEADERS32 pNtHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.pNtHeader;
-                    if (pNtHeader32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress != 0) {
+                    PIMAGE_NT_HEADERS32 ntHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.ntHeader;
+                    if (ntHeader32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress != 0) {
                         data.dllCount = 1;
                         data.importCount = 10;
                     }
@@ -741,12 +741,12 @@ void generateAnalysisSummary(const PE_FILE_INFO& fileInfo, const std::string& in
 
     LOGF("File: %s\n", inputFile.c_str());
     LOGF("Size: %.2f MB (%u bytes)\n",
-         fileInfo.dwFileSize / (1024.0 * 1024.0),
-         static_cast<DWORD>(fileInfo.dwFileSize));
-    LOGF("Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
+         fileInfo.fileSize / (1024.0 * 1024.0),
+         static_cast<DWORD>(fileInfo.fileSize));
+    LOGF("Architecture: %s\n", fileInfo.is64Bit ? "x64" : "x86");
 
 
-    WORD characteristics = fileInfo.pNtHeader->FileHeader.Characteristics;
+    WORD characteristics = fileInfo.ntHeader->FileHeader.Characteristics;
     std::string fileType = "Unknown";
     if (characteristics & IMAGE_FILE_DLL) {
         fileType = "Dynamic Link Library (DLL)";

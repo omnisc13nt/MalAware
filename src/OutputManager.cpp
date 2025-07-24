@@ -310,7 +310,7 @@ std::string OutputManager::formatError(const std::string& error) const {
 }
 
 void OutputManager::printUsage() const {
-    std::cout << "\n=== PE File Parser - Output Options ===\n\n";
+    std::cout << "\n=== MalAware Analysis Tool - Output Options ===\n\n";
 
     std::cout << "OUTPUT LEVELS:\n";
     std::cout << "  -q, --quiet      Minimal output (threats only)\n";
@@ -340,10 +340,10 @@ void OutputManager::printUsage() const {
     std::cout << "  --only-hashes    Show only hash information\n\n";
 
     std::cout << "EXAMPLES:\n";
-    std::cout << "  peFileParser malware.exe -s --malware\n";
-    std::cout << "  peFileParser sample.exe -A --forensic\n";
-    std::cout << "  peFileParser file.exe --only-threats\n";
-    std::cout << "  peFileParser binary.exe -v --show-imports --no-entropy\n\n";
+    std::cout << "  MalAware malware.exe -s --malware\n";
+    std::cout << "  MalAware sample.exe -A --forensic\n";
+    std::cout << "  MalAware file.exe --only-threats\n";
+    std::cout << "  MalAware binary.exe -v --show-imports --no-entropy\n\n";
 }
 
 void OutputManager::printAvailableOptions() const {

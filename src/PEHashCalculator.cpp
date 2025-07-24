@@ -16,7 +16,7 @@ PEHashCalculator::PEHashCalculator(PPE_FILE_INFO pFileInfo)
     sectionHashes_.clear();
 }
 PEHashCalculator::HashResult PEHashCalculator::calculateAllHashes() {
-    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+    if (!pFileInfo_ || !pFileInfo_->dosHeader) {
         return hashResult_;
     }
     hashResult_.md5 = calculateMD5();
@@ -39,10 +39,10 @@ std::string PEHashCalculator::calculateSHA256() {
     return calculateFileHash("SHA256");
 }
 std::string PEHashCalculator::calculateFileHash(const std::string& algorithm) {
-    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+    if (!pFileInfo_ || !pFileInfo_->dosHeader) {
         return "";
     }
-    BYTE* fileData = (BYTE*)pFileInfo_->pDosHeader;
+    BYTE* fileData = (BYTE*)pFileInfo_->dosHeader;
     DWORD fileSize = getFileSize();
     if (algorithm == "MD5") {
         return calculateMD5Simple(fileData, fileSize);
@@ -63,7 +63,7 @@ std::string PEHashCalculator::calculateSHA256Simple(const BYTE* data, size_t siz
     return CryptoUtils::sha256(data, size);
 }
 std::string PEHashCalculator::calculateImphash() {
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return "";
     }
     std::vector<std::string> imports = extractImportedFunctions();
@@ -85,15 +85,15 @@ std::string PEHashCalculator::calculateImphash() {
 }
 std::vector<std::string> PEHashCalculator::extractImportedFunctions() {
     std::vector<std::string> imports;
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return imports;
     }
     PIMAGE_DATA_DIRECTORY importDir = nullptr;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
+    if (pFileInfo_->is64Bit) {
+        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->ntHeader;
         importDir = &pNtHeader64->OptionalHeader.DataDirectory[1];
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
+        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->ntHeader;
         importDir = &pNtHeader32->OptionalHeader.DataDirectory[1];
     }
     if (!importDir || importDir->Size == 0) {
@@ -109,13 +109,13 @@ std::string PEHashCalculator::calculateAuthentihash() {
     return calculateFileHash("SHA256") + "_auth";
 }
 std::string PEHashCalculator::calculateSSDeep() {
-    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+    if (!pFileInfo_ || !pFileInfo_->dosHeader) {
         return "[Error: Invalid file data]";
     }
 
 
     DWORD fileSize = getFileSize();
-    BYTE* fileData = (BYTE*)pFileInfo_->pDosHeader;
+    BYTE* fileData = (BYTE*)pFileInfo_->dosHeader;
 
 
     DWORD blockSize = 3;
@@ -145,13 +145,13 @@ std::string PEHashCalculator::calculateSSDeep() {
 }
 
 std::string PEHashCalculator::calculateTLSH() {
-    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+    if (!pFileInfo_ || !pFileInfo_->dosHeader) {
         return "[Error: Invalid file data]";
     }
 
 
     DWORD fileSize = getFileSize();
-    BYTE* fileData = (BYTE*)pFileInfo_->pDosHeader;
+    BYTE* fileData = (BYTE*)pFileInfo_->dosHeader;
 
 
     DWORD checksum = 0;
@@ -165,13 +165,13 @@ std::string PEHashCalculator::calculateTLSH() {
 }
 
 std::string PEHashCalculator::calculateVHash() {
-    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+    if (!pFileInfo_ || !pFileInfo_->dosHeader) {
         return "[Error: Invalid file data]";
     }
 
 
     DWORD fileSize = getFileSize();
-    BYTE* fileData = (BYTE*)pFileInfo_->pDosHeader;
+    BYTE* fileData = (BYTE*)pFileInfo_->dosHeader;
 
 
     DWORD hash = 0;
@@ -187,18 +187,18 @@ std::string PEHashCalculator::calculateVHash() {
 }
 std::vector<PEHashCalculator::SectionHashes> PEHashCalculator::calculateSectionHashes() {
     sectionHashes_.clear();
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return sectionHashes_;
     }
     PIMAGE_SECTION_HEADER sectionHeader;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
+    if (pFileInfo_->is64Bit) {
+        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->ntHeader;
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
+        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->ntHeader;
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
-    for (int i = 0; i < pFileInfo_->pNtHeader->FileHeader.NumberOfSections; i++) {
+    for (int i = 0; i < pFileInfo_->ntHeader->FileHeader.NumberOfSections; i++) {
         SectionHashes sectionHash;
         char sectionName[9] = {0};
         memcpy(sectionName, sectionHeader[i].Name, 8);
@@ -207,7 +207,7 @@ std::vector<PEHashCalculator::SectionHashes> PEHashCalculator::calculateSectionH
         sectionHash.virtualSize = sectionHeader[i].Misc.VirtualSize;
         sectionHash.rawSize = sectionHeader[i].SizeOfRawData;
         if (sectionHeader[i].SizeOfRawData > 0 && sectionHeader[i].PointerToRawData > 0) {
-            BYTE* sectionData = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + sectionHeader[i].PointerToRawData);
+            BYTE* sectionData = (BYTE*)((DWORD_PTR)pFileInfo_->dosHeader + sectionHeader[i].PointerToRawData);
             sectionHash.md5 = calculateMD5Simple(sectionData, sectionHeader[i].SizeOfRawData);
             sectionHash.sha1 = calculateSHA1Simple(sectionData, sectionHeader[i].SizeOfRawData);
             sectionHash.sha256 = calculateSHA256Simple(sectionData, sectionHeader[i].SizeOfRawData);
@@ -249,29 +249,29 @@ double PEHashCalculator::calculateChi2(const BYTE* data, size_t size) {
 }
 PEHashCalculator::FileInfo PEHashCalculator::extractFileInfo() {
     fileInfo_ = {};
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return fileInfo_;
     }
     fileInfo_.fileType = detectFileType();
     fileInfo_.magic = getMagicSignature();
-    fileInfo_.architecture = pFileInfo_->bIs64Bit ? "x64" : "x86";
+    fileInfo_.architecture = pFileInfo_->is64Bit ? "x64" : "x86";
     fileInfo_.fileSize = getFileSize();
-    fileInfo_.compilationTimestamp = pFileInfo_->pNtHeader->FileHeader.TimeDateStamp;
-    fileInfo_.numberOfSections = pFileInfo_->pNtHeader->FileHeader.NumberOfSections;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
+    fileInfo_.compilationTimestamp = pFileInfo_->ntHeader->FileHeader.TimeDateStamp;
+    fileInfo_.numberOfSections = pFileInfo_->ntHeader->FileHeader.NumberOfSections;
+    if (pFileInfo_->is64Bit) {
+        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->ntHeader;
         fileInfo_.entryPoint = pNtHeader64->OptionalHeader.AddressOfEntryPoint;
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
+        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->ntHeader;
         fileInfo_.entryPoint = pNtHeader32->OptionalHeader.AddressOfEntryPoint;
     }
     return fileInfo_;
 }
 std::string PEHashCalculator::detectFileType() {
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return "Unknown";
     }
-    WORD characteristics = pFileInfo_->pNtHeader->FileHeader.Characteristics;
+    WORD characteristics = pFileInfo_->ntHeader->FileHeader.Characteristics;
     if (characteristics & IMAGE_FILE_DLL) {
         return "Win32 DLL";
     } else if (characteristics & IMAGE_FILE_EXECUTABLE_IMAGE) {
@@ -282,19 +282,19 @@ std::string PEHashCalculator::detectFileType() {
     return "Win32 PE";
 }
 std::string PEHashCalculator::getMagicSignature() {
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return "";
     }
     std::string magic = "PE32";
-    if (pFileInfo_->bIs64Bit) {
+    if (pFileInfo_->is64Bit) {
         magic = "PE32+";
     }
     WORD subsystem = 0;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
+    if (pFileInfo_->is64Bit) {
+        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->ntHeader;
         subsystem = pNtHeader64->OptionalHeader.Subsystem;
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
+        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->ntHeader;
         subsystem = pNtHeader32->OptionalHeader.Subsystem;
     }
     if (subsystem == 2) {
@@ -309,7 +309,7 @@ std::string PEHashCalculator::getMagicSignature() {
 }
 PEHashCalculator::OverlayInfo PEHashCalculator::analyzeOverlay() {
     overlayInfo_ = {};
-    if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
+    if (!pFileInfo_ || !pFileInfo_->dosHeader) {
         return overlayInfo_;
     }
     DWORD fileSize = getFileSize();
@@ -318,7 +318,7 @@ PEHashCalculator::OverlayInfo PEHashCalculator::analyzeOverlay() {
         overlayInfo_.hasOverlay = true;
         overlayInfo_.offset = lastSectionEnd;
         overlayInfo_.size = fileSize - lastSectionEnd;
-        BYTE* overlayData = (BYTE*)((DWORD_PTR)pFileInfo_->pDosHeader + lastSectionEnd);
+        BYTE* overlayData = (BYTE*)((DWORD_PTR)pFileInfo_->dosHeader + lastSectionEnd);
 
 
         overlayInfo_.md5 = calculateMD5Simple(overlayData, overlayInfo_.size);
@@ -355,22 +355,22 @@ PEHashCalculator::OverlayInfo PEHashCalculator::analyzeOverlay() {
 }
 DWORD PEHashCalculator::getFileSize() {
     if (!pFileInfo_) return 0;
-    return pFileInfo_->dwFileSize;
+    return pFileInfo_->fileSize;
 }
 DWORD PEHashCalculator::getLastSectionEnd() {
-    if (!pFileInfo_ || !pFileInfo_->pNtHeader) {
+    if (!pFileInfo_ || !pFileInfo_->ntHeader) {
         return 0;
     }
     PIMAGE_SECTION_HEADER sectionHeader;
-    if (pFileInfo_->bIs64Bit) {
-        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->pNtHeader;
+    if (pFileInfo_->is64Bit) {
+        auto pNtHeader64 = (PIMAGE_NT_HEADERS64)pFileInfo_->ntHeader;
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
     } else {
-        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->pNtHeader;
+        auto pNtHeader32 = (PIMAGE_NT_HEADERS32)pFileInfo_->ntHeader;
         sectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
     DWORD lastEnd = 0;
-    for (int i = 0; i < pFileInfo_->pNtHeader->FileHeader.NumberOfSections; i++) {
+    for (int i = 0; i < pFileInfo_->ntHeader->FileHeader.NumberOfSections; i++) {
         DWORD sectionEnd = sectionHeader[i].PointerToRawData + sectionHeader[i].SizeOfRawData;
         if (sectionEnd > lastEnd) {
             lastEnd = sectionEnd;
@@ -459,7 +459,7 @@ void PEHashCalculator::printOverlayInfo() {
         LOGF("\tSize: %u bytes (%.2f MB)\n", overlayInfo_.size, overlayInfo_.size / (1024.0 * 1024.0));
 
 
-        double overlayPercentage = ((double)overlayInfo_.size / pFileInfo_->dwFileSize) * 100.0;
+        double overlayPercentage = ((double)overlayInfo_.size / pFileInfo_->fileSize) * 100.0;
         LOGF("\tPercentage of File: %.1f%%\n", overlayPercentage);
 
         LOGF("\tEntropy: %.2f\n", overlayInfo_.entropy);
@@ -661,7 +661,7 @@ std::vector<std::string> PEHashCalculator::generateOverlayWarnings(const Overlay
     }
 
 
-    double totalFileSize = pFileInfo_->dwFileSize;
+    double totalFileSize = pFileInfo_->fileSize;
     double overlayRatio = (double)info.size / totalFileSize;
     if (overlayRatio > 0.8) {
         warnings.push_back("ANOMALY: Overlay is " + std::to_string((int)(overlayRatio * 100)) + "% of file size - unusual structure");
