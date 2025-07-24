@@ -1,4 +1,4 @@
-#include "../include/peFileHandler.h"
+#include "peFileHandler.h"
 #include <fstream>
 #include <iostream>
 #include <memory>

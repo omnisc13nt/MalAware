@@ -4,22 +4,21 @@
 #include <algorithm>
 #include <cstring>
 
-OutputManager::OutputManager() {
-
-    outputLevel = OutputLevel::STANDARD;
-    analysisMode = AnalysisMode::SECURITY;
-    showTimestamps = false;
-    colorOutput = false;
-    includeHashes = true;
-    includeEntropy = true;
-    includeSuspiciousTechniques = true;
-    includeImports = false;
-    includeExports = false;
-    includeResources = false;
-    includeDigitalSignatures = true;
-    includeTLS = false;
-    includeFuzzyHashes = true;
-    includeDebugInfo = false;
+OutputManager::OutputManager() 
+    : outputLevel(OutputLevel::STANDARD)
+    , analysisMode(AnalysisMode::SECURITY)
+    , showTimestamps(false)
+    , includeHashes(true)
+    , includeEntropy(true)
+    , includeSuspiciousTechniques(true)
+    , includeImports(false)
+    , includeExports(false)
+    , includeResources(false)
+    , includeDigitalSignatures(true)
+    , includeTLS(false)
+    , includeFuzzyHashes(true)
+    , includeDebugInfo(false)
+{
 }
 
 void OutputManager::setOutputLevel(OutputLevel level) {
@@ -176,8 +175,6 @@ void OutputManager::parseCommandLineOptions(int argc, char* argv[]) {
             includeResources = true;
         } else if (arg == "--show-debug") {
             includeDebugInfo = true;
-        } else if (arg == "--color") {
-            colorOutput = true;
         } else if (arg == "--timestamps") {
             showTimestamps = true;
         }
@@ -187,16 +184,41 @@ void OutputManager::parseCommandLineOptions(int argc, char* argv[]) {
             setOutputLevel(OutputLevel::MINIMAL);
             includeSuspiciousTechniques = true;
             includeHashes = false;
+            includeEntropy = false;
+            includeImports = false;
+            includeExports = false;
+            includeResources = false;
+            includeDigitalSignatures = false;
+            includeTLS = false;
+            includeFuzzyHashes = false;
+            includeDebugInfo = false;
         } else if (arg == "--only-hashes") {
             setOutputLevel(OutputLevel::MINIMAL);
             includeHashes = true;
             includeFuzzyHashes = true;
+            includeEntropy = false;
+            includeSuspiciousTechniques = false;
+            includeImports = false;
+            includeExports = false;
+            includeResources = false;
+            includeDigitalSignatures = false;
+            includeTLS = false;
+            includeDebugInfo = false;
         }
     }
 }
 
 bool OutputManager::shouldShowSection(const std::string& section) const {
     return std::find(enabledSections.begin(), enabledSections.end(), section) != enabledSections.end();
+}
+
+bool OutputManager::shouldShowBasicPEInfo() const {
+    if (outputLevel == OutputLevel::MINIMAL) {
+        bool isOnlyThreats = includeSuspiciousTechniques && !includeHashes && !includeEntropy;
+        bool isOnlyHashes = includeHashes && !includeSuspiciousTechniques && !includeEntropy;
+        return !(isOnlyThreats || isOnlyHashes);
+    }
+    return true;
 }
 
 bool OutputManager::shouldShowDetails() const {
@@ -256,51 +278,34 @@ bool OutputManager::shouldRunForensicAnalysis() const {
 }
 
 std::string OutputManager::formatHeader(const std::string& title) const {
-    if (colorOutput) {
-        return "\033[1;36m[+] " + title + "\033[0m";
-    }
     return "[+] " + title;
 }
 
 std::string OutputManager::formatSubHeader(const std::string& title) const {
-    if (colorOutput) {
-        return "\033[1;34m    " + title + "\033[0m";
-    }
     return "    " + title;
 }
 
 std::string OutputManager::formatThreat(const std::string& threat, int severity) const {
     std::string prefix;
     if (severity >= 8) {
-        prefix = colorOutput ? "\033[1;31m[CRITICAL]" : "[CRITICAL]";
+        prefix = "[CRITICAL]";
     } else if (severity >= 6) {
-        prefix = colorOutput ? "\033[1;33m[WARNING]" : "[WARNING]";
+        prefix = "[WARNING]";
     } else {
-        prefix = colorOutput ? "\033[1;32m[INFO]" : "[INFO]";
+        prefix = "[INFO]";
     }
-
-    std::string suffix = colorOutput ? "\033[0m" : "";
-    return prefix + " " + threat + suffix;
+    return prefix + " " + threat;
 }
 
 std::string OutputManager::formatInfo(const std::string& info) const {
-    if (colorOutput) {
-        return "\033[0;36m[INFO] " + info + "\033[0m";
-    }
     return "[INFO] " + info;
 }
 
 std::string OutputManager::formatWarning(const std::string& warning) const {
-    if (colorOutput) {
-        return "\033[1;33m[WARNING] " + warning + "\033[0m";
-    }
     return "[WARNING] " + warning;
 }
 
 std::string OutputManager::formatError(const std::string& error) const {
-    if (colorOutput) {
-        return "\033[1;31m[ERROR] " + error + "\033[0m";
-    }
     return "[ERROR] " + error;
 }
 
@@ -328,7 +333,6 @@ void OutputManager::printUsage() const {
     std::cout << "  --show-exports   Include export table analysis\n";
     std::cout << "  --show-resources Include resource analysis\n";
     std::cout << "  --show-debug     Include debug information\n";
-    std::cout << "  --color          Enable colored output\n";
     std::cout << "  --timestamps     Show timestamps in output\n\n";
 
     std::cout << "SPECIALIZED MODES:\n";
@@ -337,7 +341,7 @@ void OutputManager::printUsage() const {
 
     std::cout << "EXAMPLES:\n";
     std::cout << "  peFileParser malware.exe -s --malware\n";
-    std::cout << "  peFileParser sample.exe -A --forensic --color\n";
+    std::cout << "  peFileParser sample.exe -A --forensic\n";
     std::cout << "  peFileParser file.exe --only-threats\n";
     std::cout << "  peFileParser binary.exe -v --show-imports --no-entropy\n\n";
 }

@@ -25,7 +25,6 @@ private:
     OutputLevel outputLevel;
     AnalysisMode analysisMode;
     bool showTimestamps;
-    bool colorOutput;
     bool includeHashes;
     bool includeEntropy;
     bool includeSuspiciousTechniques;
@@ -50,6 +49,7 @@ public:
 
 
     bool shouldShowSection(const std::string& section) const;
+    bool shouldShowBasicPEInfo() const;
     bool shouldShowDetails() const;
     bool shouldShowHashes() const;
     bool shouldShowEntropy() const;
@@ -80,7 +80,6 @@ public:
 
     OutputLevel getOutputLevel() const { return outputLevel; }
     AnalysisMode getAnalysisMode() const { return analysisMode; }
-    bool isColorEnabled() const { return colorOutput; }
 };
 
 #endif

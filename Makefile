@@ -1,45 +1,71 @@
+# Enhanced PE File Parser Makefile
+# Minimal version with only required dependencies
 
 CXX = g++
 CXX_WIN = x86_64-w64-mingw32-g++
-CXXFLAGS = -std=c++17 -O2 -Wall -Wextra
-INCLUDES = -Iinclude
-LIBS = -lfuzzy 
+CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -pthread
+CXXFLAGS_DEBUG = -std=c++17 -g -O0 -Wall -Wextra -pthread -DDEBUG
+INCLUDES = -Iinclude -I.
+LIBS = -lfuzzy
 
-SOURCES = main.cpp src/*.cpp
+# Source files (only files that actually exist)
+CORE_SOURCES = src/peFileHandler.cpp src/peParser.cpp src/peHeaderParser.cpp \
+               src/peSectionParser.cpp src/peImportExport.cpp \
+               src/PEResourceParser.cpp src/PESecurityAnalyzer.cpp \
+               src/PEDigitalSignatureAnalyzer.cpp src/PEDebugInfoAnalyzer.cpp \
+               src/PEHashCalculator.cpp src/PETLSAnalyzer.cpp \
+               src/PEMalwareAnalysisEngine.cpp src/FuzzyHashCalculator.cpp \
+               src/OutputManager.cpp src/AdvancedEntropyAnalyzer.cpp \
+               src/EnhancedOutputManager.cpp src/PerformanceMetrics.cpp \
+               src/Logger.cpp src/CryptoUtils.cpp src/PERelocationParser.cpp \
+               src/PESuspiciousTechniqueAnalyzer.cpp src/PEThreatIntelligence.cpp \
+               src/PKCS7Parser.cpp src/peCommon.cpp
 
+# Targets
 TARGET_LINUX = peFileParser
 TARGET_WIN = peFileParserWindows.exe
 
+# Default target
 all: $(TARGET_LINUX)
 
+# Standard version
 linux: $(TARGET_LINUX)
 
 $(TARGET_LINUX):
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SOURCES) -o $(TARGET_LINUX) $(LIBS)
+	@echo "Building PE File Parser..."
+	$(CXX) $(CXXFLAGS) $(INCLUDES) main.cpp $(CORE_SOURCES) -o $(TARGET_LINUX) $(LIBS)
 
+# Debug version
+debug:
+	@echo "Building PE File Parser (Debug)..."
+	$(CXX) $(CXXFLAGS_DEBUG) $(INCLUDES) main.cpp $(CORE_SOURCES) -o $(TARGET_LINUX)_debug $(LIBS)
+
+# Windows cross-compilation
 windows: $(TARGET_WIN)
 
 $(TARGET_WIN):
-	$(CXX_WIN) $(CXXFLAGS) $(INCLUDES) $(SOURCES) -o $(TARGET_WIN) -static-libgcc -static-libstdc++ $(LIBS)
+	@echo "Building Windows version..."
+	$(CXX_WIN) $(CXXFLAGS) $(INCLUDES) main.cpp $(CORE_SOURCES) -o $(TARGET_WIN) -static-libgcc -static-libstdc++ $(LIBS)
 
-cross: $(TARGET_LINUX) $(TARGET_WIN)
-
+# Clean targets
 clean:
-	rm -f $(TARGET_LINUX) $(TARGET_WIN)
+	@echo "Cleaning build files..."
+	rm -f $(TARGET_LINUX) $(TARGET_LINUX)_debug $(TARGET_WIN) peFileParser_test peFileParser_minimal
 
+# Install dependencies
 install-deps:
 	@echo "Installing required dependencies..."
-	sudo apt-get update
-	sudo apt-get install -y libcurl4-openssl-dev libssl-dev libcrypto++-dev libjsoncpp-dev
+	sudo apt update
+	sudo apt install -y libfuzzy-dev build-essential
 
+# Help target
 help:
 	@echo "Available targets:"
-	@echo "  all          - Build Linux version (default)"  
-	@echo "  linux        - Build Linux version"
-	@echo "  windows      - Build Windows version"
-	@echo "  cross        - Build both versions"
-	@echo "  install-deps - Install required dependencies"
-	@echo "  clean        - Remove executables"
-	@echo "  help         - Show this help"
+	@echo "  all (default) - Build the standard PE File Parser"
+	@echo "  debug        - Build debug version with symbols"
+	@echo "  windows      - Cross-compile for Windows"
+	@echo "  clean        - Remove build files"
+	@echo "  install-deps - Install build dependencies"
+	@echo "  help         - Show this help message"
 
-.PHONY: all linux windows cross clean install-deps help
+.PHONY: all linux debug windows clean install-deps help

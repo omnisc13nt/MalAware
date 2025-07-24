@@ -15,6 +15,7 @@
 #include "include/AdvancedEntropyAnalyzer.h"
 #include "include/EnhancedOutputManager.h"
 #include "include/PerformanceMetrics.h"
+
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -38,7 +39,6 @@
 #define fileno_fd fileno
 #endif
 int g_original_stdout = -1;
-FILE* g_output_file = nullptr;
 int g_NumberOfSections = 0;
 PIMAGE_SECTION_HEADER g_SectionHeader = nullptr;
 int g_CorruptedImports = 0;
@@ -144,49 +144,58 @@ int main(int argc, char* argv[])
         printf("[+] Architecture: %s\n", fileInfo.bIs64Bit ? "x64" : "x86");
     }
 
-
     if (fileInfo.bIs64Bit)
     {
         auto pNtHeader64 = (PIMAGE_NT_HEADERS64)fileInfo.pNtHeader;
         g_NumberOfSections = pNtHeader64->FileHeader.NumberOfSections;
-
         g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader64 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader64->FileHeader.SizeOfOptionalHeader);
     }
     else
     {
         auto pNtHeader32 = (PIMAGE_NT_HEADERS32)fileInfo.pNtHeader;
         g_NumberOfSections = pNtHeader32->FileHeader.NumberOfSections;
-
         g_SectionHeader = (PIMAGE_SECTION_HEADER)((DWORD_PTR)pNtHeader32 + 4 + sizeof(IMAGE_FILE_HEADER) + pNtHeader32->FileHeader.SizeOfOptionalHeader);
     }
-
 
     PerformanceMetrics perfMetrics;
     perfMetrics.setFileSize(fileInfo.dwFileSize);
     perfMetrics.startAnalysis();
 
-
-    int parseResult = ParsePEFile(&fileInfo);
-    if (parseResult != PE_SUCCESS)
-    {
-        if (outputToFile) {
-            LOGF("[-] ERROR: Failed to parse PE file! (Error code: %d)\n", parseResult);
-            Logger::close();
-        } else {
-            printf("[-] ERROR: Failed to parse PE file! (Error code: %d)\n", parseResult);
+    if (outputManager.shouldShowBasicPEInfo()) {
+        int parseResult = ParsePEFile(&fileInfo);
+        if (parseResult != PE_SUCCESS)
+        {
+            if (outputToFile) {
+                LOGF("[-] ERROR: Failed to parse PE file! (Error code: %d)\n", parseResult);
+                Logger::close();
+            } else {
+                printf("[-] ERROR: Failed to parse PE file! (Error code: %d)\n", parseResult);
+            }
+            CleanupPEFile(&fileInfo);
+            return parseResult;
         }
-        CleanupPEFile(&fileInfo);
-        return parseResult;
-    }
 
-    if (outputToFile) {
-        LOG("\n[+] PE file parsing completed successfully!\n");
+        if (outputToFile) {
+            LOG("\n[+] PE file parsing completed successfully!\n");
+        } else {
+            printf("\n[+] PE file parsing completed successfully!\n");
+        }
     } else {
-        printf("\n[+] PE file parsing completed successfully!\n");
+        if (fileInfo.pNtHeader == nullptr) {
+            if (outputToFile) {
+                LOGF("[-] ERROR: Invalid PE file structure!\n");
+                Logger::close();
+            } else {
+                printf("[-] ERROR: Invalid PE file structure!\n");
+            }
+            CleanupPEFile(&fileInfo);
+            return PE_ERROR_INVALID_PE;
+        }
     }
 
-
-    generateAnalysisSummary(fileInfo, inputFile);
+    if (outputManager.shouldShowBasicPEInfo()) {
+        generateAnalysisSummary(fileInfo, inputFile);
+    }
 
 
     if (outputManager.shouldShowResources()) {
@@ -207,7 +216,7 @@ int main(int argc, char* argv[])
     }
 
 
-    if (outputManager.shouldRunSecurityAnalysis()) {
+    if (outputManager.shouldRunSecurityAnalysis() && outputManager.shouldShowBasicPEInfo()) {
         try {
             perfMetrics.startModule("Security Analysis");
             PESecurityAnalyzer securityAnalyzer(&fileInfo);
@@ -259,15 +268,15 @@ int main(int argc, char* argv[])
 
 
             if (entropyResults.fileOverall.entropy >= 7.8) {
-                LOG("	⚠️  VERY HIGH ENTROPY - Likely packed, encrypted, or compressed\n");
+                LOG("	VERY HIGH ENTROPY - Likely packed, encrypted, or compressed\n");
             } else if (entropyResults.fileOverall.entropy >= 7.5) {
-                LOG("	⚠️  HIGH ENTROPY - May indicate compression or obfuscation\n");
+                LOG("	HIGH ENTROPY - May indicate compression or obfuscation\n");
             } else if (entropyResults.fileOverall.entropy >= 6.0) {
-                LOG("	✅ NORMAL ENTROPY - Typical for executable code and data\n");
+                LOG("	NORMAL ENTROPY - Typical for executable code and data\n");
             } else if (entropyResults.fileOverall.entropy >= 3.0) {
-                LOG("	ℹ️  LOW ENTROPY - Contains repetitive data\n");
+                LOG("	LOW ENTROPY - Contains repetitive data\n");
             } else {
-                LOG("	ℹ️  VERY LOW ENTROPY - Mostly padding or zeros\n");
+                LOG("   VERY LOW ENTROPY - Mostly padding or zeros\n");
             }
 
             LOGF("	Packing Detected: %s\n", entropyResults.fileOverall.isPacked ? "YES" : "NO");
@@ -341,7 +350,7 @@ int main(int argc, char* argv[])
     }
 
 
-    if (outputManager.shouldRunMalwareAnalysis()) {
+    if (outputManager.shouldRunMalwareAnalysis() && outputManager.shouldShowBasicPEInfo()) {
         try {
             auto malwareResult = PEMalwareAnalysisEngine::analyzeFile(&fileInfo);
             PEMalwareAnalysisEngine::logMalwareAnalysis(malwareResult);
@@ -495,28 +504,30 @@ int main(int argc, char* argv[])
         }
     }
 
-    try {
-        perfMetrics.endAnalysis();
-        auto metrics = perfMetrics.generateReport();
-        LOG("\n[+] PERFORMANCE METRICS\n");
-        LOGF("	Total Analysis Time: %.2f seconds\n", metrics.totalTime);
-        if (metrics.peakMemory > 1024) {
-            LOGF("	Peak Memory Usage: %.2f MB\n", metrics.peakMemory / (1024.0 * 1024.0));
-        } else {
-            LOGF("	Peak Memory Usage: < 1 MB (minimal footprint)\n");
-        }
-        LOGF("	Performance Grade: %s\n", metrics.performanceGrade.c_str());
-        if (!metrics.bottlenecks.empty()) {
-            LOG("	Bottlenecks Identified:\n");
-            for (const auto& bottleneck : metrics.bottlenecks) {
-                LOGF("	  - %s\n", bottleneck.c_str());
+    if (outputManager.shouldShowDetails() || outputManager.shouldShowBasicPEInfo()) {
+        try {
+            perfMetrics.endAnalysis();
+            auto metrics = perfMetrics.generateReport();
+            LOG("\n[+] PERFORMANCE METRICS\n");
+            LOGF("	Total Analysis Time: %.2f seconds\n", metrics.totalTime);
+            if (metrics.peakMemory > 1024) {
+                LOGF("	Peak Memory Usage: %.2f MB\n", metrics.peakMemory / (1024.0 * 1024.0));
+            } else {
+                LOGF("	Peak Memory Usage: %.2f KB\n", metrics.peakMemory / 1024.0);
             }
+            LOGF("	Performance Grade: %s\n", metrics.performanceGrade.c_str());
+            if (!metrics.bottlenecks.empty()) {
+                LOG("	Bottlenecks Identified:\n");
+                for (const auto& bottleneck : metrics.bottlenecks) {
+                    LOGF("	  - %s\n", bottleneck.c_str());
+                }
+            }
+            LOG("[+] Performance metrics analysis completed successfully!\n");
+        } catch (const std::exception& e) {
+            LOGF("[-] ERROR: Performance metrics failed: %s\n", e.what());
+        } catch (...) {
+            LOG("[-] ERROR: Unknown error during performance metrics\n");
         }
-        LOG("[+] Performance metrics analysis completed successfully!\n");
-    } catch (const std::exception& e) {
-        LOGF("[-] ERROR: Performance metrics failed: %s\n", e.what());
-    } catch (...) {
-        LOG("[-] ERROR: Unknown error during performance metrics\n");
     }
     if (false && outputFormat != "text") {
         try {
@@ -750,11 +761,11 @@ void generateAnalysisSummary(const PE_FILE_INFO& fileInfo, const std::string& in
     LOG("\nQuick Security Assessment:\n");
 
 
-    LOG("🔍 Digital Signature: Will be analyzed below\n");
-    LOG("🔍 Entropy Analysis: Will be analyzed below\n");
-    LOG("🔍 Packing Detection: Will be analyzed below\n");
-    LOG("🔍 Suspicious Patterns: Will be analyzed below\n");
+    LOG("Digital Signature: Will be analyzed below\n");
+    LOG("Entropy Analysis: Will be analyzed below\n");
+    LOG("Packing Detection: Will be analyzed below\n");
+    LOG("Suspicious Patterns: Will be analyzed below\n");
 
-    LOG("\n📝 Detailed analysis results follow...\n");
+    LOG("\nDetailed analysis results follow...\n");
     LOG("===============================\n");
 }

@@ -434,7 +434,7 @@ std::vector<IconInfo> PEResourceParser::parseIconResource(const std::vector<uint
         return icons;
     }
 
-    for (uint16_t i = 0; i < iconCount && (6 + i * 16) < data.size(); i++) {
+    for (uint16_t i = 0; i < iconCount && (6 + static_cast<size_t>(i) * 16) < data.size(); i++) {
         IconInfo iconInfo = parseIconEntry(dataPtr + 6 + i * 16, 16);
         if (iconInfo.isValid) {
             icons.push_back(iconInfo);

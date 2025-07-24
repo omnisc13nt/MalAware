@@ -84,7 +84,7 @@ COMPREHENSIVE_ANALYSIS_REPORT.md
 changelogs.md
 
 # Test files and folders
-theZoo/
+ToAdd/
 testFolder/
 *.test
 *.spec

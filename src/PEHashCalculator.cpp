@@ -1,16 +1,19 @@
-#include "../include/PEHashCalculator.h"
-#include "../include/CryptoUtils.h"
+#include "PEHashCalculator.h"
+#include "CryptoUtils.h"
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <ctime>
-PEHashCalculator::PEHashCalculator(PPE_FILE_INFO pFileInfo) : pFileInfo_(pFileInfo) {
-    hashResult_ = {};
+
+PEHashCalculator::PEHashCalculator(PPE_FILE_INFO pFileInfo) 
+    : pFileInfo_(pFileInfo)
+    , hashResult_({})
+    , fileInfo_({})
+    , overlayInfo_({})
+{
     sectionHashes_.clear();
-    fileInfo_ = {};
-    overlayInfo_ = {};
 }
 PEHashCalculator::HashResult PEHashCalculator::calculateAllHashes() {
     if (!pFileInfo_ || !pFileInfo_->pDosHeader) {
