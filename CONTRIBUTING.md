@@ -4,7 +4,7 @@ It's people like you that make MalAware such a great tool.
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the MalAware [Code of Conduct](Code of Conduct.md). By participating, you are expected to uphold this code.
+This project and everyone participating in it is governed by the MalAware [Code of Conduct](Code%20of%20Conduct.md). By participating, you are expected to uphold this code.
 
 ## How Can I Contribute?
 
