@@ -15,14 +15,14 @@ CORE_SOURCES = src/peFileHandler.cpp src/peParser.cpp src/peHeaderParser.cpp \
                src/PEMalwareAnalysisEngine.cpp src/FuzzyHashCalculator.cpp \
                src/OutputManager.cpp src/AdvancedEntropyAnalyzer.cpp \
                src/EnhancedOutputManager.cpp src/PerformanceMetrics.cpp \
-               src/Logger.cpp src/CryptoUtils.cpp src/PERelocationParser.cpp \
-               src/PESuspiciousTechniqueAnalyzer.cpp src/PEThreatIntelligence.cpp \
-               src/PKCS7Parser.cpp src/peCommon.cpp
+			   src/Logger.cpp src/CryptoUtils.cpp src/PERelocationParser.cpp \
+			   src/PESuspiciousTechniqueAnalyzer.cpp \
+			   src/PKCS7Parser.cpp src/peCommon.cpp
 
 TARGET_LINUX = MalAware
 TARGET_WIN = MalAwareWindows.exe
 
-all: $(TARGET_LINUX)
+all: $(TARGET_LINUX) $(TARGET_WIN)
 
 linux: $(TARGET_LINUX)
 

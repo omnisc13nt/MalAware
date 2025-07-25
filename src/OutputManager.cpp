@@ -339,7 +339,7 @@ void OutputManager::printUsage() const {
               << "  --sign               Verify digital signatures\n"
               << "  --packer             Check for packer signatures\n"
               << "  --yara RULES         Apply custom YARA rules\n"
-              << "  --vt KEY             Query VirusTotal using API key\n\n"
+    
               << "examples:\n"
               << "  malaware sample.exe              # Standard analysis\n"
               << "  malaware -m malware sample.dll   # Full malware analysis\n"
