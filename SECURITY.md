@@ -1,37 +1,42 @@
-# Security Policy
+# Keeping MalAware Secure
 
-## Supported Versions
+Hey there! Security is a top priority for us, and we really appreciate your help in keeping MalAware safe. Here's what you need to know:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
+## Currently Supported Versions
 
-## Reporting a Vulnerability
+We're actively maintaining and providing security updates for:
+- Version 1.0.x ✅
 
-We take the security of MalAware seriously. If you believe you have found a security vulnerability, please report it to us as described below.
+## Found a Security Issue?
 
-**Please do not report security vulnerabilities through public GitHub issues.**
+First off, thank you for caring about security! If you think you've found a vulnerability, we'd love to hear about it - but let's keep it private to protect everyone.
 
-Instead, please report them via email to lolpix3l@proton.me
+### How to Report
 
-You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
+Send us an email at lolpix3l@proton.me
 
-Please include the requested information listed below (as much as you can provide) to help us better understand the nature and scope of the possible issue:
+Please don't post about security issues in public GitHub issues - this gives us time to address the problem before it becomes widely known.
 
-* Type of issue (e.g. buffer overflow, SQL injection, cross-site scripting, etc.)
-* Full paths of source file(s) related to the manifestation of the issue
-* The location of the affected source code (tag/branch/commit or direct URL)
-* Any special configuration required to reproduce the issue
-* Step-by-step instructions to reproduce the issue
-* Proof-of-concept or exploit code (if possible)
-* Impact of the issue, including how an attacker might exploit it
+We'll get back to you within 48 hours. If you don't hear from us, please feel free to send a follow-up email - sometimes messages get lost in spam filters!
 
-This information will help us triage your report more quickly.
+### What to Include
 
-## Preferred Languages
+To help us understand and fix the issue quickly, it would be super helpful if you could tell us:
 
-We prefer all communications to be in English.
+1. What kind of security issue you found (like a buffer overflow, injection vulnerability, etc.)
+2. Where you found it (which files or code areas)
+3. How to make it happen (steps to reproduce)
+4. What could go wrong if someone exploited it
+5. If you have ideas for fixing it, we'd love to hear those too!
 
-## Policy
+The more details you can share, the faster we can get it fixed!
 
-We follow the principle of [Responsible Disclosure](https://en.wikipedia.org/wiki/Responsible_disclosure).
+### Language
+
+We work primarily in English, so English communications are preferred. However, we'll do our best to understand and respond to any security report, regardless of language.
+
+### Our Approach
+
+We believe in responsible disclosure - meaning we work together privately to fix security issues before they become public knowledge. This protects everyone using MalAware.
+
+Thank you for helping make MalAware more secure!
