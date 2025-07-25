@@ -75,8 +75,8 @@ ParseResults.txt
 # Important markdown files
 *.md
 !README.md
-!CONTRIBUTING.md
-!CODE_OF_CONDUCT.md
+!Contributing.md
+!"Code of Conduct.md"
 !SECURITY.md
 !CHANGELOG.md
 !sampleOutput.md
