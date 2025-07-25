@@ -9,6 +9,7 @@
 *.lib
 *.a
 *.bin
+*.sh
 
 # Executables (but keep testFolder examples)
 MalAware*
@@ -21,6 +22,7 @@ obj/
 obj_*/
 bin/
 dist/
+release/
 
 # CMake files
 CMakeFiles/
@@ -86,6 +88,8 @@ changelogs.md
 # Test files and folders
 ToAdd/
 testFolder/
+malSamples/
+test_samples.sh
 *.test
 *.spec
 
