@@ -2,11 +2,11 @@
 
 [![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.cppreference.com/w/cpp/17)
 [![License: Apache](https://img.shields.io/badge/License-Apache-yellow.svg)](https://opensource.org/licenses/Apache)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/michaelangelo23/peParse)
-[![Build](https://img.shields.io/badge/Build-Makefile-green.svg)](https://github.com/michaelangelo23/peParse)
-[![Security](https://img.shields.io/badge/Security-Malware%20Analysis-red.svg)](https://github.com/michaelangelo23/peParse)
-[![PE Format](https://img.shields.io/badge/PE-Analysis-orange.svg)](https://github.com/michaelangelo23/peParse)
-[![Fuzzy Hash](https://img.shields.io/badge/SSDeep-Supported-purple.svg)](https://github.com/michaelangelo23/peParse)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/michaelangelo23/MalAware)
+[![Build](https://img.shields.io/badge/Build-Makefile-green.svg)](https://github.com/michaelangelo23/MalAware)
+[![Security](https://img.shields.io/badge/Security-Malware%20Analysis-red.svg)](https://github.com/michaelangelo23/MalAware)
+[![PE Format](https://img.shields.io/badge/PE-Analysis-orange.svg)](https://github.com/michaelangelo23/MalAware)
+[![Fuzzy Hash](https://img.shields.io/badge/SSDeep-Supported-purple.svg)](https://github.com/michaelangelo23/MalAware)
 
 A comprehensive Portable Executable (PE) file analysis tool that provides deep inspection capabilities for Windows PE files with a focus on security analysis, malware detection, and forensic investigation.
 
@@ -41,8 +41,8 @@ sudo dnf install gcc-c++ fuzzy-devel
 
 #### Quick Installation
 ```bash
-git clone https://github.com/michaelangelo23/peParse.git
-cd peParse
+git clone https://github.com/michaelangelo23/MalAware.git
+cd MalAware
 make
 ```
 
