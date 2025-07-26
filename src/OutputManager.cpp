@@ -24,68 +24,62 @@ OutputManager::OutputManager()
 void OutputManager::setOutputLevel(OutputLevel level) {
     outputLevel = level;
 
+    // Reset all toggles to false first for clarity
+    includeHashes = false;
+    includeEntropy = false;
+    includeImports = false;
+    includeExports = false;
+    includeResources = false;
+    includeDigitalSignatures = false;
+    includeTLS = false;
+    includeFuzzyHashes = false;
+    includeDebugInfo = false;
 
     switch (level) {
         case OutputLevel::MINIMAL:
-            includeHashes = false;
-            includeEntropy = false;
-            includeImports = false;
-            includeExports = false;
-            includeResources = false;
-            includeDigitalSignatures = false;
-            includeTLS = false;
-            includeFuzzyHashes = false;
-            includeDebugInfo = false;
+            // Only show threats (suspicious techniques)
+            // All other toggles remain false
             break;
 
         case OutputLevel::SUMMARY:
+            // Basic info + threats, hashes only
             includeHashes = true;
-            includeEntropy = false;
-            includeImports = false;
-            includeExports = false;
-            includeResources = false;
-            includeDigitalSignatures = false;
-            includeTLS = false;
-            includeFuzzyHashes = false;
-            includeDebugInfo = false;
             break;
 
         case OutputLevel::STANDARD:
+            // Security analysis: hashes, entropy, digital signatures, fuzzy hashes
             includeHashes = true;
             includeEntropy = true;
-            includeImports = false;
-            includeExports = false;
-            includeResources = false;
             includeDigitalSignatures = true;
-            includeTLS = false;
             includeFuzzyHashes = true;
-            includeDebugInfo = false;
             break;
 
         case OutputLevel::DETAILED:
+            // Everything in STANDARD + imports, exports, resources, TLS, more details
             includeHashes = true;
             includeEntropy = true;
+            includeDigitalSignatures = true;
+            includeFuzzyHashes = true;
             includeImports = true;
             includeExports = true;
             includeResources = true;
-            includeDigitalSignatures = true;
             includeTLS = true;
-            includeFuzzyHashes = true;
-            includeDebugInfo = false;
             break;
 
         case OutputLevel::FULL:
+            // Everything in DETAILED + debug info
             includeHashes = true;
             includeEntropy = true;
+            includeDigitalSignatures = true;
+            includeFuzzyHashes = true;
             includeImports = true;
             includeExports = true;
             includeResources = true;
-            includeDigitalSignatures = true;
             includeTLS = true;
-            includeFuzzyHashes = true;
             includeDebugInfo = true;
             break;
     }
+}
 }
 
 void OutputManager::setAnalysisMode(AnalysisMode mode) {
